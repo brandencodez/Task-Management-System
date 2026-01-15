@@ -1,0 +1,11 @@
+<h2>Assign Task</h2>
+
+<form (ngSubmit)="assignTask()">
+  <input placeholder="Task Title" [(ngModel)]="task.title" name="title" required />
+  <input placeholder="Employee Name" [(ngModel)]="task.assignedTo" name="assignedTo" required />
+  <input type="date" [(ngModel)]="task.startDate" name="startDate" required />
+  <input type="date" [(ngModel)]="task.endDate" name="endDate" required />
+  <textarea placeholder="Description" [(ngModel)]="task.description" name="description"></textarea>
+
+  <button type="submit">Assign Task</button>
+</form>

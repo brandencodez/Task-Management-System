@@ -1,0 +1,45 @@
+<h2>Task List</h2>
+
+<div *ngFor="let task of tasks" class="task-card" [ngClass]="task.status">
+  <div class="task-header">
+    <h3>{{ task.title }}</h3>
+    <span class="status">{{ task.status }}</span>
+  </div>
+
+  <p><b>Employee:</b> {{ task.assignedTo }}</p>
+  <p><b>Deadline:</b> {{ task.endDate }}</p>
+
+  <div class="actions">
+    <button class="btn edit" (click)="openEdit(task)">Edit</button>
+    <button class="btn delete" (click)="openDelete(task)">Delete</button>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-backdrop" *ngIf="showEditModal">
+  <div class="modal">
+    <h3>Edit Task</h3>
+
+    <input [(ngModel)]="selectedTask!.title" placeholder="Task title" />
+    <input [(ngModel)]="selectedTask!.assignedTo" placeholder="Employee name" />
+    <input type="date" [(ngModel)]="selectedTask!.endDate" />
+
+    <div class="modal-actions">
+      <button class="btn save" (click)="saveEdit()">Save</button>
+      <button class="btn cancel" (click)="closeModals()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-backdrop" *ngIf="showDeleteModal">
+  <div class="modal danger">
+    <h3>Confirm Delete</h3>
+    <p>Are you sure you want to delete this task?</p>
+
+    <div class="modal-actions">
+      <button class="btn delete" (click)="confirmDelete()">Yes, Delete</button>
+      <button class="btn cancel" (click)="closeModals()">Cancel</button>
+    </div>
+  </div>
+</div>
