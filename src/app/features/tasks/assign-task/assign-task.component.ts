@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { TaskService } from '../task.service';
 import { Task } from '../../../shared/models/task.model';
 
@@ -11,7 +12,6 @@ import { Task } from '../../../shared/models/task.model';
   styleUrls: ['./assign-task.component.css']
 })
 export class AssignTaskComponent {
-
   task: Partial<Task> = {
     title: '',
     description: '',
@@ -20,9 +20,25 @@ export class AssignTaskComponent {
     endDate: ''
   };
 
-  constructor(private taskService: TaskService) {}
+  // Toast notification state
+  showToast = false;
+  toastMessage = '';
+
+  constructor(
+    private taskService: TaskService,
+    private router: Router
+  ) {}
 
   assignTask() {
+    if (!this.task.title || !this.task.assignedTo || !this.task.startDate || !this.task.endDate) {
+      return;
+    }
+
+    if (new Date(this.task.endDate!) < new Date(this.task.startDate!)) {
+      this.showNotification('End date must be after start date');
+      return;
+    }
+
     const newTask: Task = {
       id: Date.now(),
       title: this.task.title!,
@@ -34,8 +50,19 @@ export class AssignTaskComponent {
     };
 
     this.taskService.addTask(newTask);
-    alert('Task assigned successfully');
+    this.showNotification('Task assigned successfully!');
+    
+    // redirect after delay
+    setTimeout(() => {
+      this.router.navigate(['/admin-dashboard']);
+    }, 1500);
+  }
 
-    this.task = {};
+  showNotification(message: string) {
+    this.toastMessage = message;
+    this.showToast = true;
+    setTimeout(() => {
+      this.showToast = false;
+    }, 3000); // Hide after 3 seconds
   }
 }

@@ -1,11 +1,110 @@
-<h2>Assign Task</h2>
+<div class="assign-task-container">
+  <div class="card">
+    <h2>Assign New Task</h2>
+    
+    <form (ngSubmit)="assignTask()" #taskForm="ngForm">
+      <!-- Task Title -->
+      <div class="form-group">
+        <label for="title">Task Title *</label>
+        <input
+          type="text"
+          id="title"
+          [(ngModel)]="task.title"
+          name="title"
+          #titleInput="ngModel"
+          required
+          minlength="3"
+          placeholder="e.g., Update user profile page"
+        />
+        @if (titleInput.invalid && titleInput.touched) {
+          <div class="error">
+            @if (titleInput.errors?.['required']) {
+              Task title is required
+            } @else if (titleInput.errors?.['minlength']) {
+              Title must be at least 3 characters
+            }
+          </div>
+        }
+      </div>
 
-<form (ngSubmit)="assignTask()">
-  <input placeholder="Task Title" [(ngModel)]="task.title" name="title" required />
-  <input placeholder="Employee Name" [(ngModel)]="task.assignedTo" name="assignedTo" required />
-  <input type="date" [(ngModel)]="task.startDate" name="startDate" required />
-  <input type="date" [(ngModel)]="task.endDate" name="endDate" required />
-  <textarea placeholder="Description" [(ngModel)]="task.description" name="description"></textarea>
+      <!-- Employee Name -->
+      <div class="form-group">
+        <label for="assignedTo">Assign To *</label>
+        <input
+          type="text"
+          id="assignedTo"
+          [(ngModel)]="task.assignedTo"
+          name="assignedTo"
+          #assignedToInput="ngModel"
+          required
+          placeholder="Employee full name"
+        />
+        @if (assignedToInput.invalid && assignedToInput.touched) {
+          <div class="error">Employee name is required</div>
+        }
+      </div>
 
-  <button type="submit">Assign Task</button>
-</form>
+      <!-- Dates -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="startDate">Start Date *</label>
+          <input
+            type="date"
+            id="startDate"
+            [(ngModel)]="task.startDate"
+            name="startDate"
+            #startDateInput="ngModel"
+            required
+          />
+          @if (startDateInput.invalid && startDateInput.touched) {
+            <div class="error">Start date is required</div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="endDate">End Date *</label>
+          <input
+            type="date"
+            id="endDate"
+            [(ngModel)]="task.endDate"
+            name="endDate"
+            #endDateInput="ngModel"
+            required
+          />
+          @if (endDateInput.invalid && endDateInput.touched) {
+            <div class="error">End date is required</div>
+          }
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          [(ngModel)]="task.description"
+          name="description"
+          rows="4"
+          placeholder="Add task details, requirements, or notes..."
+        ></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="submit" [disabled]="!taskForm.valid" class="btn-primary">
+          Assign Task
+        </button>
+        <button type="button" routerLink="/admin-dashboard" class="btn-secondary">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+@if (showToast) {
+  <div class="toast">
+    {{ toastMessage }}
+  </div>
+}
