@@ -1,34 +1,15 @@
 <h2>Admin Dashboard</h2>
 
-<!-- SUMMARY CARDS -->
+<!-- Summary Cards -->
 <div class="cards">
-  <div class="card total">
-    <h3>Total Tasks</h3>
-    <p>{{ totalTasks }}</p>
-  </div>
-
-  <div class="card track">
-    <h3>On Track</h3>
-    <p>{{ onTrack }}</p>
-  </div>
-
-  <div class="card warn">
-    <h3>Warning</h3>
-    <p>{{ warning }}</p>
-  </div>
-
-  <div class="card danger">
-    <h3>Overdue</h3>
-    <p>{{ overdue }}</p>
-  </div>
-
-  <div class="card complete">
-    <h3>Completed</h3>
-    <p>{{ completed }}</p>
-  </div>
+  <div class="card total"><h3>Total Tasks</h3><p>{{ totalTasks }}</p></div>
+  <div class="card track"><h3>On Track</h3><p>{{ onTrack }}</p></div>
+  <div class="card warn"><h3>Warning</h3><p>{{ warning }}</p></div>
+  <div class="card danger"><h3>Overdue</h3><p>{{ overdue }}</p></div>
+  <div class="card complete"><h3>Completed</h3><p>{{ completed }}</p></div>
 </div>
 
-<!--  SEARCH -->
+<!-- Search -->
 <div class="search-container">
   <input
     type="text"
@@ -39,30 +20,51 @@
   />
 </div>
 
-<!-- EMPLOYEE CARDS -->
-<div class="employee-cards" *ngIf="filteredEmployees.length > 0">
-  <div class="employee-card" *ngFor="let emp of filteredEmployees">
-    <!-- Employee Name Header -->
-    <div class="employee-name">
-      {{ emp.name }}
-    </div>
-
-    <!-- Task List -->
-    <div class="tasks-list">
-      <div class="task-item" *ngFor="let task of emp.tasks" [ngClass]="task.status">
-        <div class="task-title">{{ task.title }}</div>
-        <div class="task-meta">
-          <span class="status-badge">{{ task.status.replace('_', ' ') }}</span>
-          <span class="due-date">Due: {{ task.endDate }}</span>
-        </div>
-        <div class="task-description" *ngIf="task.description">
-          {{ task.description }}
+<!-- IN PROGRESS SECTION -->
+@if (inProgressEmployees.length > 0) {
+  <div class="section">
+    <h3 class="section-title">In Progress Tasks</h3>
+    <div class="employee-cards">
+      <div class="employee-card" *ngFor="let emp of inProgressEmployees">
+        <div class="employee-name">{{ emp.name }}</div>
+        <div class="tasks-list">
+          <div class="task-item" *ngFor="let task of emp.tasks" [ngClass]="task.status">
+            <div class="task-title">{{ task.title }}</div>
+            <div class="task-meta">
+              <span class="status-badge">{{ task.status.replace('_', ' ') }}</span>
+              <span class="due-date">Due: {{ task.endDate }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
+}
 
-<div *ngIf="filteredEmployees.length === 0" class="no-results">
-  No employees or tasks match your search.
-</div>
+<!-- COMPLETED SECTION -->
+@if (completedEmployees.length > 0) {
+  <div class="section">
+    <h3 class="section-title">Completed Tasks</h3>
+    <div class="employee-cards">
+      <div class="employee-card" *ngFor="let emp of completedEmployees">
+        <div class="employee-name">{{ emp.name }}</div>
+        <div class="tasks-list">
+          <div class="task-item" *ngFor="let task of emp.tasks" [ngClass]="task.status">
+            <div class="task-title">{{ task.title }}</div>
+            <div class="task-meta">
+              <span class="status-badge">Completed</span>
+              <span class="due-date">Due: {{ task.endDate }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- No results -->
+@if (inProgressEmployees.length === 0 && completedEmployees.length === 0) {
+  <div class="no-results">
+    No tasks found.
+  </div>
+}

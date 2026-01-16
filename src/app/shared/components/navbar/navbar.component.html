@@ -1,16 +1,19 @@
 <nav class="navbar">
   <a routerLink="/" class="logo">Employee Tracker</a>
 
-  @if (role === 'user') {
-    <ul class="nav-links">
-      <li><a routerLink="/user-dashboard" routerLinkActive="active">My Tasks</a></li>
-    </ul>
-  }
+  <ul class="nav-links">
+    <!-- Always show Home -->
+    <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
 
-  @if (role === 'admin') {
-    <ul class="nav-links">
+    <!-- User-only links -->
+    @if (role === 'user') {
+      <li><a routerLink="/user-dashboard" routerLinkActive="active">My Tasks</a></li>
+    }
+
+    <!-- Admin-only links -->
+    @if (role === 'admin') {
       <li><a routerLink="/admin-dashboard" routerLinkActive="active">Admin Dashboard</a></li>
       <li><a routerLink="/assign-task" routerLinkActive="active">Assign Task</a></li>
-    </ul>
-  }
+    }
+  </ul>
 </nav>

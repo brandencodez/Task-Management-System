@@ -1,9 +1,9 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../task.service';
 import { Task } from '../../../shared/models/task.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../../shared/services/user.service';
 
 @Component({
@@ -24,12 +24,22 @@ export class TaskListComponent implements OnInit {
   constructor(
     private taskService: TaskService,
     private route: ActivatedRoute,
-    public userService: UserService // public so template can access
+    public userService: UserService,
+    private router: Router
   ) {}
 
   ngOnInit() {
     this.route.data.subscribe(data => {
       this.isUserMode = data['isUserMode'] || false;
+      
+      // Redirect to login if user mode but no user logged in
+      if (this.isUserMode) {
+        const user = this.userService.getCurrentUser();
+        if (!user) {
+          this.router.navigate(['/user-login']);
+          return;
+        }
+      }
       this.loadTasks();
     });
   }
@@ -114,9 +124,10 @@ export class TaskListComponent implements OnInit {
       this.loadTasks();
     }
   }
-
-  clearUser() {
+  
+  // Logout
+  logout() {
     this.userService.clearCurrentUser();
-    this.loadTasks();
+    this.router.navigate(['/user-login']);
   }
 }

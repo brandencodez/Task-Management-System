@@ -7,10 +7,16 @@
 } @else {
   <h2>{{ isUserMode ? 'My Tasks' : 'All Tasks' }}</h2>
 
+  
+@if (isUserMode) {
+  <div style="text-align: right; margin-bottom: 15px;">
+    <button (click)="logout()" class="btn logout">Logout</button>
+  </div>
+}
+
   @if (isUserMode) {
     <p class="current-user">
       Showing tasks for: <strong>{{ userService.getCurrentUser() }}</strong>
-      <button (click)="clearUser()" style="margin-left: 10px; font-size: 12px;">(Switch)</button>
     </p>
   }
 

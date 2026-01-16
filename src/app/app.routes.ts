@@ -10,6 +10,17 @@ export const routes: Routes = [
     component: SimpleLayoutComponent,
     children: [{ path: '', component: HomeComponent }]
   },
+
+  {
+  path: 'user-login',
+  component: SimpleLayoutComponent,
+  children: [
+    {
+      path: '',
+      loadComponent: () => import('./features/auth/user-login/user-login').then(m => m.UserLoginComponent)
+    }
+  ]
+},
   {
     path: 'user-dashboard',
     component: UserLayoutComponent,
