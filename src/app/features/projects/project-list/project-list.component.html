@@ -1,0 +1,123 @@
+<div class="projects-container">
+  <h2>Project Management</h2>
+  
+  <button (click)="showAddForm = !showAddForm" class="btn-primary">
+    {{ showAddForm ? 'Cancel' : 'Add New Project' }}
+  </button>
+
+  <!-- Add Project Form -->
+  @if (showAddForm) {
+    <div class="card form-card">
+      <h3>Add Project Details</h3>
+      <form (ngSubmit)="addProject()">
+        <div class="form-group">
+          <label>Project Name *</label>
+          <input 
+            [(ngModel)]="newProject.name" 
+            name="name" 
+            placeholder="e.g., Website Redesign"
+            required 
+          />
+        </div>
+        
+        <div class="form-group">
+          <label>Project Type</label>
+          <input 
+            [(ngModel)]="newProject.projectType" 
+            name="projectType" 
+            placeholder="e.g., Web Development, Mobile App"
+          />
+        </div>
+        
+        <div class="form-group">
+          <label>Client Details</label>
+          <textarea 
+            [(ngModel)]="newProject.clientDetails" 
+            name="clientDetails" 
+            placeholder="Client name, contact info, company"
+            rows="3"
+          ></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Project Brief</label>
+          <textarea 
+            [(ngModel)]="newProject.projectBrief" 
+            name="projectBrief" 
+            placeholder="Describe project scope, requirements, deliverables"
+            rows="4"
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start Date *</label>
+            <input 
+              type="date" 
+              [(ngModel)]="newProject.startDate" 
+              name="startDate" 
+              required 
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Finish Date *</label>
+            <input 
+              type="date" 
+              [(ngModel)]="newProject.finishDate" 
+              name="finishDate" 
+              required 
+            />
+          </div>
+        </div>
+
+        
+        <div class="form-group">
+          <label>Status</label>
+          <select [(ngModel)]="newProject.status" name="status">
+            @for (status of statuses; track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn-success">Save Project</button>
+          <button type="button" (click)="resetForm()" class="btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Projects by Status -->
+  @for (status of statuses; track status) {
+    @if (getProjectsByStatus(status).length > 0) {
+      <div class="status-section">
+        <h3>{{ status }} Projects</h3>
+        <div class="projects-grid">
+          @for (project of getProjectsByStatus(status); track project.id) {
+            <div class="project-card">
+              <div class="project-header">
+                <h4>{{ project.name }}</h4>
+                <span class="status-badge {{ status.toLowerCase() }}">{{ status }}</span>
+              </div>
+              
+              <div class="project-details">
+                <p><strong>Type:</strong> {{ project.projectType || 'Not specified' }}</p>
+                <p><strong>Client:</strong> {{ project.clientDetails || 'Not specified' }}</p>
+                <p><strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}</p>
+                <p><strong>Brief:</strong> {{ project.projectBrief || 'No brief provided' }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  @if (projects.length === 0 && !showAddForm) {
+    <div class="no-projects">
+      No projects yet. Click "Add New Project" to get started.
+    </div>
+  }
+</div>

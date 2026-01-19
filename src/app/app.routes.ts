@@ -3,6 +3,7 @@ import { HomeComponent } from './features/home/home';
 import { SimpleLayoutComponent } from './shared/layouts/simple-layout/simple-layout';
 import { UserLayoutComponent } from './shared/layouts/user-layout/user-layout';
 import { AdminLayoutComponent } from './shared/layouts/admin-layout/admin-layout';
+import { ProjectListComponent } from './features/projects/project-list/project-list.component';
 
 export const routes: Routes = [
   {
@@ -10,17 +11,16 @@ export const routes: Routes = [
     component: SimpleLayoutComponent,
     children: [{ path: '', component: HomeComponent }]
   },
-
   {
-  path: 'user-login',
-  component: SimpleLayoutComponent,
-  children: [
-    {
-      path: '',
-      loadComponent: () => import('./features/auth/user-login/user-login').then(m => m.UserLoginComponent)
-    }
-  ]
-},
+    path: 'user-login',
+    component: SimpleLayoutComponent,
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/auth/user-login/user-login').then(m => m.UserLoginComponent)
+      }
+    ]
+  },
   {
     path: 'user-dashboard',
     component: UserLayoutComponent,
@@ -39,16 +39,11 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
-      }
-    ]
-  },
-  {
-    path: 'assign-task',
-    component: AdminLayoutComponent,
-    children: [
+      },
+      
       {
-        path: '',
-        loadComponent: () => import('./features/tasks/assign-task/assign-task.component').then(m => m.AssignTaskComponent)
+        path: 'projects',
+        loadComponent: () => import('./features/projects/project-list/project-list.component').then(m => m.ProjectListComponent)
       }
     ]
   },
