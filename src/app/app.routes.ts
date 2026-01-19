@@ -3,7 +3,6 @@ import { HomeComponent } from './features/home/home';
 import { SimpleLayoutComponent } from './shared/layouts/simple-layout/simple-layout';
 import { UserLayoutComponent } from './shared/layouts/user-layout/user-layout';
 import { AdminLayoutComponent } from './shared/layouts/admin-layout/admin-layout';
-import { ProjectListComponent } from './features/projects/project-list/project-list.component';
 
 export const routes: Routes = [
   {
@@ -40,10 +39,19 @@ export const routes: Routes = [
         path: '',
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
-      
       {
         path: 'projects',
         loadComponent: () => import('./features/projects/project-list/project-list.component').then(m => m.ProjectListComponent)
+      }
+    ]
+  },
+  {
+    path: 'employees',
+    component: AdminLayoutComponent,
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/employees/employee-list.component').then(m => m.EmployeeListComponent)
       }
     ]
   },
