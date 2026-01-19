@@ -13,7 +13,8 @@
     <!-- Admin-only links -->
     @if (role === 'admin') {
       <li><a routerLink="/admin-dashboard" routerLinkActive="active">Admin Dashboard</a></li>
-       <li><a routerLink="/admin-dashboard/projects">Projects</a></li>
+      <li><a routerLink="/admin-dashboard/projects" routerLinkActive="active">Projects</a></li>
+      <li><a routerLink="/employees" routerLinkActive="active">Employees</a></li>
     }
   </ul>
 </nav>

@@ -1,0 +1,124 @@
+<div class="employee-container">
+  <div class="header">
+    <h2>Employee Management</h2>
+    <button class="btn-add" (click)="toggleAddForm()">
+      {{ showAddForm ? 'Cancel' : '+ Add Employee' }}
+    </button>
+  </div>
+
+  <!-- Add/Edit Form -->
+  <div class="form-container" *ngIf="showAddForm">
+    <h3>{{ editingEmployee ? 'Edit Employee' : 'Add New Employee' }}</h3>
+    <form (ngSubmit)="editingEmployee ? updateEmployee() : addEmployee()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" [(ngModel)]="newEmployee.name" name="name" required placeholder="Enter employee name">
+        </div>
+
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" [(ngModel)]="newEmployee.email" name="email" required placeholder="employee@example.com">
+        </div>
+
+        <div class="form-group">
+          <label>Phone *</label>
+          <input type="tel" [(ngModel)]="newEmployee.phone" name="phone" required placeholder="+91-9876543210">
+        </div>
+
+        <div class="form-group">
+          <label>Department *</label>
+          <input type="text" [(ngModel)]="newEmployee.department" name="department" required placeholder="e.g., Development, HR">
+        </div>
+
+        <div class="form-group">
+          <label>Position *</label>
+          <input type="text" [(ngModel)]="newEmployee.position" name="position" required placeholder="e.g., Senior Developer">
+        </div>
+
+        <div class="form-group">
+          <label>Join Date *</label>
+          <input type="date" [(ngModel)]="newEmployee.joinDate" name="joinDate" required>
+        </div>
+
+        <div class="form-group">
+          <label>Status *</label>
+          <select [(ngModel)]="newEmployee.status" name="status">
+            <option value="active">Active</option>
+            <option value="on-leave">On Leave</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-submit">
+          {{ editingEmployee ? 'Update' : 'Add' }} Employee
+        </button>
+        <button type="button" class="btn-cancel" (click)="toggleAddForm()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-container">
+    <input 
+      type="text" 
+      [(ngModel)]="searchQuery" 
+      (input)="searchEmployees()"
+      placeholder="Search by name, email, department, or position..."
+      class="search-input"
+    >
+  </div>
+
+  <!-- Employee List -->
+  <div class="employee-list" *ngIf="filteredEmployees.length > 0">
+    <div class="employee-card" *ngFor="let employee of filteredEmployees">
+      <div class="employee-header">
+        <h3>{{ employee.name }}</h3>
+        <span [ngClass]="getStatusClass(employee.status)" class="status-badge">
+          {{ employee.status | titlecase }}
+        </span>
+      </div>
+      
+      <div class="employee-info">
+        <div class="info-row">
+          <span class="info-label">Position:</span>
+          <span class="info-value">{{ employee.position }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Department:</span>
+          <span class="info-value">{{ employee.department }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Email:</span>
+          <span class="info-value">{{ employee.email }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Phone:</span>
+          <span class="info-value">{{ employee.phone }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Join Date:</span>
+          <span class="info-value">{{ employee.joinDate | date: 'MMM dd, yyyy' }}</span>
+        </div>
+      </div>
+      
+      <div class="employee-actions">
+        <button class="btn-edit" (click)="editEmployee(employee)">
+          <span>✏️</span> Edit
+        </button>
+        <button class="btn-delete" (click)="deleteEmployee(employee.id)">
+          <span>🗑️</span> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Results -->
+  <div class="no-results" *ngIf="filteredEmployees.length === 0">
+    <p>No employees found.</p>
+  </div>
+</div>
