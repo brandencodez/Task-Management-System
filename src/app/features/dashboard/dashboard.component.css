@@ -148,7 +148,7 @@
 .ON_TRACK { border-left: 5px solid #3495f6; padding-left: 16px; }
 .WARNING  { border-left: 5px solid #ffc107; padding-left: 16px; background: #fffdf5; }
 .OVERDUE  { border-left: 5px solid #dc3545; padding-left: 16px; background: #fff5f5; }
-.COMPLETED { border-left: 5px solid #20c997; padding-left: 16px; background: #f6fff8; }
+.COMPLETED { border-left: 5px solid #0fdb9e; padding-left: 16px; background: #a2fdb6; }
 
 .no-results {
   text-align: center;
