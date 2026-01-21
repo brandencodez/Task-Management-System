@@ -8,6 +8,7 @@ export interface Project {
   projectBrief: string;
   startDate: string; 
   finishDate: string; // Format: YYYY-MM-DD
+  department: string;
   status: ProjectStatus;
   renewal?: boolean; 
 }

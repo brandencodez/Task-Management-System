@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TaskService } from '../../tasks/task.service';
+import { EmployeeService } from '../../employees/employee.service';
 import { UserService } from '../../../shared/services/user.service';
 
 @Component({
   selector: 'app-user-login',
   standalone: true,
-  imports: [FormsModule],
-  templateUrl: './user-login.html', 
+  imports: [CommonModule, FormsModule],
+  templateUrl: './user-login.html',
   styleUrls: ['./user-login.css']
 })
 export class UserLoginComponent {
@@ -17,18 +18,13 @@ export class UserLoginComponent {
   newPassword = '';
   confirmPassword = '';
   errorMessage = '';
-  passwordError = '';
-  showPasswordSetup = false;
+  showPasswordSetup = false; // For first-time password setup
 
   constructor(
-    private taskService: TaskService,
+    private employeeService: EmployeeService,
     private userService: UserService,
     private router: Router
   ) {}
-
-   goHome() {
-    this.router.navigate(['/']);
-  }
 
   login() {
     const name = this.username.trim();
@@ -37,17 +33,20 @@ export class UserLoginComponent {
       return;
     }
 
-    const tasks = this.taskService.getTasks();
-    const isAssigned = tasks.some(task => 
-      task.assignedTo.toLowerCase() === name.toLowerCase()
+    // Check if employee exists
+    const employees = this.employeeService.getEmployees();
+    const employee = employees.find(emp => 
+      emp.name.toLowerCase() === name.toLowerCase()
     );
 
-    if (!isAssigned) {
-      this.errorMessage = 'No tasks assigned to this name.';
+    if (!employee) {
+      this.errorMessage = 'No employee found with this name.';
       return;
     }
 
+    // Check if they already have a password
     if (this.userService.hasPassword(name)) {
+      // Regular login
       if (this.userService.validateCredentials(name, this.password)) {
         this.userService.setCurrentUser(name);
         this.router.navigate(['/user-dashboard']);
@@ -55,6 +54,7 @@ export class UserLoginComponent {
         this.errorMessage = 'Invalid password.';
       }
     } else {
+      // First-time: show password setup
       this.showPasswordSetup = true;
       this.errorMessage = '';
     }
@@ -62,15 +62,19 @@ export class UserLoginComponent {
 
   setPassword() {
     if (this.newPassword.length < 6) {
-      this.passwordError = 'Password must be at least 6 characters.';
+      this.errorMessage = 'Password must be at least 6 characters.';
       return;
     }
     if (this.newPassword !== this.confirmPassword) {
-      this.passwordError = 'Passwords do not match.';
+      this.errorMessage = 'Passwords do not match.';
       return;
     }
 
     this.userService.setCredentials(this.username.trim(), this.newPassword);
     this.router.navigate(['/user-dashboard']);
+  }
+
+  goHome() {
+    this.router.navigate(['/']);
   }
 }

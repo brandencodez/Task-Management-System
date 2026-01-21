@@ -3,6 +3,10 @@ import { HomeComponent } from './features/home/home';
 import { SimpleLayoutComponent } from './shared/layouts/simple-layout/simple-layout';
 import { UserLayoutComponent } from './shared/layouts/user-layout/user-layout';
 import { AdminLayoutComponent } from './shared/layouts/admin-layout/admin-layout';
+import { ProjectListComponent } from './features/projects/project-list/project-list.component';
+import { UserProjectsComponent } from './features/projects/user-projects/user-projects.component';
+import { UserLoginComponent } from './features/auth/user-login/user-login';
+import { EmployeeListComponent } from './features/employees/employee-list.component';
 
 export const routes: Routes = [
   {
@@ -24,10 +28,13 @@ export const routes: Routes = [
     path: 'user-dashboard',
     component: UserLayoutComponent,
     children: [
+  {
+      path: '',
+      loadComponent: () => import('./features/projects/user-projects/user-projects.component').then(m => m.UserProjectsComponent)
+    },
       {
-        path: '',
-        loadComponent: () => import('./features/tasks/task-list/task-list.component').then(m => m.TaskListComponent),
-        data: { isUserMode: true }
+        path: 'projects',
+        loadComponent: () => import('./features/projects/user-projects/user-projects.component').then(m => m.UserProjectsComponent)
       }
     ]
   },
@@ -40,31 +47,15 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
       {
+        path: 'employees',
+        loadComponent: () => import('./features/employees/employee-list.component').then(m => m.EmployeeListComponent)
+      },
+      {
         path: 'projects',
         loadComponent: () => import('./features/projects/project-list/project-list.component').then(m => m.ProjectListComponent)
       }
     ]
   },
-  {
-    path: 'employees',
-    component: AdminLayoutComponent,
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/employees/employee-list.component').then(m => m.EmployeeListComponent)
-      }
-    ]
-  },
-  {
-    path: 'tasks',
-    component: AdminLayoutComponent,
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/tasks/task-list/task-list.component').then(m => m.TaskListComponent),
-        data: { isUserMode: false } 
-      }
-    ]
-  },
+  
   { path: '**', redirectTo: '' }
 ];
