@@ -1,0 +1,101 @@
+.user-projects-container {
+  padding: 20px;
+}
+
+.user-projects-container h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.department-info {
+  margin-bottom: 25px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #495057;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.project-card {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 20px;
+  background: white;
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.project-header h4 {
+  margin: 0;
+  color: #333;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.upcoming { background: #ffc107; color: #000; }
+.ongoing { background: #198754; color: white; }
+.completed { background: #20c997; color: white; }
+
+.project-details p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.no-projects {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 40px;
+  padding: 30px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/*  LOGOUT BUTTON */
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-logout {
+  background: #dc3545; 
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-logout:hover {
+  background: #c82333; 
+  transform: translateY(-1px);
+}

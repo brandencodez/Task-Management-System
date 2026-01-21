@@ -2,19 +2,16 @@
   <a routerLink="/" class="logo">Employee Tracker</a>
 
   <ul class="nav-links">
-    <!-- Always show Home -->
     <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
 
-    <!-- User-only links -->
     @if (role === 'user') {
-      <li><a routerLink="/user-dashboard" routerLinkActive="active">My Tasks</a></li>
+      <li><a routerLink="/user-dashboard/projects">My Projects</a></li>
     }
 
-    <!-- Admin-only links -->
     @if (role === 'admin') {
-      <li><a routerLink="/admin-dashboard" routerLinkActive="active">Admin Dashboard</a></li>
-      <li><a routerLink="/admin-dashboard/projects" routerLinkActive="active">Projects</a></li>
-      <li><a routerLink="/employees" routerLinkActive="active">Employees</a></li>
+      <li><a routerLink="/admin-dashboard">Dashboard</a></li>
+      <li><a routerLink="/admin-dashboard/employees">Employees</a></li>
+      <li><a routerLink="/admin-dashboard/projects">Projects</a></li>
     }
   </ul>
 </nav>

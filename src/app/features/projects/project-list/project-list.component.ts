@@ -20,6 +20,7 @@ export class ProjectListComponent implements OnInit {
     projectBrief: '',
     startDate: '',
     finishDate: '',
+    department: '', 
     status: 'UPCOMING'
   };
   showAddForm = false;
@@ -36,8 +37,8 @@ export class ProjectListComponent implements OnInit {
   }
 
   addProject() {
-  if (!this.newProject.name || !this.newProject.startDate || !this.newProject.finishDate) {
-    alert('Project name, start date, and finish date are required!');
+  if (!this.newProject.name || !this.newProject.startDate || !this.newProject.finishDate || !this.newProject.department) {
+    alert('All fields are required!');
     return;
   }
     if (new Date(this.newProject.finishDate!) < new Date(this.newProject.startDate!)) {
@@ -53,6 +54,7 @@ export class ProjectListComponent implements OnInit {
       projectBrief: this.newProject.projectBrief || '',
       startDate: this.newProject.startDate, 
       finishDate: this.newProject.finishDate,
+      department: this.newProject.department,
       status: this.newProject.status || 'UPCOMING'
     };
 

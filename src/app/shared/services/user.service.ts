@@ -12,7 +12,6 @@ export class UserService {
   private USER_KEY = 'current_user_name';
   private CREDENTIALS_KEY = 'employee_credentials';
 
-
   setCurrentUser(name: string): void {
     localStorage.setItem(this.USER_KEY, name);
   }
@@ -21,12 +20,14 @@ export class UserService {
     return localStorage.getItem(this.USER_KEY);
   }
 
+  // Save user credentials (name + password)
   setCredentials(name: string, password: string): void {
     const credentials: UserCredentials = { name, password };
     localStorage.setItem(this.CREDENTIALS_KEY, JSON.stringify(credentials));
-    this.setCurrentUser(name); 
+    this.setCurrentUser(name);
   }
 
+  // Validate login credentials
   validateCredentials(name: string, password: string): boolean {
     const saved = localStorage.getItem(this.CREDENTIALS_KEY);
     if (!saved) return false;
@@ -40,6 +41,7 @@ export class UserService {
     }
   }
 
+  // Check if employee already has a password set
   hasPassword(name: string): boolean {
     const saved = localStorage.getItem(this.CREDENTIALS_KEY);
     if (!saved) return false;

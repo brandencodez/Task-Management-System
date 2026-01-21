@@ -1,0 +1,38 @@
+<div class="user-projects-container">
+  <div class="header-actions">
+    <h2>My Projects</h2>
+    <button (click)="logout()" class="btn-logout">Logout</button>
+  </div>
+  
+  @if (userDepartment) {
+    <p class="department-info">Department: <strong>{{ userDepartment }}</strong></p>
+  }
+
+  @if (projects.length > 0) {
+    <div class="projects-grid">
+      @for (project of projects; track project.id) {
+        <div class="project-card">
+          <div class="project-header">
+            <h4>{{ project.name }}</h4>
+            <span class="status-badge {{ project.status.toLowerCase() }}">{{ project.status }}</span>
+          </div>
+          
+          <div class="project-details">
+            <p><strong>Type:</strong> {{ project.projectType || 'Not specified' }}</p>
+            <p><strong>Client:</strong> {{ project.clientDetails || 'Not specified' }}</p>
+            <p><strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}</p>
+            <p><strong>Brief:</strong> {{ project.projectBrief || 'No brief provided' }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="no-projects">
+      @if (userDepartment) {
+        No projects assigned to your department ({{ userDepartment }}).
+      } @else {
+        No employee record found for your account.
+      }
+    </div>
+  }
+</div>
