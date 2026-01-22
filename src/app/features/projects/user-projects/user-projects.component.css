@@ -99,3 +99,12 @@
   background: #c82333; 
   transform: translateY(-1px);
 }
+
+.client-details {
+  margin: 8px 0;
+}
+
+.client-details p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}

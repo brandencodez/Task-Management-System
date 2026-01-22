@@ -19,7 +19,19 @@
           
           <div class="project-details">
             <p><strong>Type:</strong> {{ project.projectType || 'Not specified' }}</p>
-            <p><strong>Client:</strong> {{ project.clientDetails || 'Not specified' }}</p>
+            <div class="client-details">
+            <p><strong>Company:</strong> {{ project.clientDetails.companyName || 'Not specified' }}</p>
+           @for (contact of project.clientDetails.contacts; track $index) {
+            <p><strong>Contact {{ $index + 1 }}:</strong> {{ contact.name }}
+            @if (contact.email || contact.phone) {
+          ({{ contact.email || contact.phone }})
+           }
+        </p>
+  }
+  @if (project.clientDetails.address) {
+    <p><strong>Address:</strong> {{ project.clientDetails.address }}</p>
+  }
+</div>
             <p><strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}</p>
             <p><strong>Brief:</strong> {{ project.projectBrief || 'No brief provided' }}</p>
           </div>
