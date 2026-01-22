@@ -1,29 +1,118 @@
-<div class="container">
-  <div class="dashboard-header">
-    <h2>Admin Dashboard</h2>
+<div class="dashboard">
+
+  <h1>Admin Dashboard</h1>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat blue">Total Projects <span>{{ totalTasks }}</span></div>
+    <div class="stat green">On Track <span>{{ ongoing.length - warning.length - overdue.length }}</span></div>
+    <div class="stat yellow">Warning <span>{{ warning.length }}</span></div>
+    <div class="stat red">Overdue <span>{{ overdue.length }}</span></div>
+    <div class="stat teal">Completed <span>{{ completed.length }}</span></div>
   </div>
 
-  <!-- Summary Cards -->
-  <div class="stats-grid">
-    <div class="stat-card total">
-      <h3>Total Tasks</h3>
-      <p>{{ totalTasks }}</p>
+  <!-- SEARCH -->
+  <input
+    class="search"
+    type="text"
+    placeholder="Search by department type..."
+    [(ngModel)]="searchTerm"
+  />
+
+  <!-- UPCOMING -->
+  <section *ngIf="filtered(upcoming).length > 0">
+    <h2>Upcoming Projects</h2>
+
+    <div class="grid">
+      <div class="card" *ngFor="let p of filtered(upcoming)">
+        <div class="header">
+          <h3>{{ p.name }}</h3>
+          <span class="badge upcoming">UPCOMING</span>
+        </div>
+
+        <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
+        <p><b>Client:</b> {{ p.clientDetails || 'Not specified' }}</p>
+        <p><b>Department:</b> {{ p.department }}</p>
+        <p><b>Duration:</b> {{ p.startDate | date:'mediumDate' }} → {{ p.finishDate | date:'mediumDate' }}</p>
+      </div>
     </div>
-    <div class="stat-card track">
-      <h3>On Track</h3>
-      <p>{{ onTrack }}</p>
+  </section>
+
+  <!-- ONGOING (includes overdue projects) -->
+  <section *ngIf="filtered(ongoing).length > 0">
+    <h2>Active Projects</h2>
+
+    <div class="grid">
+      <div 
+        class="card" 
+        [ngClass]="{
+          'overdue-card': isOverdue(p),
+          'warning-card': isWarning(p) && !isOverdue(p),
+          'normal-card': !isWarning(p) && !isOverdue(p)
+        }"
+        *ngFor="let p of filtered(ongoing)"
+      >
+        <div class="header">
+          <h3>{{ p.name }}</h3>
+          <div>
+            <span 
+              class="badge" 
+              [ngClass]="{
+                'overdue': isOverdue(p),
+                'ongoing': !isOverdue(p)
+              }"
+            >
+              {{ isOverdue(p) ? 'OVERDUE' : 'ONGOING' }}
+            </span>
+          </div>
+        </div>
+
+        <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
+        <p><b>Department:</b> {{ p.department }}</p>
+        <p><b>Deadline:</b> {{ p.finishDate | date:'mediumDate' }}</p>
+        <p><b>Client:</b> {{ p.clientDetails || 'Not specified' }}</p>
+        
+        <!-- Status indicators -->
+        <div *ngIf="isOverdue(p)" class="status-indicator overdue-indicator">
+          ⚠️ OVERDUE - {{ getDaysOverdue(p) }} days past deadline
+        </div>
+        <div *ngIf="isWarning(p) && !isOverdue(p)" class="status-indicator warning-indicator">
+          ⚠️ Deadline approaching - {{ getDaysUntilDeadline(p) }} days left
+        </div>
+        
+        
+        <!-- Progress status -->
+        <div class="progress-info">
+          <p *ngIf="!isOverdue(p) && !isWarning(p)">
+            <span style="color: #15803d;">✓ On track</span>
+          </p>
+        </div>
+      </div>
     </div>
-    <div class="stat-card warn">
-      <h3>Warning</h3>
-      <p>{{ warning }}</p>
+  </section>
+
+  <!-- COMPLETED -->
+  <section *ngIf="filtered(completed).length > 0">
+    <h2>Completed Projects</h2>
+
+    <div class="grid">
+      <div class="card completed-card" *ngFor="let p of filtered(completed)">
+        <div class="header">
+          <h3>{{ p.name }}</h3>
+          <span class="badge completed">COMPLETED</span>
+        </div>
+
+        <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
+        <p><b>Department:</b> {{ p.department }}</p>
+        <p><b>Completed on:</b> {{ p.finishDate | date:'mediumDate' }}</p>
+        <p><b>Client:</b> {{ p.clientDetails || 'Not specified' }}</p>
+      </div>
     </div>
-    <div class="stat-card danger">
-      <h3>Overdue</h3>
-      <p>{{ overdue }}</p>
-    </div>
-    <div class="stat-card complete">
-      <h3>Completed</h3>
-      <p>{{ completed }}</p>
-    </div>
-  </div>
+  </section>
+
+  <!-- EMPTY STATE -->
+  <section *ngIf="totalTasks === 0">
+    <p>No projects found. Add some projects to get started.</p>
+  </section>
+
 </div>
