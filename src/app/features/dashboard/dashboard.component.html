@@ -33,7 +33,13 @@
         <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
         <div class="client-info">
           <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
-          <p><b>Contact:</b> {{ p.clientDetails.contactPerson || 'Not specified' }}</p>
+          @for (contact of p.clientDetails.contacts; track $index) {
+            <p><b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+              @if (contact.email || contact.phone) {
+                ({{ contact.email || contact.phone }})
+              }
+            </p>
+          }
         </div>
         <p><b>Department:</b> {{ p.department }}</p>
         <p><b>Duration:</b> {{ p.startDate | date:'mediumDate' }} → {{ p.finishDate | date:'mediumDate' }}</p>
@@ -75,7 +81,13 @@
         <p><b>Deadline:</b> {{ p.finishDate | date:'mediumDate' }}</p>
         <div class="client-info">
           <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
-          <p><b>Contact:</b> {{ p.clientDetails.contactPerson || 'Not specified' }}</p>
+          @for (contact of p.clientDetails.contacts; track $index) {
+            <p><b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+              @if (contact.email || contact.phone) {
+                ({{ contact.email || contact.phone }})
+              }
+            </p>
+          }
         </div>
         
         <!-- Status indicators -->
@@ -85,7 +97,6 @@
         <div *ngIf="isWarning(p) && !isOverdue(p)" class="status-indicator warning-indicator">
           ⚠️ Deadline approaching - {{ getDaysUntilDeadline(p) }} days left
         </div>
-        
         
         <!-- Progress status -->
         <div class="progress-info">
@@ -113,7 +124,13 @@
         <p><b>Completed on:</b> {{ p.finishDate | date:'mediumDate' }}</p>
         <div class="client-info">
           <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
-          <p><b>Contact:</b> {{ p.clientDetails.contactPerson || 'Not specified' }}</p>
+          @for (contact of p.clientDetails.contacts; track $index) {
+            <p><b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+              @if (contact.email || contact.phone) {
+                ({{ contact.email || contact.phone }})
+              }
+            </p>
+          }
         </div>
       </div>
     </div>
