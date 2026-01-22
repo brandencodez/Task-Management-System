@@ -31,7 +31,10 @@
         </div>
 
         <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
-        <p><b>Client:</b> {{ p.clientDetails || 'Not specified' }}</p>
+        <div class="client-info">
+          <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
+          <p><b>Contact:</b> {{ p.clientDetails.contactPerson || 'Not specified' }}</p>
+        </div>
         <p><b>Department:</b> {{ p.department }}</p>
         <p><b>Duration:</b> {{ p.startDate | date:'mediumDate' }} → {{ p.finishDate | date:'mediumDate' }}</p>
       </div>
@@ -70,7 +73,10 @@
         <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
         <p><b>Department:</b> {{ p.department }}</p>
         <p><b>Deadline:</b> {{ p.finishDate | date:'mediumDate' }}</p>
-        <p><b>Client:</b> {{ p.clientDetails || 'Not specified' }}</p>
+        <div class="client-info">
+          <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
+          <p><b>Contact:</b> {{ p.clientDetails.contactPerson || 'Not specified' }}</p>
+        </div>
         
         <!-- Status indicators -->
         <div *ngIf="isOverdue(p)" class="status-indicator overdue-indicator">
@@ -105,7 +111,10 @@
         <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
         <p><b>Department:</b> {{ p.department }}</p>
         <p><b>Completed on:</b> {{ p.finishDate | date:'mediumDate' }}</p>
-        <p><b>Client:</b> {{ p.clientDetails || 'Not specified' }}</p>
+        <div class="client-info">
+          <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
+          <p><b>Contact:</b> {{ p.clientDetails.contactPerson || 'Not specified' }}</p>
+        </div>
       </div>
     </div>
   </section>
