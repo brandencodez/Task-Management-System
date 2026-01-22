@@ -19,7 +19,13 @@ export class ProjectListComponent implements OnInit {
     id: 0,
     name: '',
     projectType: '',
-    clientDetails: '',
+    clientDetails: {//
+       companyName: '',
+    contactPerson: '',
+    email: '',
+    phone: '',
+    address: ''
+  },
     projectBrief: '',
     startDate: '',
     finishDate: '',
@@ -31,6 +37,59 @@ export class ProjectListComponent implements OnInit {
   isEditing = false;
   statuses: ProjectStatus[] = ['UPCOMING', 'ONGOING', 'COMPLETED'];
 
+  projectTypesByDepartment: { [key: string]: string[] } = {
+    'Development': [
+      'Web Application',
+      'Mobile App',
+      'API Development', 
+      'System Integration',
+      'DevOps Setup',
+      'Database Design',
+      'UI/UX Design',
+      'Quality Assurance'
+    ],
+    'HR': [
+      'Recruitment Campaign',
+      'Employee Onboarding',
+      'Training Program',
+      'Performance Review',
+      'Policy Development',
+      'Employee Engagement',
+      'Compliance Audit',
+      'Benefits Management'
+    ],
+    'Marketing': [
+      'Digital Marketing Campaign',
+      'Social Media Strategy',
+      'Content Creation',
+      'Brand Development',
+      'Market Research',
+      'Email Marketing',
+      'SEO Optimization',
+      'Event Planning'
+    ],
+    'Sales': [
+      'Lead Generation',
+      'Client Acquisition',
+      'Sales Pipeline',
+      'Customer Retention',
+      'Account Management',
+      'Sales Training',
+      'CRM Implementation',
+      'Revenue Growth'
+    ],
+    'Finance': [
+      'Budget Planning',
+      'Financial Analysis',
+      'Tax Preparation',
+      'Audit Process',
+      'Investment Strategy',
+      'Cost Reduction',
+      'Financial Reporting',
+      'Risk Assessment'
+    ]
+  };
+
   constructor(private projectService: ProjectService) {}
 
   ngOnInit() {
@@ -38,16 +97,36 @@ export class ProjectListComponent implements OnInit {
   }
 
   loadProjects() {
-    this.projects = this.projectService.getProjects();
-  }
-
-  //  OPEN ADD FORM
+  this.projects = this.projectService.getProjects().map(project => {
+    // Handle legacy string clientDetails (from old projects)
+    if (typeof project.clientDetails === 'string') {
+      return {
+        ...project,
+        clientDetails: {
+          companyName: project.clientDetails,
+          contactPerson: '',
+          email: '',
+          phone: '',
+          address: ''
+        }
+      };
+    }
+    return project;
+  });
+}
+  // OPEN ADD FORM
   openAddForm() {
     this.currentProject = {
       id: 0,
       name: '',
       projectType: '',
-      clientDetails: '',
+      clientDetails: {
+      companyName: '',
+      contactPerson: '',
+      email: '',
+      phone: '',
+      address: ''
+    },
       projectBrief: '',
       startDate: '',
       finishDate: '',
@@ -58,17 +137,19 @@ export class ProjectListComponent implements OnInit {
     this.showForm = true;
   }
 
-  //  OPEN EDIT FORM
+  // OPEN EDIT FORM
   openEditForm(project: Project) {
     this.currentProject = { ...project }; // Create a copy
     this.isEditing = true;
     this.showForm = true;
   }
 
-  //  SAVE OR UPDATE
+  // SAVE OR UPDATE
   saveProject() {
     if (!this.currentProject.name || !this.currentProject.startDate || 
-        !this.currentProject.finishDate || !this.currentProject.department) {
+        !this.currentProject.finishDate || !this.currentProject.department ||
+        !this.currentProject.clientDetails.companyName || 
+        !this.currentProject.clientDetails.contactPerson) {
       alert('All fields are required!');
       return;
     }
@@ -108,5 +189,13 @@ export class ProjectListComponent implements OnInit {
 
   getProjectsByStatus(status: ProjectStatus) {
     return this.projects.filter(p => p.status === status);
+  }
+
+  //  METHOD FOR DYNAMIC PROJECT TYPES
+  getProjectTypes(): string[] {
+    if (this.currentProject.department && this.projectTypesByDepartment[this.currentProject.department]) {
+      return this.projectTypesByDepartment[this.currentProject.department];
+    }
+    return [];
   }
 }

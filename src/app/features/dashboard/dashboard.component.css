@@ -267,3 +267,12 @@ section p {
   background: #fef3c7;
   color: #92400e;
 }
+
+.client-info {
+  margin: 8px 0;
+}
+
+.client-info p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}

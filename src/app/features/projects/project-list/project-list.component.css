@@ -233,3 +233,10 @@
   opacity: 0.9;
   transform: translateY(-1px);
 }
+
+.help-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
