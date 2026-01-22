@@ -1,0 +1,125 @@
+<div class="daily-work-container">
+
+  <!-- SECTION TITLE -->
+  <h3 class="section-title">Daily Work Entry</h3>
+
+  <!-- ===== ENTRY FORM ===== -->
+  <div class="entry-form">
+
+    <!-- Project -->
+    <div class="form-group">
+      <label>Project</label>
+      <select [(ngModel)]="project">
+        <option value="">Select project</option>
+        <option *ngFor="let p of assignedProjects" [value]="p">
+          {{ p }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Hours -->
+    <div class="form-group">
+      <label>Hours Worked</label>
+      <input
+        type="number"
+        placeholder="e.g. 4"
+        [(ngModel)]="hours"
+        min="0"
+        max="24"
+      />
+    </div>
+
+    <!-- Date -->
+    <div class="form-group">
+      <label>Date</label>
+      <input
+        type="date"
+        [(ngModel)]="date"
+      />
+    </div>
+
+    <!-- Progress -->
+    <div class="form-group progress-group">
+      <label>Progress</label>
+      <div class="progress-input">
+        <input
+          type="range"
+          min="0"
+          max="100"
+          [(ngModel)]="progress"
+        />
+        <span class="progress-value">{{ progress }}%</span>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group full-width">
+      <label>Work Description</label>
+      <textarea
+        placeholder="Describe what you worked on today..."
+        [(ngModel)]="description">
+      </textarea>
+    </div>
+
+    <!-- Submit -->
+    <div class="form-group full-width">
+      <button class="add-btn" (click)="addEntry()">
+        {{ isEditing ? '💾 Update Entry' : '➕ Add Work Entry' }}
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ===== ENTRIES LIST ===== -->
+  <div class="entries" *ngIf="entries.length">
+
+    <div
+      class="entry-card"
+      *ngFor="let entry of entries"
+      [class.editing]="editingId === entry.id"
+    >
+
+      <!-- Card Header -->
+      <div class="entry-header">
+        <strong>{{ entry.project }}</strong>
+        <span class="entry-date">{{ entry.date }}</span>
+      </div>
+
+      <!-- Description -->
+      <p class="entry-desc">
+        {{ entry.description }}
+      </p>
+
+      <!-- Progress Bar -->
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          [style.width.%]="entry.progress">
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="entry-footer">
+        <span>
+          ⏱ {{ entry.hours }} hrs • 📊 {{ entry.progress }}%
+        </span>
+
+        <div class="actions">
+          <button class="edit" (click)="editEntry(entry)">
+            Edit
+          </button>
+          <button class="delete" (click)="deleteEntry(entry.id)">
+            Delete
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <p class="empty-text" *ngIf="!entries.length">
+    No work entries yet. Start by adding one above 👆
+  </p>
+
+</div>

@@ -1,0 +1,208 @@
+/* ===== CONTAINER ===== */
+.daily-work-container {
+  margin-top: 24px;
+}
+
+/* ===== TITLE ===== */
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* ===== FORM ===== */
+.entry-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+/* Form groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Full width rows */
+.full-width {
+  grid-column: span 2;
+}
+
+/* Inputs */
+.entry-form input,
+.entry-form select,
+.entry-form textarea {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+}
+
+.entry-form input:focus,
+.entry-form select:focus,
+.entry-form textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Textarea */
+.entry-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* ===== PROGRESS ===== */
+.progress-group {
+  grid-column: span 2;
+}
+
+.progress-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-input input[type="range"] {
+  flex: 1;
+}
+
+.progress-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* ===== ADD / UPDATE BUTTON ===== */
+.add-btn {
+  padding: 12px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
+/* ===== ENTRIES ===== */
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Entry card */
+.entry-card {
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+/* Header */
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.entry-date {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Description */
+.entry-desc {
+  font-size: 14px;
+  color: #374151;
+  margin: 8px 0;
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #22c55e);
+  transition: width 0.3s ease;
+}
+
+/* Footer */
+.entry-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #374151;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Edit button (BLUE) */
+.edit {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.edit:hover {
+  background: #1e40af;
+}
+
+/* Delete button (RED) */
+.delete {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.delete:hover {
+  background: #b91c1c;
+}
+
+/* Empty state */
+.empty-text {
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  margin-top: 20px;
+}

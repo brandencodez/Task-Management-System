@@ -1,0 +1,38 @@
+<div class="work-dashboard">
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h2>Work Entry Dashboard</h2>
+    <p class="subtitle">Track and manage your daily work</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card purple">
+      <h3>Total Entries</h3>
+      <span class="stat-value">{{ totalEntries }}</span>
+    </div>
+
+    <div class="stat-card blue">
+      <h3>Today</h3>
+      <span class="stat-value">{{ todayEntries }}</span>
+    </div>
+
+    <div class="stat-card green">
+      <h3>This Week</h3>
+      <span class="stat-value">{{ weekEntries }}</span>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <hr class="divider" />
+
+  <!-- Daily Work Entry Component -->
+  <section class="entry-section">
+    <!-- 🔥 THIS LINE CONNECTS LIVE STATS -->
+    <app-daily-work-entry
+      (entriesChange)="onEntriesChange($event)">
+    </app-daily-work-entry>
+  </section>
+
+</div>
