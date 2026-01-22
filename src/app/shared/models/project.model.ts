@@ -1,23 +1,25 @@
-export type ProjectStatus = 'UPCOMING' | 'ONGOING' | 'COMPLETED';
- 
-//CLIENT DETAILS
+export interface ClientContact {
+  name: string;
+  email: string;
+  phone: string;
+}
 
 export interface ClientDetails {
   companyName: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
+  contacts: ClientContact[];
   address?: string;
 }
+
+export type ProjectStatus = 'UPCOMING' | 'ONGOING' | 'COMPLETED';
+
 export interface Project {
   id: number;
   name: string;
   projectType: string;
   clientDetails: ClientDetails;
   projectBrief: string;
-  startDate: string; 
-  finishDate: string; // Format: YYYY-MM-DD
+  startDate: string;
+  finishDate: string;
   department: string;
   status: ProjectStatus;
-  renewal?: boolean; 
 }
