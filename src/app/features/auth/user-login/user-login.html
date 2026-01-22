@@ -1,77 +1,101 @@
-<div class="login-container">
-  <button class="home-btn" (click)="goHome()">← Home</button>
-  
-  <h2>Employee Login</h2>
+<div class="auth-container">
+  <div class="login-card">
+    <!-- Home button positioned correctly -->
+    <a href="/" class="home-btn">← Back to Home</a>
+    
+    <div class="login-header">
+      <h2>Employee Portal</h2>
+      <p>Secure access to your projects and tasks</p>
+    </div>
 
-  <!-- Password Setup Form (First Time) -->
-  @if (showPasswordSetup) {
-    <p>Set your password for future logins:</p>
-    <form (ngSubmit)="setPassword()" #setupForm="ngForm">
-      <div class="form-group">
-        <label for="newPassword">Create Password *</label>
-        <input
-          type="password"
-          id="newPassword"
-          [(ngModel)]="newPassword"
-          name="newPassword"
-          required
-          minlength="6"
-          placeholder="At least 6 characters"
-        />
-      </div>
+    @if (showPasswordSetup) {
+      <form (ngSubmit)="setPassword()" #setupForm="ngForm" class="login-form">
+        <div class="form-group">
+          <label class="form-label" for="newPassword">Create Password *</label>
+          <div class="password-input">
+            <input
+              [type]="showNewPassword ? 'text' : 'password'"
+              id="newPassword"
+              [(ngModel)]="newPassword"
+              name="newPassword"
+              required
+              minlength="6"
+              class="form-control"
+              placeholder="At least 6 characters"
+            />
+            <button type="button" class="password-toggle" (click)="showNewPassword = !showNewPassword">
+              {{ showNewPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirm Password *</label>
+          <div class="password-input">
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              id="confirmPassword"
+              [(ngModel)]="confirmPassword"
+              name="confirmPassword"
+              required
+              class="form-control"
+              placeholder="Confirm your password"
+            />
+            <button type="button" class="password-toggle" (click)="showConfirmPassword = !showConfirmPassword">
+              {{ showConfirmPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+        
+        @if (errorMessage) {
+          <div class="error">{{ errorMessage }}</div>
+        }
+        
+        <button type="submit" class="btn btn-primary w-full">Save Password</button>
+      </form>
+    } @else {
+      <form (ngSubmit)="login()" #loginForm="ngForm" class="login-form">
+        <div class="form-group">
+          <label class="form-label" for="username">Full Name *</label>
+          <input
+            type="text"
+            id="username"
+            [(ngModel)]="username"
+            name="username"
+            required
+            class="form-control"
+            placeholder="Enter your full name"
+          />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="password">Password *</label>
+          <div class="password-input">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              [(ngModel)]="password"
+              name="password"
+              required
+              class="form-control"
+              placeholder="Enter your password"
+            />
+            <button type="button" class="password-toggle" (click)="showPassword = !showPassword">
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+        
+        @if (errorMessage) {
+          <div class="error">{{ errorMessage }}</div>
+        }
+        
+        <button type="submit" class="btn btn-primary w-full">Sign In</button>
+      </form>
       
-      <div class="form-group">
-        <label for="confirmPassword">Confirm Password *</label>
-        <input
-          type="password"
-          id="confirmPassword"
-          [(ngModel)]="confirmPassword"
-          name="confirmPassword"
-          required
-          placeholder="Confirm your password"
-        />
-      </div>
-      
-      @if (errorMessage) {
-        <div class="error">{{ errorMessage }}</div>
-      }
-      
-      <button type="submit" class="btn-primary">Save Password</button>
-    </form>
-  } 
-  <!-- Regular Login Form -->
-  @else {
-    <form (ngSubmit)="login()" #loginForm="ngForm">
-      <div class="form-group">
-        <label for="username">Full Name *</label>
-        <input
-          type="text"
-          id="username"
-          [(ngModel)]="username"
-          name="username"
-          required
-          placeholder=""
-        />
-      </div>
-      
-      <div class="form-group">
-        <label for="password">Password *</label>
-        <input
-          type="password"
-          id="password"
-          [(ngModel)]="password"
-          name="password"
-          required
-          placeholder="Enter your password"
-        />
-      </div>
-      
-      @if (errorMessage) {
-        <div class="error">{{ errorMessage }}</div>
-      }
-      
-      <button type="submit" class="btn-primary">Login</button>
-    </form>
-    <p class="note">First time? Enter your name and click "Login" to set password.</p>
-  }
+      <p class="note">
+        First time user? Enter your name and click "Sign In" to set up your password.
+      </p>
+    }
+  </div>
 </div>

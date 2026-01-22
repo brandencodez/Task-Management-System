@@ -1,93 +1,107 @@
-<div class="projects-container">
-  <h2>Project Management</h2>
-  
-  <button (click)="showAddForm = !showAddForm" class="btn-primary">
-    {{ showAddForm ? 'Cancel' : 'Add New Project' }}
-  </button>
+<div class="container">
+  <div class="page-header">
+    <h2>Project Management</h2>
+    <button class="btn btn-primary" (click)="openAddForm()">
+      Add Project
+    </button>
+  </div>
 
-  <!-- Add Project Form -->
-  @if (showAddForm) {
+  <!-- Project Form (Add/Edit) -->
+  @if (showForm) {
     <div class="card form-card">
-      <h3>Add Project Details</h3>
-      <form (ngSubmit)="addProject()">
+      <h3>{{ isEditing ? 'Edit Project' : 'Add Project' }}</h3>
+      <form (ngSubmit)="saveProject()" class="form-grid">
         <div class="form-group">
-          <label>Project Name *</label>
+          <label class="form-label">Project Name *</label>
           <input 
-            [(ngModel)]="newProject.name" 
+            [(ngModel)]="currentProject.name" 
             name="name" 
-            placeholder="e.g., Website Redesign"
             required 
+            class="form-control"
+            placeholder="e.g., Website Redesign"
           />
         </div>
         
         <div class="form-group">
-          <label>Project Type</label>
+          <label class="form-label">Project Type</label>
           <input 
-            [(ngModel)]="newProject.projectType" 
+            [(ngModel)]="currentProject.projectType" 
             name="projectType" 
+            class="form-control"
             placeholder="e.g., Web Development, Mobile App"
           />
         </div>
         
         <div class="form-group">
-  <label>Department *</label>
-  <select [(ngModel)]="newProject.department" name="department" required>
-    <option value="">Select Department</option>
-    <option value="Development">Development</option>
-    <option value="HR">HR</option>
-    <option value="Marketing">Marketing</option>
-    <option value="Sales">Sales</option>
-    <option value="Finance">Finance</option>
-    
-  </select>
-</div>
+          <label class="form-label">Department *</label>
+          <select 
+            [(ngModel)]="currentProject.department" 
+            name="department" 
+            required 
+            class="form-control"
+          >
+            <option value="">Select Department</option>
+            <option value="Development">Development</option>
+            <option value="HR">HR</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Sales">Sales</option>
+            <option value="Finance">Finance</option>
+          </select>
+        </div>
 
         <div class="form-group">
-          <label>Client Details</label>
+          <label class="form-label">Client Details</label>
           <textarea 
-            [(ngModel)]="newProject.clientDetails" 
+            [(ngModel)]="currentProject.clientDetails" 
             name="clientDetails" 
-            placeholder="Client name, contact info, company"
+            class="form-control"
             rows="3"
+            placeholder="Client name, contact info, company"
           ></textarea>
         </div>
         
         <div class="form-group">
-          <label>Project Brief</label>
+          <label class="form-label">Project Brief</label>
           <textarea 
-            [(ngModel)]="newProject.projectBrief" 
+            [(ngModel)]="currentProject.projectBrief" 
             name="projectBrief" 
-            placeholder="Describe project scope, requirements, deliverables"
+            class="form-control"
             rows="4"
+            placeholder="Describe project scope, requirements, deliverables"
           ></textarea>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Start Date *</label>
+            <label class="form-label">Start Date *</label>
             <input 
               type="date" 
-              [(ngModel)]="newProject.startDate" 
+              [(ngModel)]="currentProject.startDate" 
               name="startDate" 
               required 
+              class="form-control"
             />
           </div>
           
           <div class="form-group">
-            <label>Finish Date *</label>
+            <label class="form-label">Finish Date *</label>
             <input 
               type="date" 
-              [(ngModel)]="newProject.finishDate" 
+              [(ngModel)]="currentProject.finishDate" 
               name="finishDate" 
               required 
+              class="form-control"
             />
           </div>
         </div>
 
-        
         <div class="form-group">
-          <label>Status</label>
-          <select [(ngModel)]="newProject.status" name="status">
+          <label class="form-label">Status</label>
+          <select 
+            [(ngModel)]="currentProject.status" 
+            name="status" 
+            class="form-control"
+          >
             @for (status of statuses; track status) {
               <option [value]="status">{{ status }}</option>
             }
@@ -95,8 +109,10 @@
         </div>
         
         <div class="form-actions">
-          <button type="submit" class="btn-success">Save Project</button>
-          <button type="button" (click)="resetForm()" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-success">
+            {{ isEditing ? 'Update Project' : 'Save Project' }}
+          </button>
+          <button type="button" class="btn btn-outline" (click)="cancelForm()">Cancel</button>
         </div>
       </form>
     </div>
@@ -106,20 +122,30 @@
   @for (status of statuses; track status) {
     @if (getProjectsByStatus(status).length > 0) {
       <div class="status-section">
-        <h3>{{ status }} Projects</h3>
+        <h3 class="section-title">{{ status }} Projects</h3>
         <div class="projects-grid">
           @for (project of getProjectsByStatus(status); track project.id) {
             <div class="project-card">
               <div class="project-header">
                 <h4>{{ project.name }}</h4>
-                <span class="status-badge {{ status.toLowerCase() }}">{{ status }}</span>
+                <span class="badge badge-{{ status.toLowerCase() }}">{{ status }}</span>
               </div>
               
               <div class="project-details">
                 <p><strong>Type:</strong> {{ project.projectType || 'Not specified' }}</p>
                 <p><strong>Client:</strong> {{ project.clientDetails || 'Not specified' }}</p>
+                <p><strong>Department:</strong> {{ project.department || 'Not specified' }}</p>
                 <p><strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}</p>
-                <p><strong>Brief:</strong> {{ project.projectBrief || 'No brief provided' }}</p>
+                <p>{{ project.projectBrief || 'No brief provided' }}</p>
+              </div>
+              
+              <div class="project-actions">
+                <button class="btn btn-outline" (click)="openEditForm(project)">
+                  Edit
+                </button>
+                <button class="btn btn-danger" (click)="deleteProject(project.id)">
+                  Delete
+                </button>
               </div>
             </div>
           }
@@ -128,9 +154,9 @@
     }
   }
 
-  @if (projects.length === 0 && !showAddForm) {
-    <div class="no-projects">
-      No projects yet. Click "Add New Project" to get started.
+  @if (projects.length === 0 && !showForm) {
+    <div class="no-results">
+      <p>No projects yet. Click "Add Project" to get started.</p>
     </div>
   }
 </div>

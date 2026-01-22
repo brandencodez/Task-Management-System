@@ -8,7 +8,6 @@ export class ProjectService {
   private storageKey = 'projects';
 
   constructor() {
-    // Initialize localStorage if empty
     if (!localStorage.getItem(this.storageKey)) {
       localStorage.setItem(this.storageKey, JSON.stringify([]));
     }
@@ -24,6 +23,7 @@ export class ProjectService {
     localStorage.setItem(this.storageKey, JSON.stringify(projects));
   }
 
+  //  ADD UPDATE METHOD
   updateProject(updatedProject: Project) {
     const projects = this.getProjects().map(proj =>
       proj.id === updatedProject.id ? updatedProject : proj

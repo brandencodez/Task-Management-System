@@ -18,7 +18,12 @@ export class UserLoginComponent {
   newPassword = '';
   confirmPassword = '';
   errorMessage = '';
-  showPasswordSetup = false; // For first-time password setup
+  showPasswordSetup = false;
+  
+  // PASSWORD VISIBILITY TOGGLES
+  showPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private employeeService: EmployeeService,
@@ -33,7 +38,6 @@ export class UserLoginComponent {
       return;
     }
 
-    // Check if employee exists
     const employees = this.employeeService.getEmployees();
     const employee = employees.find(emp => 
       emp.name.toLowerCase() === name.toLowerCase()
@@ -44,9 +48,7 @@ export class UserLoginComponent {
       return;
     }
 
-    // Check if they already have a password
     if (this.userService.hasPassword(name)) {
-      // Regular login
       if (this.userService.validateCredentials(name, this.password)) {
         this.userService.setCurrentUser(name);
         this.router.navigate(['/user-dashboard']);
@@ -54,7 +56,6 @@ export class UserLoginComponent {
         this.errorMessage = 'Invalid password.';
       }
     } else {
-      // First-time: show password setup
       this.showPasswordSetup = true;
       this.errorMessage = '';
     }
