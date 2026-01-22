@@ -13,17 +13,22 @@ import { Project, ProjectStatus } from '../../../shared/models/project.model';
 })
 export class ProjectListComponent implements OnInit {
   projects: Project[] = [];
-  newProject: Partial<Project> = {
+  
+  // single form object for both add and edit
+  currentProject: Project = {
+    id: 0,
     name: '',
     projectType: '',
     clientDetails: '',
     projectBrief: '',
     startDate: '',
     finishDate: '',
-    department: '', 
+    department: '',
     status: 'UPCOMING'
   };
-  showAddForm = false;
+  
+  showForm = false;
+  isEditing = false;
   statuses: ProjectStatus[] = ['UPCOMING', 'ONGOING', 'COMPLETED'];
 
   constructor(private projectService: ProjectService) {}
@@ -36,36 +41,69 @@ export class ProjectListComponent implements OnInit {
     this.projects = this.projectService.getProjects();
   }
 
-  addProject() {
-  if (!this.newProject.name || !this.newProject.startDate || !this.newProject.finishDate || !this.newProject.department) {
-    alert('All fields are required!');
-    return;
-  }
-    if (new Date(this.newProject.finishDate!) < new Date(this.newProject.startDate!)) {
-    alert('Finish date must be after start date!');
-    return;
-  }
-    
-    const project: Project = {
-      id: Date.now(),
-      name: this.newProject.name,
-      projectType: this.newProject.projectType || '',
-      clientDetails: this.newProject.clientDetails || '',
-      projectBrief: this.newProject.projectBrief || '',
-      startDate: this.newProject.startDate, 
-      finishDate: this.newProject.finishDate,
-      department: this.newProject.department,
-      status: this.newProject.status || 'UPCOMING'
+  //  OPEN ADD FORM
+  openAddForm() {
+    this.currentProject = {
+      id: 0,
+      name: '',
+      projectType: '',
+      clientDetails: '',
+      projectBrief: '',
+      startDate: '',
+      finishDate: '',
+      department: '',
+      status: 'UPCOMING'
     };
+    this.isEditing = false;
+    this.showForm = true;
+  }
 
-    this.projectService.addProject(project);
-    this.resetForm();
+  //  OPEN EDIT FORM
+  openEditForm(project: Project) {
+    this.currentProject = { ...project }; // Create a copy
+    this.isEditing = true;
+    this.showForm = true;
+  }
+
+  //  SAVE OR UPDATE
+  saveProject() {
+    if (!this.currentProject.name || !this.currentProject.startDate || 
+        !this.currentProject.finishDate || !this.currentProject.department) {
+      alert('All fields are required!');
+      return;
+    }
+
+    if (new Date(this.currentProject.finishDate) < new Date(this.currentProject.startDate)) {
+      alert('Finish date must be after start date!');
+      return;
+    }
+    
+    if (this.isEditing) {
+      // Update existing project
+      this.projectService.updateProject(this.currentProject);
+    } else {
+      // Add new project
+      const newProject: Project = {
+        ...this.currentProject,
+        id: Date.now()
+      };
+      this.projectService.addProject(newProject);
+    }
+    
+    this.cancelForm();
     this.loadProjects();
   }
 
-  resetForm() {
-    this.newProject = { status: 'UPCOMING' };
-    this.showAddForm = false;
+  cancelForm() {
+    this.showForm = false;
+    this.isEditing = false;
+  }
+
+  deleteProject(id: number) {
+    if (confirm('Are you sure you want to delete this project?')) {
+      this.projectService.deleteProject(id);
+      this.loadProjects();
+    }
   }
 
   getProjectsByStatus(status: ProjectStatus) {

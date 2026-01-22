@@ -1,11 +1,29 @@
-<h2>Admin Dashboard</h2>
+<div class="container">
+  <div class="dashboard-header">
+    <h2>Admin Dashboard</h2>
+  </div>
 
-<!-- Summary Cards  -->
-<div class="cards">
-  <div class="card total"><h3>Total Tasks</h3><p>{{ totalTasks }}</p></div>
-  <div class="card track"><h3>On Track</h3><p>{{ onTrack }}</p></div>
-  <div class="card warn"><h3>Warning</h3><p>{{ warning }}</p></div>
-  <div class="card danger"><h3>Overdue</h3><p>{{ overdue }}</p></div>
-  <div class="card complete"><h3>Completed</h3><p>{{ completed }}</p></div>
+  <!-- Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <h3>Total Tasks</h3>
+      <p>{{ totalTasks }}</p>
+    </div>
+    <div class="stat-card track">
+      <h3>On Track</h3>
+      <p>{{ onTrack }}</p>
+    </div>
+    <div class="stat-card warn">
+      <h3>Warning</h3>
+      <p>{{ warning }}</p>
+    </div>
+    <div class="stat-card danger">
+      <h3>Overdue</h3>
+      <p>{{ overdue }}</p>
+    </div>
+    <div class="stat-card complete">
+      <h3>Completed</h3>
+      <p>{{ completed }}</p>
+    </div>
+  </div>
 </div>
-

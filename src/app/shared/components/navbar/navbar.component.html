@@ -1,17 +1,19 @@
 <nav class="navbar">
-  <a routerLink="/" class="logo">Employee Tracker</a>
+  <div class="navbar-content">
+    <a routerLink="/" class="logo">Eazy Track</a>
 
-  <ul class="nav-links">
-    <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
+    <ul class="nav-links">
+      <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
 
-    @if (role === 'user') {
-      <li><a routerLink="/user-dashboard/projects">My Projects</a></li>
-    }
+      @if (role === 'user') {
+        <li><a routerLink="/user-dashboard">My Projects</a></li>
+      }
 
-    @if (role === 'admin') {
-      <li><a routerLink="/admin-dashboard">Dashboard</a></li>
-      <li><a routerLink="/admin-dashboard/employees">Employees</a></li>
-      <li><a routerLink="/admin-dashboard/projects">Projects</a></li>
-    }
-  </ul>
+      @if (role === 'admin') {
+        <li><a routerLink="/admin-dashboard">Dashboard</a></li>
+        <li><a routerLink="/admin-dashboard/employees">Employees</a></li>
+        <li><a routerLink="/admin-dashboard/projects">Projects</a></li>
+      }
+    </ul>
+  </div>
 </nav>
