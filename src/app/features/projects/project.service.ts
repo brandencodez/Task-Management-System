@@ -23,7 +23,7 @@ export class ProjectService {
     localStorage.setItem(this.storageKey, JSON.stringify(projects));
   }
 
-  //  ADD UPDATE METHOD
+  
   updateProject(updatedProject: Project) {
     const projects = this.getProjects().map(proj =>
       proj.id === updatedProject.id ? updatedProject : proj
