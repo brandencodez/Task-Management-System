@@ -11,8 +11,10 @@
       <label>Project</label>
       <select [(ngModel)]="project">
         <option value="">Select project</option>
-        <option *ngFor="let p of assignedProjects" [value]="p">
-          {{ p }}
+
+        <!-- ✅ FIXED: use Project object -->
+        <option *ngFor="let p of assignedProjects" [value]="p.name">
+          {{ p.name }}
         </option>
       </select>
     </div>
