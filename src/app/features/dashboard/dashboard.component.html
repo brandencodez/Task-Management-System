@@ -24,7 +24,7 @@
     <h2>Upcoming Projects</h2>
 
     <div class="grid">
-      <div class="card" *ngFor="let p of filtered(upcoming)">
+      <div class="card" *ngFor="let p of filtered(upcoming)" (click)="openMomPopup(p)">
         <div class="header">
           <h3>{{ p.name }}</h3>
           <span class="badge upcoming">UPCOMING</span>
@@ -59,7 +59,7 @@
           'warning-card': isWarning(p) && !isOverdue(p),
           'normal-card': !isWarning(p) && !isOverdue(p)
         }"
-        *ngFor="let p of filtered(ongoing)"
+        *ngFor="let p of filtered(ongoing)" (click)="openMomPopup(p)"
       >
         <div class="header">
           <h3>{{ p.name }}</h3>
@@ -113,7 +113,7 @@
     <h2>Completed Projects</h2>
 
     <div class="grid">
-      <div class="card completed-card" *ngFor="let p of filtered(completed)">
+      <div class="card completed-card" *ngFor="let p of filtered(completed)" (click)="openMomPopup(p)">
         <div class="header">
           <h3>{{ p.name }}</h3>
           <span class="badge completed">COMPLETED</span>
@@ -238,6 +238,103 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- MoM Popup (Like Chat Popup) -->
+<div class="mom-popup-overlay" *ngIf="selectedProjectForMom" (click)="closeMomPopup()">
+  <div class="mom-popup" (click)="$event.stopPropagation()">
+    
+    <!-- Popup Header -->
+    <div class="mom-popup-header">
+      <div class="mom-popup-title">
+        <h3>{{ selectedProjectForMom.name }}</h3>
+        <span class="mom-project-status" [ngClass]="getProjectStatusClass(selectedProjectForMom)">
+          {{ getProjectStatusText(selectedProjectForMom) }}
+        </span>
+      </div>
+      <button class="close-mom-popup" (click)="closeMomPopup()">×</button>
+    </div>
+
+    <!-- Project Quick Info -->
+    <div class="project-quick-info">
+      <div class="project-quick-details">
+        <span class="quick-detail">
+          <strong>Type:</strong> {{ selectedProjectForMom.projectType || 'N/A' }}
+        </span>
+        <span class="quick-detail">
+          <strong>Dept:</strong> {{ selectedProjectForMom.department }}
+        </span>
+        <span class="quick-detail">
+          <strong>Client:</strong> {{ selectedProjectForMom.clientDetails?.companyName || getClientName(selectedProjectForMom.clientDetails) || 'Not specified' }}
+        </span>
+      </div>
+      <div class="project-dates">
+        <span class="quick-detail">
+        <strong>Date:</strong> {{ selectedProjectForMom.startDate | date:'shortDate' }} → {{ selectedProjectForMom.finishDate | date:'shortDate' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Add Memo Input -->
+    <div class="add-memo-container">
+      <div class="memo-input-header">
+        <span class="memo-input-title">Add New Memo</span>
+        <span class="memo-count">{{ getProjectMoms(selectedProjectForMom.id).length }} memo(s)</span>
+      </div>
+      <textarea 
+        [(ngModel)]="newMomText" 
+        placeholder="Type your memo here... (e.g., 'Meeting with client tomorrow', 'Need design assets')" 
+        class="memo-input"
+        rows="2"
+      ></textarea>
+      <div class="memo-actions">
+        <button 
+          class="memo-save-btn" 
+          (click)="addNewMom()"
+          [disabled]="!newMomText || !newMomText.trim()"
+        >
+          {{ editingMom ? 'Update Memo' : 'Add Memo' }}
+        </button>
+        <button 
+          class="memo-cancel-btn" 
+          (click)="cancelEditMom()"
+          *ngIf="editingMom"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- Memos List (Card Style) -->
+    <div class="memos-container">
+      <h4 class="memos-title">Memo History</h4>
+      
+      <div class="no-memos-msg" *ngIf="getProjectMoms(selectedProjectForMom.id).length === 0">
+        <div class="empty-memos-icon">📝</div>
+        <p>No memos yet. Add your first memo above!</p>
+      </div>
+
+      <div class="memo-cards">
+        <div class="memo-card" *ngFor="let mom of getProjectMoms(selectedProjectForMom.id)">
+          <div class="memo-card-content">
+            {{ mom.content }}
+          </div>
+          <div class="memo-card-footer">
+            <span class="memo-date">{{ mom.date | date:'MMM d, h:mm a' }}</span>
+            <div class="memo-card-actions">
+              <button class="memo-edit-action" (click)="startEditMom(mom)">
+                <span>✏️ Edit</span>
+              </button>
+              <button class="memo-delete-action" (click)="deleteMom(mom.id)">
+                <span>🗑️ Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>
