@@ -3,12 +3,40 @@
     <a routerLink="/" class="logo">Eazy Track</a>
 
     <ul class="nav-links">
-      <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
+      <!-- Home -->
+      <li>
+        <a
+          routerLink="/"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Home
+        </a>
+      </li>
 
+      <!-- USER NAV -->
       @if (role === 'user') {
-        <li><a routerLink="/user-dashboard">My Projects</a></li>
+        <li>
+          <a
+            routerLink="/user-dashboard"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+          >
+            My Projects
+          </a>
+        </li>
+
+        <li>
+          <a
+            routerLink="/user-dashboard/work-entry"
+            routerLinkActive="active"
+          >
+            Work Entry
+          </a>
+        </li>
       }
 
+      <!-- ADMIN NAV -->
       @if (role === 'admin') {
         <li><a routerLink="/admin-dashboard">Dashboard</a></li>
         <li><a routerLink="/admin-dashboard/employees">Employees</a></li>
