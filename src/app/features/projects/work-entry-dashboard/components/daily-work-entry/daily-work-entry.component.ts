@@ -2,6 +2,11 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+import { ProjectService } from '../../../project.service';
+import { EmployeeService } from '../../../../employees/employee.service';
+import { UserService } from '../../../../../shared/services/user.service';
+import { Project } from '../../../../../shared/models/project.model';
+
 export interface WorkEntry {
   id: number;
   project: string;
@@ -22,47 +27,73 @@ export class DailyWorkEntryComponent implements OnInit {
 
   private STORAGE_KEY = 'daily_work_entries';
 
-  /* 🔥 SEND DATA TO DASHBOARD */
   @Output() entriesChange = new EventEmitter<WorkEntry[]>();
 
-  assignedProjects: string[] = [
-    'Employee Tracker',
-    'Inventory System',
-    'Payroll App'
-  ];
+  /* ===============================
+     PROJECTS (USER BASED)
+  ================================ */
+  assignedProjects: Project[] = [];
 
-  // ===== FORM STATE =====
+  /* ===============================
+     FORM STATE
+  ================================ */
   project = '';
   description = '';
   hours: number | null = null;
   progress = 0;
   date = this.today();
 
-  // ===== EDIT MODE STATE =====
+  /* ===============================
+     EDIT MODE
+  ================================ */
   isEditing = false;
   editingId: number | null = null;
 
   entries: WorkEntry[] = [];
 
-  /* ===============================
-     INIT
-  ================================ */
+  constructor(
+    private projectService: ProjectService,
+    private employeeService: EmployeeService,
+    private userService: UserService
+  ) {}
+
   ngOnInit(): void {
-    const data = localStorage.getItem(this.STORAGE_KEY);
-    if (data) {
-      this.entries = JSON.parse(data);
-    }
+    this.loadEntries();
+    this.loadProjectsForLoggedUser();
     this.emitEntries();
   }
 
   /* ===============================
-     ADD / UPDATE
+     LOAD PROJECTS FOR LOGGED USER
+  ================================ */
+  private loadProjectsForLoggedUser(): void {
+    const currentUser = this.userService.getCurrentUser();
+    if (!currentUser) return;
+
+    const employee = this.employeeService
+      .getEmployees()
+      .find((emp: any) =>
+        emp.name.toLowerCase() === currentUser.toLowerCase()
+      );
+
+    if (!employee) return;
+
+    const department = employee.department.toLowerCase();
+
+    this.assignedProjects = this.projectService
+      .getProjects()
+      .filter((p: Project) =>
+        p.department?.toLowerCase() === department
+      );
+  }
+
+  /* ===============================
+     ADD / UPDATE ENTRY
   ================================ */
   addEntry(): void {
     if (!this.project || !this.description || !this.hours) return;
 
     if (this.isEditing && this.editingId !== null) {
-      // UPDATE EXISTING
       const index = this.entries.findIndex(e => e.id === this.editingId);
       if (index !== -1) {
         this.entries[index] = {
@@ -75,7 +106,6 @@ export class DailyWorkEntryComponent implements OnInit {
         };
       }
     } else {
-      // ADD NEW
       this.entries.unshift({
         id: Date.now(),
         project: this.project,
@@ -91,9 +121,6 @@ export class DailyWorkEntryComponent implements OnInit {
     this.resetForm();
   }
 
-  /* ===============================
-     EDIT
-  ================================ */
   editEntry(entry: WorkEntry): void {
     this.isEditing = true;
     this.editingId = entry.id;
@@ -105,9 +132,6 @@ export class DailyWorkEntryComponent implements OnInit {
     this.date = entry.date;
   }
 
-  /* ===============================
-     DELETE
-  ================================ */
   deleteEntry(id: number): void {
     this.entries = this.entries.filter(e => e.id !== id);
     this.save();
@@ -118,9 +142,13 @@ export class DailyWorkEntryComponent implements OnInit {
     }
   }
 
-  /* ===============================
-     STORAGE
-  ================================ */
+  private loadEntries(): void {
+    const data = localStorage.getItem(this.STORAGE_KEY);
+    if (data) {
+      this.entries = JSON.parse(data);
+    }
+  }
+
   private save(): void {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.entries));
   }
@@ -129,9 +157,6 @@ export class DailyWorkEntryComponent implements OnInit {
     this.entriesChange.emit([...this.entries]);
   }
 
-  /* ===============================
-     HELPERS
-  ================================ */
   private resetForm(): void {
     this.project = '';
     this.description = '';
