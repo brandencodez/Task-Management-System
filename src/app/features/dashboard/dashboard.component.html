@@ -141,4 +141,103 @@
     <p>No projects found. Add some projects to get started.</p>
   </section>
 
+  <!-- Floating Chat Button -->
+<div class="chat-container">
+  <button class="chat-toggle-btn" (click)="toggleChatPanel()">
+    <span class="chat-icon">💬</span>
+    <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+  </button>
+
+  <!-- Chat Panel Overlay -->
+  <div class="chat-overlay" *ngIf="showChatPanel">
+    <div class="chat-panel">
+      <div class="chat-header">
+        <h4>Team Messages</h4>
+        <button class="close-chat" (click)="toggleChatPanel()">×</button>
+      </div>
+      
+      <div class="chat-content">
+        <!-- Left: Employee List -->
+        <div class="chat-sidebar">
+          <input 
+            type="text" 
+            placeholder="Search employees..." 
+            [(ngModel)]="employeeSearch"
+            class="sidebar-search"
+          />
+          
+          <div class="employee-chat-list">
+            <div 
+              *ngFor="let emp of filteredEmployees"
+              class="chat-employee-item"
+              [class.active]="selectedEmployee?.id === emp.id"
+              (click)="selectEmployee(emp)"
+            >
+              <div class="employee-avatar-small">{{ emp.name.charAt(0) }}</div>
+              <div class="employee-info-small">
+                <strong>{{ emp.name }}</strong>
+                <span class="dept-small">{{ emp.department }}</span>
+                <span class="last-msg" *ngIf="getLastMessage(emp.id)">
+                  {{ getLastMessage(emp.id) }}
+                </span>
+              </div>
+              <div class="chat-indicators">
+                <span class="unread-small" *ngIf="getUnreadCount(emp.id) > 0">
+                  {{ getUnreadCount(emp.id) }}
+                </span>
+                <span class="time-small" *ngIf="getLastMessageTime(emp.id)">
+                  {{ getLastMessageTime(emp.id) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Chat Messages -->
+        <div class="chat-main" *ngIf="selectedEmployee">
+          <div class="chat-with-header">
+            <div class="current-chat-avatar">{{ selectedEmployee.name.charAt(0) }}</div>
+            <div>
+              <strong>{{ selectedEmployee.name }}</strong>
+              <span class="current-dept">{{ selectedEmployee.department }}</span>
+            </div>
+          </div>
+
+          <div class="messages-area">
+            <div 
+              *ngFor="let msg of getMessagesWithEmployee(selectedEmployee.id)"
+              class="single-message"
+              [class.sent-msg]="msg.sender === 'admin'"
+              [class.received-msg]="msg.sender === 'employee'"
+            >
+              <div class="msg-content">{{ msg.content }}</div>
+              <div class="msg-time">{{ msg.timestamp | date:'shortTime' }}</div>
+            </div>
+          </div>
+
+          <div class="message-input-area">
+            <input 
+              type="text" 
+              placeholder="Type a message..." 
+              [(ngModel)]="newMessage"
+              (keyup.enter)="sendMessage()"
+              class="message-input"
+            />
+            <button class="send-msg-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+              Send
+            </button>
+          </div>
+        </div>
+
+        <!-- No selection -->
+        <div class="no-chat-selected" *ngIf="!selectedEmployee">
+          <div class="select-prompt">
+            <div class="prompt-icon">💬</div>
+            <p>Select an employee to chat</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
