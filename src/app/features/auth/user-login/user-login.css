@@ -30,11 +30,18 @@
   font-weight: 500;
   text-decoration: none;
   transition: var(--transition);
+  background-color: #ffffff;
+  color: #333;
+  border-radius: 6px;
+  font-weight: 500;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
 }
 
 .home-btn:hover {
-  background: var(--primary-light);
-  color: var(--primary);
+  transform: translateX(-3px);
+  background-color: #f0f0f0;
 }
 
 .login-header {
