@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProjectService } from '../projects/project.service';
 import { Project } from '../../shared/models/project.model';
 import { EmployeeService } from '../employees/employee.service';
-import { UserService } from '../../shared/services/user.service';
+import { ChatService } from '../../shared/services/chat.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -278,23 +278,6 @@ export class DashboardComponent implements OnInit {
 
   get unreadCount(): number {
     return this.chatService.getUnreadCount('admin');
-  }
-
-  loadChatMessages() {
-    const saved = localStorage.getItem('admin_chat_messages');
-    this.chatMessages = saved ? JSON.parse(saved) : [];
-  }
-
-  saveChatMessages() {
-    localStorage.setItem('admin_chat_messages', JSON.stringify(this.chatMessages));
-  }
-
-  // Optional: Clear all chat history
-  clearChatHistory() {
-    if (confirm('Clear all chat messages?')) {
-      this.chatMessages = [];
-      this.saveChatMessages();
-    }
   }
 
   // ====================
