@@ -51,6 +51,18 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+  path: 'authpage',
+  component: SimpleLayoutComponent,
+  children: [
+    {
+      path: '',
+      loadComponent: () =>
+        import('./features/auth/authpage/authpage')
+          .then(m => m.Authpage)
+    }
+  ]
+},
 
   // ===== ADMIN DASHBOARD =====
   {
