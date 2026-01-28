@@ -6,5 +6,8 @@ export interface Employee {
   department: string;
   position: string;
   joinDate: Date;
+  HomeAddress: string;
   status: 'active' | 'on-leave' | 'inactive';
+ IssuedItems: string;
+
 }

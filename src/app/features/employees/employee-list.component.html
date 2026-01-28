@@ -87,6 +87,16 @@
           >
         </div>
 
+          <div class="form-group">
+          <label class="form-label">Home Address *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="newEmployee.HomeAddress" 
+            name="HomeAddress" 
+            required 
+            class="form-control"          >
+        </div>
+
         <div class="form-group">
           <label class="form-label">Status *</label>
           <select 
@@ -99,6 +109,17 @@
             <option value="inactive">Inactive</option>
           </select>
         </div>
+
+       <div class="form-group">
+  <label class="form-label">Issued Items</label>
+  <input
+    type="text"
+    [(ngModel)]="newEmployee.IssuedItems"
+    name="IssuedItems"
+    class="form-control"
+    placeholder="Laptop, Mouse, Headset"
+  />
+</div>
 
         <div class="form-actions">
           <button type="submit" class="btn btn-success">
@@ -154,9 +175,23 @@
             </div>
             <div class="info-row">
               <span class="info-label">Join Date:</span>
-              <span class="info-value">{{ employee.joinDate | date: 'MMM dd, yyyy' }}</span>
+              <span class="info-value">{{ employee.joinDate | date: 'dd MMM, yyyy' }}</span>
             </div>
           </div>
+          <div class="info-row">
+              <span class="info-label">Home Address:</span>
+              <span class="info-value">{{ employee.HomeAddress }}</span>
+            </div>
+
+            <div class="info-row" *ngIf="employee.IssuedItems">
+  <span class="info-label">Issued Items:</span>
+  <span class="info-value issued-badges">
+    <span class="badge badge-info"
+          *ngFor="let item of employee.IssuedItems.split(',')">
+      {{ item.trim() }}
+    </span>
+  </span>
+</div>
           
           <div class ="employee-actions">
             <button class="btn btn-outline" (click)="editEmployee(employee)">

@@ -26,7 +26,9 @@ export class EmployeeListComponent implements OnInit {
     department: '',
     position: '',
     joinDate: new Date(),
-    status: 'active'
+    HomeAddress: '',
+    status: 'active',
+    IssuedItems: ''
   };
 
   constructor(private employeeService: EmployeeService) {}
@@ -112,8 +114,11 @@ export class EmployeeListComponent implements OnInit {
       phone: '',
       department: '',
       position: '',
+      HomeAddress: '',
       joinDate: new Date(),
-      status: 'active'
+      status: 'active',
+      IssuedItems: ''
+
     };
     this.editingEmployee = null;
   }

@@ -11,8 +11,10 @@
       <label>Project</label>
       <select [(ngModel)]="project">
         <option value="">Select project</option>
-        <option *ngFor="let p of assignedProjects" [value]="p">
-          {{ p }}
+
+        <!-- Department-based projects -->
+        <option *ngFor="let p of assignedProjects" [value]="p.name">
+          {{ p.name }}
         </option>
       </select>
     </div>
@@ -32,22 +34,14 @@
     <!-- Date -->
     <div class="form-group">
       <label>Date</label>
-      <input
-        type="date"
-        [(ngModel)]="date"
-      />
+      <input type="date" [(ngModel)]="date" />
     </div>
 
     <!-- Progress -->
     <div class="form-group progress-group">
       <label>Progress</label>
       <div class="progress-input">
-        <input
-          type="range"
-          min="0"
-          max="100"
-          [(ngModel)]="progress"
-        />
+        <input type="range" min="0" max="100" [(ngModel)]="progress" />
         <span class="progress-value">{{ progress }}%</span>
       </div>
     </div>
@@ -64,7 +58,7 @@
     <!-- Submit -->
     <div class="form-group full-width">
       <button class="add-btn" (click)="addEntry()">
-        {{ isEditing ? '💾 Update Entry' : '➕ Add Work Entry' }}
+        ➕ Add Work Entry
       </button>
     </div>
 
@@ -73,24 +67,15 @@
   <!-- ===== ENTRIES LIST ===== -->
   <div class="entries" *ngIf="entries.length">
 
-    <div
-      class="entry-card"
-      *ngFor="let entry of entries"
-      [class.editing]="editingId === entry.id"
-    >
+    <div class="entry-card" *ngFor="let entry of entries">
 
-      <!-- Card Header -->
       <div class="entry-header">
         <strong>{{ entry.project }}</strong>
         <span class="entry-date">{{ entry.date }}</span>
       </div>
 
-      <!-- Description -->
-      <p class="entry-desc">
-        {{ entry.description }}
-      </p>
+      <p class="entry-desc">{{ entry.description }}</p>
 
-      <!-- Progress Bar -->
       <div class="progress-bar">
         <div
           class="progress-fill"
@@ -98,16 +83,13 @@
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="entry-footer">
         <span>
           ⏱ {{ entry.hours }} hrs • 📊 {{ entry.progress }}%
         </span>
 
         <div class="actions">
-          <button class="edit" (click)="editEntry(entry)">
-            Edit
-          </button>
+          <!-- ✅ ONLY DELETE -->
           <button class="delete" (click)="deleteEntry(entry.id)">
             Delete
           </button>

@@ -13,7 +13,7 @@ import { Project, ProjectStatus } from '../../../shared/models/project.model';
 })
 export class ProjectListComponent implements OnInit {
   projects: Project[] = [];
-  
+
   // single form object for both add and edit
   currentProject: Project = {
     id: 0,
@@ -21,7 +21,13 @@ export class ProjectListComponent implements OnInit {
     projectType: '',
     clientDetails: {
       companyName: '',
-      contacts: [{ name: '', email: '', phone: '' }],
+      contacts: [{
+        name: '',
+        designation: '',
+        email: '',
+        phone: '',
+        'contact for': '' 
+      }],
       address: ''
     },
     projectBrief: '',
@@ -30,7 +36,7 @@ export class ProjectListComponent implements OnInit {
     department: '',
     status: 'UPCOMING'
   };
-  
+
   showForm = false;
   isEditing = false;
   statuses: ProjectStatus[] = ['UPCOMING', 'ONGOING', 'COMPLETED'];
@@ -95,36 +101,36 @@ export class ProjectListComponent implements OnInit {
   }
 
   loadProjects() {
-  this.projects = this.projectService.getProjects().map(project => {
-    // Type guard: check if clientDetails has the old structure
-    const clientDetails = project.clientDetails as any;
-    
-    // Handle legacy single contact format (old structure)
-    if (clientDetails && 
-        typeof clientDetails === 'object' && 
+    this.projects = this.projectService.getProjects().map(project => {
+      const clientDetails = project.clientDetails as any;
+
+      if (
+        clientDetails &&
+        typeof clientDetails === 'object' &&
         !Array.isArray(clientDetails.contacts) &&
-        (clientDetails.contactPerson !== undefined || 
-         clientDetails.email !== undefined || 
-         clientDetails.phone !== undefined)) {
-      
-      return {
-        ...project,
-        clientDetails: {
-          companyName: clientDetails.companyName || '',
-          contacts: [{
-            name: clientDetails.contactPerson || '',
-            email: clientDetails.email || '',
-            phone: clientDetails.phone || ''
-          }],
-          address: clientDetails.address || ''
-        }
-      };
-    }
-    
-    // Return as-is for new structure
-    return project;
-  });
-}
+        (clientDetails.contactPerson !== undefined ||
+         clientDetails.email !== undefined ||
+         clientDetails.phone !== undefined)
+      ) {
+        return {
+          ...project,
+          clientDetails: {
+            companyName: clientDetails.companyName || '',
+            contacts: [{
+              name: clientDetails.contactPerson || '',
+              designation: clientDetails.Designation || '',
+              email: clientDetails.email || '',
+              phone: clientDetails.phone || '',
+              'contact for': clientDetails.contactFor || '' 
+            }],
+            address: clientDetails.address || ''
+          }
+        };
+      }
+
+      return project;
+    });
+  }
 
   // OPEN ADD FORM
   openAddForm() {
@@ -134,7 +140,13 @@ export class ProjectListComponent implements OnInit {
       projectType: '',
       clientDetails: {
         companyName: '',
-        contacts: [{ name: '', email: '', phone: '' }],
+        contacts: [{
+          name: '',
+          designation: '',
+          email: '',
+          phone: '',
+          'contact for': '' 
+        }],
         address: ''
       },
       projectBrief: '',
@@ -155,39 +167,44 @@ export class ProjectListComponent implements OnInit {
   }
 
   // SAVE OR UPDATE
-  saveProject() {
-    if (!this.currentProject.name || !this.currentProject.startDate || 
-        !this.currentProject.finishDate || !this.currentProject.department ||
-        !this.currentProject.clientDetails.companyName ||
-        !this.currentProject.clientDetails.address) {
-      alert('Please fill all required fields!');
-      return;
-    }
+ saveProject() {
+  // Validate project main fields
+  if (!this.currentProject.name || !this.currentProject.startDate || 
+      !this.currentProject.finishDate || !this.currentProject.department ||
+      !this.currentProject.clientDetails.companyName ||
+      !this.currentProject.clientDetails.address) {
+    alert('Please fill all required fields!');
+    return;
+  }
 
-    // Validate at least one contact has a name
-    const hasValidContact = this.currentProject.clientDetails.contacts.some(contact => contact.name.trim());
-    if (!hasValidContact) {
-      alert('Please add at least one contact with a name');
-      return;
-    }
+    const allContactsValid = this.currentProject.clientDetails.contacts.every(contact =>
+    contact.name.trim() &&
+    contact.designation?.trim() &&
+    contact.email?.trim() &&
+    contact.phone?.trim() &&
+    contact['contact for']?.trim()
+  );
+
+   if (!allContactsValid) {
+    alert('Please fill all fields for each contact!');
+    return;
+  }
 
     if (new Date(this.currentProject.finishDate) < new Date(this.currentProject.startDate)) {
       alert('Finish date must be after start date!');
       return;
     }
-    
+
     if (this.isEditing) {
-      // Update existing project
       this.projectService.updateProject(this.currentProject);
     } else {
-      // Add new project
       const newProject: Project = {
         ...this.currentProject,
         id: Date.now()
       };
       this.projectService.addProject(newProject);
     }
-    
+
     this.cancelForm();
     this.loadProjects();
   }
@@ -208,7 +225,6 @@ export class ProjectListComponent implements OnInit {
     return this.projects.filter(p => p.status === status);
   }
 
-  // METHOD FOR DYNAMIC PROJECT TYPES
   getProjectTypes(): string[] {
     if (this.currentProject.department && this.projectTypesByDepartment[this.currentProject.department]) {
       return this.projectTypesByDepartment[this.currentProject.department];
@@ -216,16 +232,16 @@ export class ProjectListComponent implements OnInit {
     return [];
   }
 
-  // ADD NEW CONTACT
   addClientContact() {
     this.currentProject.clientDetails.contacts.push({
       name: '',
+      designation: '',
       email: '',
-      phone: ''
+      phone: '',
+      'contact for': '' 
     });
   }
 
-  // REMOVE CONTACT
   removeClientContact(index: number) {
     this.currentProject.clientDetails.contacts.splice(index, 1);
   }

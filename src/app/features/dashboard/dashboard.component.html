@@ -34,7 +34,10 @@
         <div class="client-info">
           <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
           @for (contact of p.clientDetails.contacts; track $index) {
-            <p><b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+            <p>
+              <b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+              @if (contact.designation) { ({{ contact.designation }}) }
+              @if (contact['contact for']) { – {{ contact['contact for'] }} }
               @if (contact.email || contact.phone) {
                 ({{ contact.email || contact.phone }})
               }
@@ -82,7 +85,10 @@
         <div class="client-info">
           <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
           @for (contact of p.clientDetails.contacts; track $index) {
-            <p><b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+            <p>
+              <b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+              @if (contact.designation) { ({{ contact.designation }}) }
+              @if (contact['contact for']) { – {{ contact['contact for'] }} }
               @if (contact.email || contact.phone) {
                 ({{ contact.email || contact.phone }})
               }
@@ -125,7 +131,10 @@
         <div class="client-info">
           <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
           @for (contact of p.clientDetails.contacts; track $index) {
-            <p><b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+            <p>
+              <b>Contact {{ $index + 1 }}:</b> {{ contact.name || 'Not specified' }}
+              @if (contact.designation) { ({{ contact.designation }}) }
+              @if (contact['contact for']) { – {{ contact['contact for'] }} }
               @if (contact.email || contact.phone) {
                 ({{ contact.email || contact.phone }})
               }
@@ -142,199 +151,199 @@
   </section>
 
   <!-- Floating Chat Button -->
-<div class="chat-container">
-  <button class="chat-toggle-btn" (click)="toggleChatPanel()">
-    <span class="chat-icon">💬</span>
-    <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
-  </button>
+  <div class="chat-container">
+    <button class="chat-toggle-btn" (click)="toggleChatPanel()">
+      <span class="chat-icon">💬</span>
+      <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+    </button>
 
-  <!-- Chat Panel Overlay -->
-  <div class="chat-overlay" *ngIf="showChatPanel">
-    <div class="chat-panel">
-      <div class="chat-header">
-        <h4>Team Messages</h4>
-        <button class="close-chat" (click)="toggleChatPanel()">×</button>
-      </div>
-      
-      <div class="chat-content">
-        <!-- Left: Employee List -->
-        <div class="chat-sidebar">
-          <input 
-            type="text" 
-            placeholder="Search employees..." 
-            [(ngModel)]="employeeSearch"
-            class="sidebar-search"
-          />
-          
-          <div class="employee-chat-list">
-            <div 
-              *ngFor="let emp of filteredEmployees"
-              class="chat-employee-item"
-              [class.active]="selectedEmployee?.id === emp.id"
-              (click)="selectEmployee(emp)"
-            >
-              <div class="employee-avatar-small">{{ emp.name.charAt(0) }}</div>
-              <div class="employee-info-small">
-                <strong>{{ emp.name }}</strong>
-                <span class="dept-small">{{ emp.department }}</span>
-                <span class="last-msg" *ngIf="getLastMessage(emp.id)">
-                  {{ getLastMessage(emp.id) }}
-                </span>
-              </div>
-              <div class="chat-indicators">
-                <span class="unread-small" *ngIf="getUnreadCount(emp.id) > 0">
-                  {{ getUnreadCount(emp.id) }}
-                </span>
-                <span class="time-small" *ngIf="getLastMessageTime(emp.id)">
-                  {{ getLastMessageTime(emp.id) }}
-                </span>
-              </div>
-            </div>
-          </div>
+    <!-- Chat Panel Overlay -->
+    <div class="chat-overlay" *ngIf="showChatPanel">
+      <div class="chat-panel">
+        <div class="chat-header">
+          <h4>Team Messages</h4>
+          <button class="close-chat" (click)="toggleChatPanel()">×</button>
         </div>
-
-        <!-- Right: Chat Messages -->
-        <div class="chat-main" *ngIf="selectedEmployee">
-          <div class="chat-with-header">
-            <div class="current-chat-avatar">{{ selectedEmployee.name.charAt(0) }}</div>
-            <div>
-              <strong>{{ selectedEmployee.name }}</strong>
-              <span class="current-dept">{{ selectedEmployee.department }}</span>
-            </div>
-          </div>
-
-          <div class="messages-area">
-            <div 
-              *ngFor="let msg of getMessagesWithEmployee()"
-              class="single-message"
-              [class.sent-msg]="msg.senderId === 'admin'"
-              [class.received-msg]="msg.senderId !== 'admin'"
-            >
-              <div class="msg-content">{{ msg.content }}</div>
-              <div class="msg-time">{{ msg.timestamp | date:'shortTime' }}</div>
-            </div>
-          </div>
-
-          <div class="message-input-area">
+        
+        <div class="chat-content">
+          <!-- Left: Employee List -->
+          <div class="chat-sidebar">
             <input 
               type="text" 
-              placeholder="Type a message..." 
-              [(ngModel)]="newMessage"
-              (keyup.enter)="sendMessage()"
-              class="message-input"
+              placeholder="Search employees..." 
+              [(ngModel)]="employeeSearch"
+              class="sidebar-search"
             />
-            <button class="send-msg-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
-              Send
-            </button>
+            
+            <div class="employee-chat-list">
+              <div 
+                *ngFor="let emp of filteredEmployees"
+                class="chat-employee-item"
+                [class.active]="selectedEmployee?.id === emp.id"
+                (click)="selectEmployee(emp)"
+              >
+                <div class="employee-avatar-small">{{ emp.name.charAt(0) }}</div>
+                <div class="employee-info-small">
+                  <strong>{{ emp.name }}</strong>
+                  <span class="dept-small">{{ emp.department }}</span>
+                  <span class="last-msg" *ngIf="getLastMessage(emp.id)">
+                    {{ getLastMessage(emp.id) }}
+                  </span>
+                </div>
+                <div class="chat-indicators">
+                  <span class="unread-small" *ngIf="getUnreadCount(emp.id) > 0">
+                    {{ getUnreadCount(emp.id) }}
+                  </span>
+                  <span class="time-small" *ngIf="getLastMessageTime(emp.id)">
+                    {{ getLastMessageTime(emp.id) }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- No selection -->
-        <div class="no-chat-selected" *ngIf="!selectedEmployee">
-          <div class="select-prompt">
-            <div class="prompt-icon">💬</div>
-            <p>Select an employee to chat</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+          <!-- Right: Chat Messages -->
+          <div class="chat-main" *ngIf="selectedEmployee">
+            <div class="chat-with-header">
+              <div class="current-chat-avatar">{{ selectedEmployee.name.charAt(0) }}</div>
+              <div>
+                <strong>{{ selectedEmployee.name }}</strong>
+                <span class="current-dept">{{ selectedEmployee.department }}</span>
+              </div>
+            </div>
 
-<!-- MoM Popup (Like Chat Popup) -->
-<div class="mom-popup-overlay" *ngIf="selectedProjectForMom" (click)="closeMomPopup()">
-  <div class="mom-popup" (click)="$event.stopPropagation()">
-    
-    <!-- Popup Header -->
-    <div class="mom-popup-header">
-      <div class="mom-popup-title">
-        <h3>{{ selectedProjectForMom.name }}</h3>
-        <span class="mom-project-status" [ngClass]="getProjectStatusClass(selectedProjectForMom)">
-          {{ getProjectStatusText(selectedProjectForMom) }}
-        </span>
-      </div>
-      <button class="close-mom-popup" (click)="closeMomPopup()">×</button>
-    </div>
+            <div class="messages-area">
+              <div 
+                *ngFor="let msg of getMessagesWithEmployee(selectedEmployee.id)"
+                class="single-message"
+                [class.sent-msg]="msg.sender === 'admin'"
+                [class.received-msg]="msg.sender === 'employee'"
+              >
+                <div class="msg-content">{{ msg.content }}</div>
+                <div class="msg-time">{{ msg.timestamp | date:'shortTime' }}</div>
+              </div>
+            </div>
 
-    <!-- Project Quick Info -->
-    <div class="project-quick-info">
-      <div class="project-quick-details">
-        <span class="quick-detail">
-          <strong>Type:</strong> {{ selectedProjectForMom.projectType || 'N/A' }}
-        </span>
-        <span class="quick-detail">
-          <strong>Dept:</strong> {{ selectedProjectForMom.department }}
-        </span>
-        <span class="quick-detail">
-          <strong>Client:</strong> {{ selectedProjectForMom.clientDetails?.companyName || getClientName(selectedProjectForMom.clientDetails) || 'Not specified' }}
-        </span>
-      </div>
-      <div class="project-dates">
-        <span class="quick-detail">
-        <strong>Date:</strong> {{ selectedProjectForMom.startDate | date:'shortDate' }} → {{ selectedProjectForMom.finishDate | date:'shortDate' }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Add Memo Input -->
-    <div class="add-memo-container">
-      <div class="memo-input-header">
-        <span class="memo-input-title">Add New Memo</span>
-        <span class="memo-count">{{ getProjectMoms(selectedProjectForMom.id).length }} memo(s)</span>
-      </div>
-      <textarea 
-        [(ngModel)]="newMomText" 
-        placeholder="Type your memo here... (e.g., 'Meeting with client tomorrow', 'Need design assets')" 
-        class="memo-input"
-        rows="2"
-      ></textarea>
-      <div class="memo-actions">
-        <button 
-          class="memo-save-btn" 
-          (click)="addNewMom()"
-          [disabled]="!newMomText || !newMomText.trim()"
-        >
-          {{ editingMom ? 'Update Memo' : 'Add Memo' }}
-        </button>
-        <button 
-          class="memo-cancel-btn" 
-          (click)="cancelEditMom()"
-          *ngIf="editingMom"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-
-    <!-- Memos List (Card Style) -->
-    <div class="memos-container">
-      <h4 class="memos-title">Memo History</h4>
-      
-      <div class="no-memos-msg" *ngIf="getProjectMoms(selectedProjectForMom.id).length === 0">
-        <div class="empty-memos-icon">📝</div>
-        <p>No memos yet. Add your first memo above!</p>
-      </div>
-
-      <div class="memo-cards">
-        <div class="memo-card" *ngFor="let mom of getProjectMoms(selectedProjectForMom.id)">
-          <div class="memo-card-content">
-            {{ mom.content }}
-          </div>
-          <div class="memo-card-footer">
-            <span class="memo-date">{{ mom.date | date:'MMM d, h:mm a' }}</span>
-            <div class="memo-card-actions">
-              <button class="memo-edit-action" (click)="startEditMom(mom)">
-                <span>✏️ Edit</span>
+            <div class="message-input-area">
+              <input 
+                type="text" 
+                placeholder="Type a message..." 
+                [(ngModel)]="newMessage"
+                (keyup.enter)="sendMessage()"
+                class="message-input"
+              />
+              <button class="send-msg-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+                Send
               </button>
-              <button class="memo-delete-action" (click)="deleteMom(mom.id)">
-                <span>🗑️ Delete</span>
-              </button>
+            </div>
+          </div>
+
+          <!-- No selection -->
+          <div class="no-chat-selected" *ngIf="!selectedEmployee">
+            <div class="select-prompt">
+              <div class="prompt-icon">💬</div>
+              <p>Select an employee to chat</p>
             </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
-</div>
+
+  <!-- MoM Popup (Like Chat Popup) -->
+  <div class="mom-popup-overlay" *ngIf="selectedProjectForMom" (click)="closeMomPopup()">
+    <div class="mom-popup" (click)="$event.stopPropagation()">
+      
+      <!-- Popup Header -->
+      <div class="mom-popup-header">
+        <div class="mom-popup-title">
+          <h3>{{ selectedProjectForMom.name }}</h3>
+          <span class="mom-project-status" [ngClass]="getProjectStatusClass(selectedProjectForMom)">
+            {{ getProjectStatusText(selectedProjectForMom) }}
+          </span>
+        </div>
+        <button class="close-mom-popup" (click)="closeMomPopup()">×</button>
+      </div>
+
+      <!-- Project Quick Info -->
+      <div class="project-quick-info">
+        <div class="project-quick-details">
+          <span class="quick-detail">
+            <strong>Type:</strong> {{ selectedProjectForMom.projectType || 'N/A' }}
+          </span>
+          <span class="quick-detail">
+            <strong>Dept:</strong> {{ selectedProjectForMom.department }}
+          </span>
+          <span class="quick-detail">
+            <strong>Client:</strong> {{ selectedProjectForMom.clientDetails?.companyName || getClientName(selectedProjectForMom.clientDetails) || 'Not specified' }}
+          </span>
+        </div>
+        <div class="project-dates">
+          <span class="quick-detail">
+            <strong>Date:</strong> {{ selectedProjectForMom.startDate | date:'shortDate' }} → {{ selectedProjectForMom.finishDate | date:'shortDate' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Add Memo Input -->
+      <div class="add-memo-container">
+        <div class="memo-input-header">
+          <span class="memo-input-title">Add New Memo</span>
+          <span class="memo-count">{{ getProjectMoms(selectedProjectForMom.id).length }} memo(s)</span>
+        </div>
+        <textarea 
+          [(ngModel)]="newMomText" 
+          placeholder="Type your memo here... (e.g., 'Meeting with client tomorrow', 'Need design assets')" 
+          class="memo-input"
+          rows="2"
+        ></textarea>
+        <div class="memo-actions">
+          <button 
+            class="memo-save-btn" 
+            (click)="addNewMom()"
+            [disabled]="!newMomText || !newMomText.trim()"
+          >
+            {{ editingMom ? 'Update Memo' : 'Add Memo' }}
+          </button>
+          <button 
+            class="memo-cancel-btn" 
+            (click)="cancelEditMom()"
+            *ngIf="editingMom"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Memos List (Card Style) -->
+      <div class="memos-container">
+        <h4 class="memos-title">Memo History</h4>
+        
+        <div class="no-memos-msg" *ngIf="getProjectMoms(selectedProjectForMom.id).length === 0">
+          <div class="empty-memos-icon">📝</div>
+          <p>No memos yet. Add your first memo above!</p>
+        </div>
+
+        <div class="memo-cards">
+          <div class="memo-card" *ngFor="let mom of getProjectMoms(selectedProjectForMom.id)">
+            <div class="memo-card-content">
+              {{ mom.content }}
+            </div>
+            <div class="memo-card-footer">
+              <span class="memo-date">{{ mom.date | date:'MMM d, h:mm a' }}</span>
+              <div class="memo-card-actions">
+                <button class="memo-edit-action" (click)="startEditMom(mom)">
+                  <span>✏️ Edit</span>
+                </button>
+                <button class="memo-delete-action" (click)="deleteMom(mom.id)">
+                  <span>🗑️ Delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
