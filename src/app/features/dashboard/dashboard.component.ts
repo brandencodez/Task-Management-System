@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProjectService } from '../projects/project.service';
 import { Project } from '../../shared/models/project.model';
-import { EmployeeService } from '../employees/employee.service'; // Add this line
-import { UserService } from '../../shared/services/user.service';
+import { EmployeeService } from '../employees/employee.service';
+import { ChatService } from '../../shared/services/chat.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,12 +24,13 @@ export class DashboardComponent implements OnInit {
   warning: Project[] = [];
   overdue: Project[] = [];
 
-    constructor(
+  constructor(
     private projectService: ProjectService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private chatService: ChatService
   ) {
-    this.loadChatMessages();
     this.loadEmployeesFromService();
+    this.initializeChat();
   }
 
   ngOnInit() {
@@ -96,15 +97,15 @@ export class DashboardComponent implements OnInit {
     return this.allProjects.length;
   }
 
-filtered(list: Project[]) {
-  if (!this.searchTerm) return list;
+  filtered(list: Project[]) {
+    if (!this.searchTerm) return list;
 
-  const term = this.searchTerm.toLowerCase().trim();
-  
-  return list.filter(p =>
-    p.department?.toLowerCase().includes(term)
-  );
-}
+    const term = this.searchTerm.toLowerCase().trim();
+    
+    return list.filter(p =>
+      p.department?.toLowerCase().includes(term)
+    );
+  }
 
   // Helper to check if a project is overdue
   isOverdue(project: Project): boolean {
@@ -132,15 +133,15 @@ filtered(list: Project[]) {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-    // ====================
+  // ====================
   // CHAT SYSTEM
   // ====================
   employeeSearch = '';
   newMessage = '';
   showChatPanel = false;
   selectedEmployee: any = null;
-  chatMessages: any[] = [];
   employees: any[] = [];
+  currentUser = { id: 'admin', name: 'Admin', role: 'admin' as 'admin' | 'employee' };
 
   // Load real employees from your EmployeeService
   loadEmployeesFromService() {
@@ -148,52 +149,59 @@ filtered(list: Project[]) {
       // Get all employees from your service
       const allEmployees = this.employeeService.getEmployees();
       
-      // Filter out the current admin user (optional)
-      // You might want to exclude the current logged-in admin
       this.employees = allEmployees.map(emp => ({
         id: emp.id,
         name: emp.name,
         department: emp.department,
         position: emp.position,
-        email: emp.email
+        email: emp.email,
+        role: 'employee' as 'admin' | 'employee'
       }));
       
       // If no employees found, add some defaults
       if (this.employees.length === 0) {
         this.employees = [
-          { id: '1', name: 'Development Team', department: 'Development', position: 'Team' },
-          { id: '2', name: 'Marketing Team', department: 'Marketing', position: 'Team' },
-          { id: '3', name: 'HR Team', department: 'HR', position: 'Team' }
+          { id: '1', name: 'Development Team', department: 'Development', position: 'Team', role: 'employee' as 'admin' | 'employee' },
+          { id: '2', name: 'Marketing Team', department: 'Marketing', position: 'Team', role: 'employee' as 'admin' | 'employee' },
+          { id: '3', name: 'HR Team', department: 'HR', position: 'Team', role: 'employee' as 'admin' | 'employee' }
         ];
       }
-      
-      // Initialize chat messages for each employee if none exist
-      this.initializeDefaultMessages();
       
     } catch (error) {
       console.error('Error loading employees:', error);
       this.employees = [
-        { id: 'temp1', name: 'Employee 1', department: 'Development' },
-        { id: 'temp2', name: 'Employee 2', department: 'Marketing' }
+        { id: 'temp1', name: 'Employee 1', department: 'Development', role: 'employee' as 'admin' | 'employee' },
+        { id: 'temp2', name: 'Employee 2', department: 'Marketing', role: 'employee' as 'admin' | 'employee' }
       ];
     }
   }
 
-  // Initialize default welcome messages
-  initializeDefaultMessages() {
-    if (this.chatMessages.length === 0) {
-      this.employees.forEach(emp => {
-        const welcomeMsg = {
-          id: Date.now() + emp.id,
-          sender: 'employee',
-          employeeId: emp.id,
-          content: `Hello! I'm ${emp.name} from ${emp.department} department.`,
-          timestamp: new Date(Date.now() - 86400000), // Yesterday
-          read: false
-        };
-        this.chatMessages.push(welcomeMsg);
-      });
-      this.saveChatMessages();
+  // Initialize chat
+  initializeChat() {
+    // Set admin as current user
+    this.chatService.setCurrentUser('admin', 'Admin', 'admin');
+    
+    // Check if we need to create welcome messages
+    const messages = this.chatService.getAllMessages();
+    if (messages.length === 0 && this.employees.length > 0) {
+      // Create welcome messages from employees to admin
+      setTimeout(() => {
+        this.employees.forEach(emp => {
+          const welcomeMsg = {
+            id: Date.now().toString() + emp.id,
+            senderId: emp.id,
+            senderName: emp.name,
+            senderRole: 'employee' as 'admin' | 'employee',
+            receiverId: 'admin',
+            receiverName: 'Admin',
+            receiverRole: 'admin' as 'admin' | 'employee',
+            content: `Hello Admin! I'm ${emp.name} from ${emp.department} department, ready to work.`,
+            timestamp: new Date(),
+            read: false
+          };
+          this.chatService.sendMessage(welcomeMsg);
+        });
+      }, 1000);
     }
   }
 
@@ -206,47 +214,27 @@ filtered(list: Project[]) {
 
   selectEmployee(employee: any) {
     this.selectedEmployee = employee;
-    this.markMessagesAsRead(employee.id);
+    this.chatService.markMessagesAsRead('admin', employee.id);
   }
 
   sendMessage() {
     if (!this.newMessage.trim() || !this.selectedEmployee) return;
 
     const message = {
-      id: Date.now(),
-      sender: 'admin',
-      employeeId: this.selectedEmployee.id,
+      id: Date.now().toString(),
+      senderId: 'admin',
+      senderName: 'Admin',
+      senderRole: 'admin' as 'admin' | 'employee',
+      receiverId: this.selectedEmployee.id,
+      receiverName: this.selectedEmployee.name,
+      receiverRole: 'employee' as 'admin' | 'employee',
       content: this.newMessage.trim(),
       timestamp: new Date(),
-      read: true
+      read: false
     };
 
-    this.chatMessages.push(message);
-    this.saveChatMessages();
+    this.chatService.sendMessage(message);
     this.newMessage = '';
-    
-    // Optional: Simulate employee reply after 1-3 seconds
-    setTimeout(() => {
-      const responses = [
-        "Got it, thanks!",
-        "I'll work on that right away.",
-        "Can you provide more details?",
-        "Noted. Will update you soon.",
-        "Thanks for the information!"
-      ];
-      
-      const reply = {
-        id: Date.now() + 1,
-        sender: 'employee',
-        employeeId: this.selectedEmployee.id,
-        content: `${this.selectedEmployee.name}: ${responses[Math.floor(Math.random() * responses.length)]}`,
-        timestamp: new Date(),
-        read: false
-      };
-      
-      this.chatMessages.push(reply);
-      this.saveChatMessages();
-    }, 1000 + Math.random() * 2000);
   }
 
   get filteredEmployees() {
@@ -254,90 +242,44 @@ filtered(list: Project[]) {
     const term = this.employeeSearch.toLowerCase().trim();
     return this.employees.filter(emp =>
       emp.name.toLowerCase().includes(term) ||
-      (emp.department && emp.department.toLowerCase().includes(term)) ||
-      (emp.position && emp.position.toLowerCase().includes(term))
+      (emp.department && emp.department.toLowerCase().includes(term))
     );
   }
 
-  getMessagesWithEmployee(employeeId: string) {
-    return this.chatMessages
-      .filter(msg => msg.employeeId === employeeId)
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  getMessagesWithEmployee() {
+    if (!this.selectedEmployee) return [];
+    return this.chatService.getMessagesBetween('admin', this.selectedEmployee.id);
   }
 
   getLastMessage(employeeId: string): string {
-    const messages = this.getMessagesWithEmployee(employeeId);
-    if (messages.length === 0) return 'No messages yet';
-    
-    const lastMsg = messages[messages.length - 1];
-    // Extract just the message content without sender name
-    const content = lastMsg.content;
-    // If message contains colon (from formatted replies), take the part after colon
-    const messageText = content.includes(': ') ? content.split(': ')[1] : content;
-    
-    return messageText.length > 25 
-      ? messageText.substring(0, 25) + '...' 
-      : messageText;
+    return this.chatService.getLastMessage('admin', employeeId);
   }
 
   getLastMessageTime(employeeId: string): string {
-    const messages = this.getMessagesWithEmployee(employeeId);
-    if (messages.length === 0) return '';
+    const lastTime = this.chatService.getLastMessageTime('admin', employeeId);
+    if (lastTime.getTime() === 0) return '';
     
-    const lastMsg = messages[messages.length - 1];
     const now = new Date();
-    const msgTime = new Date(lastMsg.timestamp);
-    const diffMs = now.getTime() - msgTime.getTime();
+    const diffMs = now.getTime() - lastTime.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    if (diffMins < 1) return 'Just now';
+    if (diffMins < 1) return 'Now';
     if (diffMins < 60) return `${diffMins}m`;
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays < 7) return `${diffDays}d`;
-    return msgTime.toLocaleDateString();
+    return lastTime.toLocaleDateString();
   }
 
   getUnreadCount(employeeId: string): number {
-    return this.chatMessages.filter(msg => 
-      msg.employeeId === employeeId && 
-      msg.sender === 'employee' && 
-      !msg.read
-    ).length;
+    return this.chatService.getUnreadCountFrom('admin', employeeId);
   }
 
   get unreadCount(): number {
-    return this.employees.reduce((total, emp) => 
-      total + this.getUnreadCount(emp.id), 0
-    );
+    return this.chatService.getUnreadCount('admin');
   }
 
-  markMessagesAsRead(employeeId: string) {
-    this.chatMessages.forEach(msg => {
-      if (msg.employeeId === employeeId && msg.sender === 'employee') {
-        msg.read = true;
-      }
-    });
-    this.saveChatMessages();
-  }
-
-  loadChatMessages() {
-    const saved = localStorage.getItem('admin_chat_messages');
-    this.chatMessages = saved ? JSON.parse(saved) : [];
-  }
-
-  saveChatMessages() {
-    localStorage.setItem('admin_chat_messages', JSON.stringify(this.chatMessages));
-  }
-
-  // Optional: Clear all chat history
-  clearChatHistory() {
-    if (confirm('Clear all chat messages?')) {
-      this.chatMessages = [];
-      this.saveChatMessages();
-    }
-  }
   // ====================
   // MOM (Memo of Moment) SYSTEM
   // ====================
@@ -378,7 +320,6 @@ filtered(list: Project[]) {
   }
 
   // Helper to extract client name from clientDetails
-    // Helper to extract client name from clientDetails
   getClientName(clientDetails: any): string {
     if (!clientDetails) return 'Not specified';
     

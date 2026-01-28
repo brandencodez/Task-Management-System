@@ -205,10 +205,10 @@
 
           <div class="messages-area">
             <div 
-              *ngFor="let msg of getMessagesWithEmployee(selectedEmployee.id)"
+              *ngFor="let msg of getMessagesWithEmployee()"
               class="single-message"
-              [class.sent-msg]="msg.sender === 'admin'"
-              [class.received-msg]="msg.sender === 'employee'"
+              [class.sent-msg]="msg.senderId === 'admin'"
+              [class.received-msg]="msg.senderId !== 'admin'"
             >
               <div class="msg-content">{{ msg.content }}</div>
               <div class="msg-time">{{ msg.timestamp | date:'shortTime' }}</div>

@@ -73,4 +73,135 @@
       }
     </div>
   }
+  <!-- Floating Chat Button -->
+<div class="chat-container">
+  <button class="chat-toggle-btn" (click)="toggleChatPanel()">
+    <span class="chat-icon">💬</span>
+    <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+  </button>
+
+  <!-- Chat Panel Overlay -->
+  <div class="chat-overlay" *ngIf="showChatPanel">
+    <div class="chat-panel">
+      <div class="chat-header">
+        <h4>Team Chat</h4>
+        <button class="close-chat" (click)="toggleChatPanel()">×</button>
+      </div>
+      
+      <div class="chat-content">
+        <!-- Left: Chat Participants -->
+        <div class="chat-sidebar">
+          <div class="participant-section">
+            <h5>Admin</h5>
+            <div 
+              class="chat-participant-item"
+              [class.active]="selectedParticipant?.id === 'admin'"
+              (click)="selectParticipant(adminParticipant)"
+            >
+              <div class="participant-avatar">A</div>
+              <div class="participant-info">
+                <strong>Admin</strong>
+                <span class="participant-role">Administrator</span>
+                <span class="last-msg">{{ getLastMessage('admin') }}</span>
+              </div>
+              <div class="participant-indicators">
+                <span class="unread-small" *ngIf="getUnreadCount('admin') > 0">
+                  {{ getUnreadCount('admin') }}
+                </span>
+                <span class="time-small">{{ getLastMessageTime('admin') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="participant-section" *ngIf="otherEmployees.length > 0">
+            <h5>Colleagues</h5>
+            <input 
+              type="text" 
+              placeholder="Search colleagues..." 
+              [(ngModel)]="employeeSearch"
+              class="sidebar-search"
+            />
+            
+            <div class="participant-list">
+              <div 
+                *ngFor="let emp of filteredEmployees"
+                class="chat-participant-item"
+                [class.active]="selectedParticipant?.id === emp.id"
+                (click)="selectParticipant(emp)"
+              >
+                <div class="participant-avatar">{{ emp.name.charAt(0) }}</div>
+                <div class="participant-info">
+                  <strong>{{ emp.name }}</strong>
+                  <span class="participant-dept">{{ emp.department }}</span>
+                  <span class="last-msg">{{ getLastMessage(emp.id) }}</span>
+                </div>
+                <div class="participant-indicators">
+                  <span class="unread-small" *ngIf="getUnreadCount(emp.id) > 0">
+                    {{ getUnreadCount(emp.id) }}
+                  </span>
+                  <span class="time-small">{{ getLastMessageTime(emp.id) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Chat Messages -->
+        <div class="chat-main" *ngIf="selectedParticipant">
+          <div class="chat-with-header">
+            <div class="current-chat-avatar">
+              {{ selectedParticipant.id === 'admin' ? 'A' : selectedParticipant.name.charAt(0) }}
+            </div>
+            <div>
+              <strong>{{ selectedParticipant.name }}</strong>
+              <span class="current-dept" *ngIf="selectedParticipant.department">
+                {{ selectedParticipant.department }}
+              </span>
+              <span class="current-role" *ngIf="selectedParticipant.role">
+                {{ selectedParticipant.role }}
+              </span>
+            </div>
+          </div>
+
+          <div class="messages-area">
+            <div 
+              *ngFor="let msg of getMessagesWithParticipant()"
+              class="single-message"
+              [class.sent-msg]="msg.senderId === chatCurrentUser?.id"
+              [class.received-msg]="msg.senderId !== chatCurrentUser?.id"
+            >
+              <div class="msg-content">{{ msg.content }}</div>
+              <div class="msg-time">{{ msg.timestamp | date:'shortTime' }}</div>
+              <div class="msg-sender" *ngIf="msg.senderId !== chatCurrentUser?.id">
+                {{ msg.senderName }}
+              </div>
+            </div>
+          </div>
+
+          <div class="message-input-area">
+            <input 
+              type="text" 
+              placeholder="Type a message..." 
+              [(ngModel)]="newMessage"
+              (keyup.enter)="sendMessage()"
+              class="message-input"
+            />
+            <button class="send-msg-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+              Send
+            </button>
+          </div>
+        </div>
+
+        <!-- No selection -->
+        <div class="no-chat-selected" *ngIf="!selectedParticipant">
+          <div class="select-prompt">
+            <div class="prompt-icon">💬</div>
+            <p>Select someone to start chatting</p>
+            <small>Chat with Admin or your colleagues</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
