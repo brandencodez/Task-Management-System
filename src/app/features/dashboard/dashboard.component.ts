@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProjectService } from '../projects/project.service';
 import { Project } from '../../shared/models/project.model';
-import { EmployeeService } from '../employees/employee.service'; // Add this line
+import { EmployeeService } from '../employees/employee.service';
 import { UserService } from '../../shared/services/user.service';
 
 @Component({
@@ -24,7 +24,7 @@ export class DashboardComponent implements OnInit {
   warning: Project[] = [];
   overdue: Project[] = [];
 
-    constructor(
+  constructor(
     private projectService: ProjectService,
     private employeeService: EmployeeService
   ) {
@@ -96,15 +96,15 @@ export class DashboardComponent implements OnInit {
     return this.allProjects.length;
   }
 
-filtered(list: Project[]) {
-  if (!this.searchTerm) return list;
+  filtered(list: Project[]) {
+    if (!this.searchTerm) return list;
 
-  const term = this.searchTerm.toLowerCase().trim();
-  
-  return list.filter(p =>
-    p.department?.toLowerCase().includes(term)
-  );
-}
+    const term = this.searchTerm.toLowerCase().trim();
+    
+    return list.filter(p =>
+      p.department?.toLowerCase().includes(term)
+    );
+  }
 
   // Helper to check if a project is overdue
   isOverdue(project: Project): boolean {
@@ -132,7 +132,7 @@ filtered(list: Project[]) {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-    // ====================
+  // ====================
   // CHAT SYSTEM
   // ====================
   employeeSearch = '';
@@ -338,6 +338,7 @@ filtered(list: Project[]) {
       this.saveChatMessages();
     }
   }
+
   // ====================
   // MOM (Memo of Moment) SYSTEM
   // ====================
@@ -378,7 +379,6 @@ filtered(list: Project[]) {
   }
 
   // Helper to extract client name from clientDetails
-    // Helper to extract client name from clientDetails
   getClientName(clientDetails: any): string {
     if (!clientDetails) return 'Not specified';
     

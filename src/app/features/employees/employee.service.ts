@@ -32,7 +32,9 @@ export class EmployeeService {
           department: 'Development',
           position: 'Senior Developer',
           joinDate: new Date('2023-01-15'),
-          status: 'active'
+          HomeAddress: '',
+          status: 'active',
+          IssuedItems: ''
         },
         {
           id: '2',
@@ -42,7 +44,9 @@ export class EmployeeService {
           department: 'HR',
           position: 'HR Manager',
           joinDate: new Date('2022-06-20'),
-          status: 'active'
+          HomeAddress: '',
+          status: 'active',
+          IssuedItems: ''
         }
       ];
       this.saveToStorage();

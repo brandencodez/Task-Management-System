@@ -115,7 +115,7 @@
 .info-label {
   font-weight: 500;
   color: var(--text-secondary);
-  min-width: 100px;
+  min-width: 110px;
 }
 
 .info-value {
@@ -227,3 +227,4 @@
     flex-direction: column;
   }
 }
+

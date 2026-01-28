@@ -72,7 +72,7 @@
             />
           </div>
 
-          <!-- Address (inline with company name) -->
+          <!-- Address -->
           <div class="form-group">
             <input 
               [(ngModel)]="currentProject.clientDetails.address" 
@@ -96,6 +96,28 @@
                     required
                   />
                 </div>
+
+                <!-- Designation -->
+                <div class="form-group contact-designation">
+                  <input 
+                    [(ngModel)]="currentProject.clientDetails.contacts[$index].designation" 
+                    [name]="'contactDesignation' + $index" 
+                    class="form-control"
+                    placeholder="Designation *"
+                    required
+                  />
+                </div>
+
+                <!-- Contact For -->
+                <div class="form-group contact-for">
+                  <input 
+                    [(ngModel)]="currentProject.clientDetails.contacts[$index]['contact for']" 
+                    [name]="'contactFor' + $index" 
+                    class="form-control"
+                    placeholder="Contact For *"
+                    required
+                  />
+                </div>
                 
                 <!-- Email -->
                 <div class="form-group contact-email">
@@ -105,6 +127,7 @@
                     [name]="'contactEmail' + $index" 
                     class="form-control"
                     placeholder="Email"
+                    required
                   />
                 </div>
                 
@@ -115,10 +138,11 @@
                     [name]="'contactPhone' + $index" 
                     class="form-control"
                     placeholder="Phone"
+                    required
                   />
                 </div>
                 
-                <!-- Remove Button (only if more than 1 contact) -->
+                <!-- Remove Button -->
                 @if (currentProject.clientDetails.contacts.length > 1) {
                   <button type="button" class="btn-remove-contact" (click)="removeClientContact($index)">
                     ×
@@ -210,10 +234,11 @@
                 <div class="client-details">
                   <p><strong>Company:</strong> {{ project.clientDetails.companyName || 'Not specified' }}</p>
                   @for (contact of project.clientDetails.contacts; track $index) {
-                    <p><strong>Contact {{ $index + 1 }}:</strong> {{ contact.name }} 
-                      @if (contact.email || contact.phone) {
-                        ({{ contact.email || contact.phone }})
-                      }
+                    <p>
+                      <strong>Contact {{ $index + 1 }}:</strong> {{ contact.name }}
+                      @if (contact.designation) { ({{ contact.designation }}) } 
+                      @if (contact['contact for']) { - {{ contact['contact for'] }} }
+                      @if (contact.email || contact.phone) { ({{ contact.email || contact.phone }}) }
                     </p>
                   }
                   @if (project.clientDetails.address) {
