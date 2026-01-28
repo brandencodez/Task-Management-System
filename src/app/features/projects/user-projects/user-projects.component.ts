@@ -23,11 +23,28 @@ export class UserProjectsComponent implements OnInit {
   currentUser: string | null = null;
   userDepartment: string | null = null;
 
+  // ====================
+  // CHAT SYSTEM PROPERTIES
+  // ====================
+  showChatPanel = false;
+  selectedParticipant: any = null;
+  newMessage = '';
+  employeeSearch = '';
+  otherEmployees: any[] = [];
+  chatCurrentUser: any = null;
+  
+  adminParticipant = {
+    id: 'admin',
+    name: 'Admin',
+    role: 'admin' as 'admin'
+  };
+
   constructor(
     private projectService: ProjectService,
     private userService: UserService,
     private employeeService: EmployeeService,
-    private router: Router
+    private router: Router,
+    private chatService: ChatService // ADD THIS
   ) {}
 
   ngOnInit(): void {
@@ -39,6 +56,13 @@ export class UserProjectsComponent implements OnInit {
     }
 
     this.loadUserProjects();
+    this.initializeChatUser();
+    this.loadOtherEmployees();
+    
+    // Auto-select admin for chat
+    if (!this.selectedParticipant) {
+      this.selectParticipant(this.adminParticipant);
+    }
   }
 
   private loadUserProjects(): void {
