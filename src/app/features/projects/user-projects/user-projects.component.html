@@ -1,16 +1,12 @@
 <div class="user-projects-container">
-
-  <!-- HEADER -->
   <div class="header-section">
     <div class="welcome-header">
       <h2>Welcome {{ currentUser || 'User' }}!</h2>
       <p class="subtitle">Your assigned projects and tasks</p>
     </div>
-
     <button (click)="logout()" class="btn-logout">Logout</button>
   </div>
-
-  <!-- DEPARTMENT -->
+  
   @if (userDepartment) {
     <div class="department-badge">
       <span class="dept-label">Department:</span>
@@ -18,84 +14,194 @@
     </div>
   }
 
-  <!-- 🔹 ROUTED CONTENT (My Projects / Work Entry) -->
-  <router-outlet></router-outlet>
-
-  <!-- 🔹 DEFAULT VIEW: MY PROJECTS -->
   @if (projects.length > 0) {
     <div class="projects-header">
       <h3>Your Projects</h3>
-      <span class="project-count">
-        {{ projects.length }} project{{ projects.length !== 1 ? 's' : '' }}
-      </span>
+      <span class="project-count">{{ projects.length }} project{{ projects.length !== 1 ? 's' : '' }}</span>
     </div>
-
+    
     <div class="projects-grid">
       @for (project of projects; track project.id) {
         <div class="project-card">
-
           <div class="project-header">
             <h4>{{ project.name }}</h4>
-            <span class="status-badge {{ project.status.toLowerCase() }}">
-              {{ project.status }}
-            </span>
+            <span class="status-badge {{ project.status.toLowerCase() }}">{{ project.status }}</span>
           </div>
-
+          
           <div class="project-details">
             <p><strong>Type:</strong> {{ project.projectType || 'Not specified' }}</p>
-
             <div class="client-details">
-              <p>
-                <strong>Company:</strong>
-                {{ project.clientDetails.companyName || 'Not specified' }}
-              </p>
-
+              <p><strong>Company:</strong> {{ project.clientDetails.companyName || 'Not specified' }}</p>
               @for (contact of project.clientDetails.contacts; track $index) {
-                <p>
-                  <strong>Contact {{ $index + 1 }}:</strong>
-                  {{ contact.name }}
+                <p><strong>Contact {{ $index + 1 }}:</strong> {{ contact.name }}
                   @if (contact.email || contact.phone) {
                     ({{ contact.email || contact.phone }})
                   }
                 </p>
               }
-
               @if (project.clientDetails.address) {
                 <p><strong>Address:</strong> {{ project.clientDetails.address }}</p>
               }
             </div>
-
-            <p>
-              <strong>Duration:</strong>
-              {{ project.startDate }} to {{ project.finishDate }}
-            </p>
-
-            <p>
-              <strong>Brief:</strong>
-              {{ project.projectBrief || 'No brief provided' }}
-            </p>
+            <p><strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}</p>
+            <p><strong>Brief:</strong> {{ project.projectBrief || 'No brief provided' }}</p>
           </div>
-
         </div>
       }
     </div>
-  }
-
-  <!-- EMPTY STATES -->
-  @else {
+  } @else {
     <div class="no-projects">
       @if (userDepartment) {
         <div class="empty-state">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-5.656-3.656L12 14m-4 6v-2a4 4 0 0 1 5.656-3.656L12 14m-4 6v-2a4 4 0 0 1 5.656-3.656L12 14"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
           <h3>No Projects Assigned</h3>
           <p>No projects assigned to your department ({{ userDepartment }}).</p>
         </div>
       } @else {
         <div class="empty-state">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+          </svg>
           <h3>Employee Record Not Found</h3>
           <p>No employee record found for your account.</p>
         </div>
       }
     </div>
   }
+  <!-- Floating Chat Button -->
+<div class="chat-container">
+  <button class="chat-toggle-btn" (click)="toggleChatPanel()">
+    <span class="chat-icon">💬</span>
+    <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+  </button>
 
+  <!-- Chat Panel Overlay -->
+  <div class="chat-overlay" *ngIf="showChatPanel">
+    <div class="chat-panel">
+      <div class="chat-header">
+        <h4>Team Chat</h4>
+        <button class="close-chat" (click)="toggleChatPanel()">×</button>
+      </div>
+      
+      <div class="chat-content">
+        <!-- Left: Chat Participants -->
+        <div class="chat-sidebar">
+          <div class="participant-section">
+            <h5>Admin</h5>
+            <div 
+              class="chat-participant-item"
+              [class.active]="selectedParticipant?.id === 'admin'"
+              (click)="selectParticipant(adminParticipant)"
+            >
+              <div class="participant-avatar">A</div>
+              <div class="participant-info">
+                <strong>Admin</strong>
+                <span class="participant-role">Administrator</span>
+                <span class="last-msg">{{ getLastMessage('admin') }}</span>
+              </div>
+              <div class="participant-indicators">
+                <span class="unread-small" *ngIf="getUnreadCount('admin') > 0">
+                  {{ getUnreadCount('admin') }}
+                </span>
+                <span class="time-small">{{ getLastMessageTime('admin') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="participant-section" *ngIf="otherEmployees.length > 0">
+            <h5>Colleagues</h5>
+            <input 
+              type="text" 
+              placeholder="Search colleagues..." 
+              [(ngModel)]="employeeSearch"
+              class="sidebar-search"
+            />
+            
+            <div class="participant-list">
+              <div 
+                *ngFor="let emp of filteredEmployees"
+                class="chat-participant-item"
+                [class.active]="selectedParticipant?.id === emp.id"
+                (click)="selectParticipant(emp)"
+              >
+                <div class="participant-avatar">{{ emp.name.charAt(0) }}</div>
+                <div class="participant-info">
+                  <strong>{{ emp.name }}</strong>
+                  <span class="participant-dept">{{ emp.department }}</span>
+                  <span class="last-msg">{{ getLastMessage(emp.id) }}</span>
+                </div>
+                <div class="participant-indicators">
+                  <span class="unread-small" *ngIf="getUnreadCount(emp.id) > 0">
+                    {{ getUnreadCount(emp.id) }}
+                  </span>
+                  <span class="time-small">{{ getLastMessageTime(emp.id) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Chat Messages -->
+        <div class="chat-main" *ngIf="selectedParticipant">
+          <div class="chat-with-header">
+            <div class="current-chat-avatar">
+              {{ selectedParticipant.id === 'admin' ? 'A' : selectedParticipant.name.charAt(0) }}
+            </div>
+            <div>
+              <strong>{{ selectedParticipant.name }}</strong>
+              <span class="current-dept" *ngIf="selectedParticipant.department">
+                {{ selectedParticipant.department }}
+              </span>
+              <span class="current-role" *ngIf="selectedParticipant.role">
+                {{ selectedParticipant.role }}
+              </span>
+            </div>
+          </div>
+
+          <div class="messages-area">
+            <div 
+              *ngFor="let msg of getMessagesWithParticipant()"
+              class="single-message"
+              [class.sent-msg]="msg.senderId === chatCurrentUser?.id"
+              [class.received-msg]="msg.senderId !== chatCurrentUser?.id"
+            >
+              <div class="msg-content">{{ msg.content }}</div>
+              <div class="msg-time">{{ msg.timestamp | date:'shortTime' }}</div>
+              <div class="msg-sender" *ngIf="msg.senderId !== chatCurrentUser?.id">
+                {{ msg.senderName }}
+              </div>
+            </div>
+          </div>
+
+          <div class="message-input-area">
+            <input 
+              type="text" 
+              placeholder="Type a message..." 
+              [(ngModel)]="newMessage"
+              (keyup.enter)="sendMessage()"
+              class="message-input"
+            />
+            <button class="send-msg-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+              Send
+            </button>
+          </div>
+        </div>
+
+        <!-- No selection -->
+        <div class="no-chat-selected" *ngIf="!selectedParticipant">
+          <div class="select-prompt">
+            <div class="prompt-icon">💬</div>
+            <p>Select someone to start chatting</p>
+            <small>Chat with Admin or your colleagues</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
