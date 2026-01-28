@@ -99,14 +99,32 @@
 
                 <!-- Designation -->
                 <div class="form-group contact-designation">
-                  <input 
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index].designation" 
-                    [name]="'contactDesignation' + $index" 
-                    class="form-control"
-                    placeholder="Designation *"
-                    required
-                  />
-                </div>
+  <select
+    [(ngModel)]="currentProject.clientDetails.contacts[$index].designation"
+    [name]="'contactDesignation' + $index"
+    class="form-control"
+    required
+  >
+    <option value="">Select Designation *</option>
+
+    <!-- Most common defaults -->
+    <option value="Owner">Owner</option>
+    <option value="Founder">Founder</option>
+    <option value="CEO">CEO</option>
+    <option value="Managing Director">Managing Director</option>
+    <option value="Director">Director</option>
+    <option value="Manager">Manager</option>
+    <option value="Project Manager">Project Manager</option>
+    <option value="Team Lead">Team Lead</option>
+    <option value="Consultant">Consultant</option>
+    <option value="Administrator">Administrator</option>
+    <option value="Coordinator">Coordinator</option>
+
+    <!-- Fallback -->
+    <option value="Other">Other</option>
+  </select>
+</div>
+
 
                 <!-- Contact For -->
                 <div class="form-group contact-for">
@@ -126,7 +144,7 @@
                     [(ngModel)]="currentProject.clientDetails.contacts[$index].email" 
                     [name]="'contactEmail' + $index" 
                     class="form-control"
-                    placeholder="Email"
+                    placeholder="Email *"
                     required
                   />
                 </div>
@@ -137,7 +155,7 @@
                     [(ngModel)]="currentProject.clientDetails.contacts[$index].phone" 
                     [name]="'contactPhone' + $index" 
                     class="form-control"
-                    placeholder="Phone"
+                    placeholder="Phone *"
                     required
                   />
                 </div>

@@ -333,3 +333,11 @@
     margin-top: 0.5rem;
   }
 }
+
+.contact-designation select {
+  font-size: 0.800rem;
+  padding: 0.625rem 0.875rem;
+  min-height: 45px;
+  min-width: 174px;
+  box-sizing: border-box;
+}
