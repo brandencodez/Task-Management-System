@@ -1,0 +1,79 @@
+<div class="reminder-list-container">
+
+  <!-- 🔔 SCHEDULE MEETING FORM -->
+  <div class="schedule-reminder-section">
+    <app-reminder-form></app-reminder-form>
+  </div>
+
+  <!-- 🔍 SEARCH FILTER -->
+  <div class="reminder-search">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Search by title, employee, client, department, or status..."
+      [(ngModel)]="searchText"
+    />
+  </div>
+
+  <!-- 🔥 HARD SPACER -->
+  <div class="section-spacer"></div>
+
+  <!-- 🔔 SCHEDULED MEETINGS -->
+  <div class="scheduled-meetings-section">
+
+    <h2 class="title">🔔 Scheduled Meetings</h2>
+
+    <!-- EMPTY STATE -->
+    <p class="empty-text" *ngIf="filteredReminders.length === 0">
+      No meetings found.
+    </p>
+
+    <!-- REMINDER CARDS -->
+    <div
+      class="reminder-card"
+      *ngFor="let r of filteredReminders"
+    >
+
+      <!-- HEADER -->
+      <div class="header">
+        <div class="header-left">
+          <strong>{{ r.title }}</strong>
+          <span class="dept">{{ r.department }}</span>
+        </div>
+
+        <!-- 🟢 STATUS BADGE -->
+        <span
+          class="status-badge"
+          [ngClass]="getReminderStatus(r).toLowerCase()"
+        >
+          {{ getReminderStatus(r) }}
+        </span>
+      </div>
+
+      <p class="purpose">{{ r.purpose }}</p>
+
+      <div class="meta">
+        <p><strong>Employee:</strong> {{ r.employeeName }}</p>
+        <p><strong>Client:</strong> {{ r.clientName }}</p>
+        <p><strong>Contact:</strong> {{ r.clientContact }}</p>
+        <p><strong>Meeting:</strong> {{ r.meetingDate }}</p>
+        <p><strong>Reminder:</strong> {{ r.remindOn }}</p>
+      </div>
+
+      <a
+        *ngIf="r.meetingLink"
+        [href]="r.meetingLink"
+        target="_blank"
+        class="meeting-link"
+      >
+        Join Meeting
+      </a>
+
+      <button class="delete-btn" (click)="delete(r.id)">
+        Delete
+      </button>
+    </div>
+
+  </div>
+
+</div>
