@@ -1,12 +1,13 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 
 import { ProjectService } from '../../../project.service';
 import { EmployeeService } from '../../../../employees/employee.service';
 import { UserService } from '../../../../../shared/services/user.service';
 import { Project } from '../../../../../shared/models/project.model';
-
+import { Employee } from '../../../../employees/employee.model';
 export interface WorkEntry {
   id: number;
   project: string;
@@ -19,13 +20,11 @@ export interface WorkEntry {
 @Component({
   selector: 'app-daily-work-entry',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './daily-work-entry.component.html',
   styleUrls: ['./daily-work-entry.component.css']
 })
 export class DailyWorkEntryComponent implements OnInit {
-
-  private STORAGE_KEY = 'daily_work_entries';
 
   @Output() entriesChange = new EventEmitter<WorkEntry[]>();
 
@@ -52,9 +51,7 @@ export class DailyWorkEntryComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadEntries();
     this.loadProjectsForLoggedUser();
-    this.emitEntries();
   }
 
   /* ===============================
@@ -64,21 +61,21 @@ export class DailyWorkEntryComponent implements OnInit {
     const currentUser = this.userService.getCurrentUser();
     if (!currentUser) return;
 
-    const employee = this.employeeService
-      .getEmployees()
-      .find((emp: any) =>
+    this.employeeService.getEmployees().subscribe((employees: Employee[]) => { 
+      const employee = employees.find((emp: Employee) => 
         emp.name.toLowerCase() === currentUser.toLowerCase()
       );
 
-    if (!employee) return;
+      if (!employee) return;
 
-    const department = employee.department.toLowerCase();
+      const department = employee.department.toLowerCase();
 
-    this.assignedProjects = this.projectService
-      .getProjects()
-      .filter((p: Project) =>
-        p.department?.toLowerCase() === department
-      );
+      this.projectService.getProjects().subscribe((projects: Project[]) => { 
+        this.assignedProjects = projects.filter((p: Project) => 
+          p.department?.toLowerCase() === department
+        );
+      });
+    });
   }
 
   /* ===============================

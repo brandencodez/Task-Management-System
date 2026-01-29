@@ -1,17 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ADD THIS
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http'; 
 import { ProjectService } from '../../projects/project.service';
 import { UserService } from '../../../shared/services/user.service';
 import { EmployeeService } from '../../employees/employee.service';
 import { Project } from '../../../shared/models/project.model';
 import { Router } from '@angular/router';
-import { ChatService } from '../../../shared/services/chat.service'; // ADD THIS
+import { ChatService } from '../../../shared/services/chat.service';
 
 @Component({
   selector: 'app-user-projects',
   standalone: true,
-  imports: [CommonModule, FormsModule], // ADD FormsModule HERE
+  imports: [CommonModule, FormsModule, HttpClientModule], 
   templateUrl: './user-projects.component.html',
   styleUrls: ['./user-projects.component.css']
 })
@@ -41,7 +42,7 @@ export class UserProjectsComponent implements OnInit {
     private userService: UserService,
     private employeeService: EmployeeService,
     private router: Router,
-    private chatService: ChatService // ADD THIS
+    private chatService: ChatService
   ) {}
 
   ngOnInit() {
@@ -50,7 +51,9 @@ export class UserProjectsComponent implements OnInit {
       this.router.navigate(['/user-login']);
       return;
     }
-    this.loadUserProjects();
+    
+    // Load data sequentially to ensure proper order
+    this.loadEmployeeAndProjects();
     this.initializeChatUser();
     this.loadOtherEmployees();
     
@@ -60,15 +63,37 @@ export class UserProjectsComponent implements OnInit {
     }
   }
 
-  loadUserProjects() {
-    const employees = this.employeeService.getEmployees();
-    const employee = employees.find(emp => emp.name === this.currentUser);
-    
-    if (employee) {
-      this.userDepartment = employee.department;
-      this.projects = this.projectService.getProjects()
-        .filter(project => project.department === this.userDepartment);
-    }
+ 
+  loadEmployeeAndProjects() {
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        const employee = employees.find(emp => emp.name === this.currentUser);
+        
+        if (employee) {
+          this.userDepartment = employee.department;
+          
+          this.projectService.getProjects().subscribe({
+            next: (projects) => {
+              this.projects = projects.filter(project => 
+                project.department === this.userDepartment
+              );
+              console.log('Projects loaded:', this.projects); // Debug
+            },
+            error: (error) => {
+              console.error('Error loading projects:', error);
+              this.projects = [];
+            }
+          });
+        } else {
+          console.warn('Current user not found in employees');
+          this.projects = [];
+        }
+      },
+      error: (error) => {
+        console.error('Error loading employees:', error);
+        this.projects = [];
+      }
+    });
   }
 
   logout() {
@@ -81,38 +106,51 @@ export class UserProjectsComponent implements OnInit {
   // ====================
 
   initializeChatUser() {
-    const employee = this.employeeService.getEmployees()
-      .find(emp => emp.name === this.currentUser);
-    
-    if (employee) {
-      this.chatCurrentUser = {
-        id: employee.id,
-        name: employee.name,
-        department: employee.department,
-        role: 'employee' as 'employee'
-      };
-      
-      this.chatService.setCurrentUser(
-        employee.id,
-        employee.name,
-        'employee'
-      );
-    }
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        const employee = employees.find(emp => emp.name === this.currentUser);
+        
+        if (employee) {
+          this.chatCurrentUser = {
+            id: employee.id.toString(),
+            name: employee.name,
+            department: employee.department,
+            role: 'employee' as 'employee'
+          };
+          
+          this.chatService.setCurrentUser(
+            employee.id.toString(),
+            employee.name,
+            'employee'
+          );
+        }
+      },
+      error: (error) => {
+        console.error('Error initializing chat user:', error);
+      }
+    });
   }
 
   loadOtherEmployees() {
     try {
-      const allEmployees = this.employeeService.getEmployees();
-      this.otherEmployees = allEmployees
-        .filter(emp => emp.name !== this.currentUser)
-        .map(emp => ({
-          id: emp.id,
-          name: emp.name,
-          department: emp.department,
-          role: 'employee' as 'employee'
-        }));
+      this.employeeService.getEmployees().subscribe({
+        next: (employees) => {
+ this.otherEmployees = employees
+            .filter(emp => emp.name !== this.currentUser)
+            .map(emp => ({
+              id: emp.id.toString(),
+              name: emp.name,
+              department: emp.department,
+              role: 'employee' as 'employee'
+            }));
+        },
+        error: (error) => {
+          console.error('Error loading other employees:', error);
+          this.otherEmployees = [];
+        }
+      });
     } catch (error) {
-      console.error('Error loading employees:', error);
+      console.error('Error in loadOtherEmployees:', error);
       this.otherEmployees = [];
     }
   }

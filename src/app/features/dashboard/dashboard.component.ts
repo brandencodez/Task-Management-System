@@ -1,17 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 import { ProjectService } from '../projects/project.service';
 import { Project } from '../../shared/models/project.model';
 import { EmployeeService } from '../employees/employee.service';
-import { ChatService } from '../../shared/services/chat.service';
-import { AdminService } from '../admins/admin.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
@@ -28,22 +26,19 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private projectService: ProjectService,
-    private employeeService: EmployeeService,
-    private chatService: ChatService,
-    private router: Router, 
-    private adminService: AdminService 
-  ) {
-    this.loadEmployeesFromService();
-    this.initializeChat();
-  }
+    private employeeService: EmployeeService
+  ) {}
 
   ngOnInit() {
     this.loadProjects();
+    this.loadEmployeesFromService();
   }
 
   loadProjects() {
-    this.allProjects = this.projectService.getProjects();
-    this.categorizeProjects();
+    this.projectService.getProjects().subscribe(projects => {
+      this.allProjects = projects;
+      this.categorizeProjects();
+    });
   }
 
   categorizeProjects() {
@@ -145,68 +140,18 @@ export class DashboardComponent implements OnInit {
   showChatPanel = false;
   selectedEmployee: any = null;
   employees: any[] = [];
-  currentUser = { id: 'admin', name: 'Admin', role: 'admin' as 'admin' | 'employee' };
 
   // Load real employees from your EmployeeService
   loadEmployeesFromService() {
-    try {
-      // Get all employees from your service
-      const allEmployees = this.employeeService.getEmployees();
-      
-      this.employees = allEmployees.map(emp => ({
+    this.employeeService.getEmployees().subscribe(employees => {
+      this.employees = employees.map(emp => ({
         id: emp.id,
         name: emp.name,
         department: emp.department,
         position: emp.position,
-        email: emp.email,
-        role: 'employee' as 'admin' | 'employee'
+        email: emp.email
       }));
-      
-      // If no employees found, add some defaults
-      if (this.employees.length === 0) {
-        this.employees = [
-          { id: '1', name: 'Development Team', department: 'Development', position: 'Team', role: 'employee' as 'admin' | 'employee' },
-          { id: '2', name: 'Marketing Team', department: 'Marketing', position: 'Team', role: 'employee' as 'admin' | 'employee' },
-          { id: '3', name: 'HR Team', department: 'HR', position: 'Team', role: 'employee' as 'admin' | 'employee' }
-        ];
-      }
-      
-    } catch (error) {
-      console.error('Error loading employees:', error);
-      this.employees = [
-        { id: 'temp1', name: 'Employee 1', department: 'Development', role: 'employee' as 'admin' | 'employee' },
-        { id: 'temp2', name: 'Employee 2', department: 'Marketing', role: 'employee' as 'admin' | 'employee' }
-      ];
-    }
-  }
-
-  // Initialize chat
-  initializeChat() {
-    // Set admin as current user
-    this.chatService.setCurrentUser('admin', 'Admin', 'admin');
-    
-    // Check if we need to create welcome messages
-    const messages = this.chatService.getAllMessages();
-    if (messages.length === 0 && this.employees.length > 0) {
-      // Create welcome messages from employees to admin
-      setTimeout(() => {
-        this.employees.forEach(emp => {
-          const welcomeMsg = {
-            id: Date.now().toString() + emp.id,
-            senderId: emp.id,
-            senderName: emp.name,
-            senderRole: 'employee' as 'admin' | 'employee',
-            receiverId: 'admin',
-            receiverName: 'Admin',
-            receiverRole: 'admin' as 'admin' | 'employee',
-            content: `Hello Admin! I'm ${emp.name} from ${emp.department} department, ready to work.`,
-            timestamp: new Date(),
-            read: false
-          };
-          this.chatService.sendMessage(welcomeMsg);
-        });
-      }, 1000);
-    }
+    });
   }
 
   toggleChatPanel() {
@@ -218,26 +163,11 @@ export class DashboardComponent implements OnInit {
 
   selectEmployee(employee: any) {
     this.selectedEmployee = employee;
-    this.chatService.markMessagesAsRead('admin', employee.id);
   }
 
   sendMessage() {
     if (!this.newMessage.trim() || !this.selectedEmployee) return;
-
-    const message = {
-      id: Date.now().toString(),
-      senderId: 'admin',
-      senderName: 'Admin',
-      senderRole: 'admin' as 'admin' | 'employee',
-      receiverId: this.selectedEmployee.id,
-      receiverName: this.selectedEmployee.name,
-      receiverRole: 'employee' as 'admin' | 'employee',
-      content: this.newMessage.trim(),
-      timestamp: new Date(),
-      read: false
-    };
-
-    this.chatService.sendMessage(message);
+    // localStorage chat simulation:
     this.newMessage = '';
   }
 
@@ -246,42 +176,34 @@ export class DashboardComponent implements OnInit {
     const term = this.employeeSearch.toLowerCase().trim();
     return this.employees.filter(emp =>
       emp.name.toLowerCase().includes(term) ||
-      (emp.department && emp.department.toLowerCase().includes(term))
+      (emp.department && emp.department.toLowerCase().includes(term)) ||
+      (emp.position && emp.position.toLowerCase().includes(term))
     );
   }
 
-  getMessagesWithEmployee() {
-    if (!this.selectedEmployee) return [];
-    return this.chatService.getMessagesBetween('admin', this.selectedEmployee.id);
-  }
+  getMessagesWithEmployee(employeeId?: string) {
+  if (!employeeId || !this.selectedEmployee) return [];
+  
+  // localStorage chat simulation:
+  const messages = JSON.parse(localStorage.getItem('admin_chat_messages') || '[]');
+  return messages.filter((msg: any) => msg.employeeId === employeeId)
+    .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+}
 
   getLastMessage(employeeId: string): string {
-    return this.chatService.getLastMessage('admin', employeeId);
+    return 'No messages yet';
   }
 
   getLastMessageTime(employeeId: string): string {
-    const lastTime = this.chatService.getLastMessageTime('admin', employeeId);
-    if (lastTime.getTime() === 0) return '';
-    
-    const now = new Date();
-    const diffMs = now.getTime() - lastTime.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffMins < 1) return 'Now';
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays < 7) return `${diffDays}d`;
-    return lastTime.toLocaleDateString();
+    return '';
   }
 
   getUnreadCount(employeeId: string): number {
-    return this.chatService.getUnreadCountFrom('admin', employeeId);
+    return 0;
   }
 
   get unreadCount(): number {
-    return this.chatService.getUnreadCount('admin');
+    return 0;
   }
 
   // ====================
@@ -427,16 +349,6 @@ export class DashboardComponent implements OnInit {
       if (this.editingMom && this.editingMom.id === momId) {
         this.cancelEditMom();
       }
-    }
-  }
-
-    logout(): void {
-    if (confirm('Are you sure you want to logout?')) {
-      // Clear admin session
-      this.adminService.logoutAdmin();
-      
-      // Navigate to auth page
-      this.router.navigate(['/authpage']);
     }
   }
 }

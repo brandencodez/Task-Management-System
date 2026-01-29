@@ -2,13 +2,13 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { EmployeeService } from '../../employees/employee.service';
+import { HttpClientModule } from '@angular/common/http';
 import { UserService } from '../../../shared/services/user.service';
 
 @Component({
   selector: 'app-user-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './user-login.html',
   styleUrls: ['./user-login.css']
 })
@@ -26,7 +26,6 @@ export class UserLoginComponent {
   showConfirmPassword = false;
 
   constructor(
-    private employeeService: EmployeeService,
     private userService: UserService,
     private router: Router
   ) {}
@@ -38,27 +37,14 @@ export class UserLoginComponent {
       return;
     }
 
-    const employees = this.employeeService.getEmployees();
-    const employee = employees.find(emp => 
-      emp.name.toLowerCase() === name.toLowerCase()
-    );
-
-    if (!employee) {
-      this.errorMessage = 'No employee found with this name.';
-      return;
-    }
-
-    if (this.userService.hasPassword(name)) {
-      if (this.userService.validateCredentials(name, this.password)) {
-        this.userService.setCurrentUser(name);
+    // Direct API call 
+    this.userService.login(name, this.password).subscribe(success => {
+      if (success) {
         this.router.navigate(['/user-dashboard']);
       } else {
-        this.errorMessage = 'Invalid password.';
+        this.errorMessage = 'Invalid credentials.';
       }
-    } else {
-      this.showPasswordSetup = true;
-      this.errorMessage = '';
-    }
+    });
   }
 
   setPassword() {
@@ -71,8 +57,13 @@ export class UserLoginComponent {
       return;
     }
 
-    this.userService.setCredentials(this.username.trim(), this.newPassword);
-    this.router.navigate(['/user-dashboard']);
+    this.userService.setPassword(this.username.trim(), this.newPassword).subscribe(success => {
+      if (success) {
+        this.router.navigate(['/user-dashboard']);
+      } else {
+        this.errorMessage = 'Failed to set password.';
+      }
+    });
   }
 
   goHome() {
