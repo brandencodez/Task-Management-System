@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -32,7 +32,10 @@ export class EmployeeListComponent implements OnInit {
     issued_items: ''
   };
 
-  constructor(private employeeService: EmployeeService) {}
+  constructor(
+    private employeeService: EmployeeService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadEmployees();
@@ -41,9 +44,10 @@ export class EmployeeListComponent implements OnInit {
   loadEmployees(): void {
     this.employeeService.getEmployees().subscribe({
       next: (employees) => {
-        console.log('Loaded employees:', employees); 
+        console.log('Loaded employees:', employees);
         this.employees = employees;
         this.applyFilter();
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading employees:', error);
@@ -52,13 +56,12 @@ export class EmployeeListComponent implements OnInit {
     });
   }
 
-  // Centralized filtering logic
   applyFilter(): void {
     if (this.searchQuery.trim() === '') {
       this.filteredEmployees = [...this.employees];
     } else {
       const lowerQuery = this.searchQuery.toLowerCase();
-      this.filteredEmployees = this.employees.filter(emp => 
+      this.filteredEmployees = this.employees.filter(emp =>
         emp.name.toLowerCase().includes(lowerQuery) ||
         emp.email.toLowerCase().includes(lowerQuery) ||
         emp.department.toLowerCase().includes(lowerQuery) ||
@@ -67,7 +70,6 @@ export class EmployeeListComponent implements OnInit {
     }
   }
 
-  // Use applyFilter() method
   searchEmployees(): void {
     this.applyFilter();
   }
@@ -84,7 +86,7 @@ export class EmployeeListComponent implements OnInit {
       this.employeeService.addEmployee({ ...this.newEmployee }).subscribe({
         next: () => {
           alert('Employee added successfully!');
-          this.loadEmployees(); // This will refresh and apply filter
+          this.loadEmployees();
           this.resetForm();
           this.showAddForm = false;
         },
@@ -136,12 +138,48 @@ export class EmployeeListComponent implements OnInit {
   }
 
   validateForm(): boolean {
-    if (!this.newEmployee.name || !this.newEmployee.email || 
-        !this.newEmployee.phone || !this.newEmployee.department || 
+    if (!this.newEmployee.name || !this.newEmployee.email ||
+        !this.newEmployee.phone || !this.newEmployee.department ||
         !this.newEmployee.position || !this.newEmployee.join_date) {
       alert('Please fill in all required fields');
       return false;
     }
+
+    // Validate phone number is exactly 10 digits
+    const phoneDigits = this.newEmployee.phone.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      alert('Phone number must be exactly 10 digits');
+      return false;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.newEmployee.email)) {
+      alert('Please enter a valid email address');
+      return false;
+    }
+
+    // Check for duplicate email (exclude current employee when editing)
+    const duplicateEmail = this.employees.find(emp => 
+      emp.email.toLowerCase() === this.newEmployee.email.toLowerCase() &&
+      emp.id !== this.editingEmployee?.id
+    );
+    if (duplicateEmail) {
+      alert('An employee with this email already exists');
+      return false;
+    }
+
+    // Check for duplicate phone (exclude current employee when editing)
+    const newPhoneDigits = this.newEmployee.phone.replace(/\D/g, '');
+    const duplicatePhone = this.employees.find(emp => {
+      const empPhoneDigits = emp.phone.replace(/\D/g, '');
+      return empPhoneDigits === newPhoneDigits && emp.id !== this.editingEmployee?.id;
+    });
+    if (duplicatePhone) {
+      alert('An employee with this phone number already exists');
+      return false;
+    }
+
     return true;
   }
 
