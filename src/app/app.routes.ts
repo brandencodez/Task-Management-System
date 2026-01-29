@@ -6,16 +6,19 @@ import { AdminLayoutComponent } from './shared/layouts/admin-layout/admin-layout
 
 export const routes: Routes = [
 
-  // ===== HOME =====
+  // ================= HOME =================
   {
     path: '',
     component: SimpleLayoutComponent,
     children: [
-      { path: '', component: HomeComponent }
+      {
+        path: '',
+        component: HomeComponent
+      }
     ]
   },
 
-  // ===== USER LOGIN =====
+  // ================= USER LOGIN =================
   {
     path: 'user-login',
     component: SimpleLayoutComponent,
@@ -42,11 +45,13 @@ export const routes: Routes = [
     ]
   },
 
-  // ===== USER DASHBOARD =====
+  // ================= USER DASHBOARD =================
   {
     path: 'user-dashboard',
     component: UserLayoutComponent,
     children: [
+
+      // 🔹 Default → My Projects
       {
         path: '',
         loadComponent: () =>
@@ -54,13 +59,12 @@ export const routes: Routes = [
             .then(m => m.UserProjectsComponent)
       },
 
-      // ✅ WORK ENTRY DASHBOARD (FIXED PATH)
+      // 🔹 Work Entry
       {
         path: 'work-entry',
         loadComponent: () =>
-          import(
-            './features/projects/work-entry-dashboard/work-entry-dashboard.component'
-          ).then(m => m.WorkEntryDashboardComponent)
+          import('./features/projects/work-entry-dashboard/work-entry-dashboard.component')
+            .then(m => m.WorkEntryDashboardComponent)
       }
     ]
   },
@@ -77,32 +81,49 @@ export const routes: Routes = [
   ]
 },
 
-  // ===== ADMIN DASHBOARD =====
+  // ================= ADMIN DASHBOARD =================
   {
     path: 'admin-dashboard',
     component: AdminLayoutComponent,
     children: [
+
+      // 🔹 Admin Home
       {
         path: '',
         loadComponent: () =>
           import('./features/dashboard/dashboard.component')
             .then(m => m.DashboardComponent)
       },
+
+      // 🔹 Employees
       {
         path: 'employees',
         loadComponent: () =>
           import('./features/employees/employee-list.component')
             .then(m => m.EmployeeListComponent)
       },
+
+      // 🔹 Projects
       {
         path: 'projects',
         loadComponent: () =>
           import('./features/projects/project-list/project-list.component')
             .then(m => m.ProjectListComponent)
+      },
+
+      // 🔔 Reminders
+      {
+        path: 'reminders',
+        loadComponent: () =>
+          import('./features/reminders/reminder-list/reminder-list.component')
+            .then(m => m.ReminderListComponent)
       }
     ]
   },
 
-  // ===== FALLBACK =====
-  { path: '**', redirectTo: '' }
+  // ================= FALLBACK =================
+  {
+    path: '**',
+    redirectTo: ''
+  }
 ];
