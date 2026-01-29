@@ -1034,3 +1034,45 @@ section p {
   white-space: nowrap;
   z-index: 1;
 }
+/* Logout button fixed top-right */
+.logout-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.logout-btn {
+  background-color: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #b91c1c;
+}
+/* Chat button fixed bottom-right */
+.chat-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.chat-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-size: 22px;
+  border: none;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  position: relative;
+}

@@ -28,6 +28,19 @@ export const routes: Routes = [
       }
     ]
   },
+  // ===== Admin LOGIN =====
+  {
+    path: 'admin-login',
+    component: SimpleLayoutComponent,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/auth/admin-login/admin-login')
+            .then(m => m.AdminLoginComponent)
+      }
+    ]
+  },
 
   // ===== USER DASHBOARD =====
   {

@@ -1,0 +1,163 @@
+<div class="auth-container">
+  <div class="login-card">
+    <!-- Back button -->
+    <button type="button" class="home-btn" (click)="goBack()">← Back</button>
+    
+    <div class="login-header">
+      <h2>{{ isRegistering ? 'Admin Registration' : 'Admin Portal' }}</h2>
+      <p>{{ isRegistering ? 'Create your admin account' : 'Secure access to employee management' }}</p>
+    </div>
+
+    <!-- Success Message -->
+    @if (successMessage) {
+      <div class="alert alert-success">
+        {{ successMessage }}
+      </div>
+    }
+
+    <!-- Error Message -->
+    @if (errorMessage) {
+      <div class="alert alert-error">
+        {{ errorMessage }}
+      </div>
+    }
+
+    <!-- LOGIN FORM -->
+    @if (!isRegistering) {
+      <form (ngSubmit)="login()" #loginForm="ngForm" class="login-form">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email Address *</label>
+          <input
+            type="email"
+            id="loginEmail"
+            [(ngModel)]="loginEmail"
+            name="loginEmail"
+            required
+            class="form-control"
+            placeholder="admin@example.com"
+          />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password *</label>
+          <div class="password-input">
+            <input
+              [type]="showLoginPassword ? 'text' : 'password'"
+              id="loginPassword"
+              [(ngModel)]="loginPassword"
+              name="loginPassword"
+              required
+              class="form-control"
+              placeholder="Enter your password"
+            />
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="showLoginPassword = !showLoginPassword"
+            >
+              {{ showLoginPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary w-full">Sign In</button>
+      </form>
+      
+      <div class="form-footer">
+        <p class="switch-mode">
+          Don't have an account? 
+          <button type="button" class="link-button" (click)="toggleMode()">
+            Register here
+          </button>
+        </p>
+      </div>
+    }
+
+    <!-- REGISTRATION FORM (SIMPLIFIED) -->
+    @if (isRegistering) {
+      <form (ngSubmit)="register()" #registerForm="ngForm" class="login-form">
+        <div class="form-group">
+          <label class="form-label" for="registerName">Full Name *</label>
+          <input
+            type="text"
+            id="registerName"
+            [(ngModel)]="registerName"
+            name="registerName"
+            required
+            class="form-control"
+            placeholder="John Doe"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="registerEmail">Email Address *</label>
+          <input
+            type="email"
+            id="registerEmail"
+            [(ngModel)]="registerEmail"
+            name="registerEmail"
+            required
+            class="form-control"
+            placeholder="admin@example.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="registerPassword">Password *</label>
+          <div class="password-input">
+            <input
+              [type]="showRegisterPassword ? 'text' : 'password'"
+              id="registerPassword"
+              [(ngModel)]="registerPassword"
+              name="registerPassword"
+              required
+              minlength="6"
+              class="form-control"
+              placeholder="At least 6 characters"
+            />
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="showRegisterPassword = !showRegisterPassword"
+            >
+              {{ showRegisterPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="registerConfirmPassword">Confirm Password *</label>
+          <div class="password-input">
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              id="registerConfirmPassword"
+              [(ngModel)]="registerConfirmPassword"
+              name="registerConfirmPassword"
+              required
+              class="form-control"
+              placeholder="Re-enter your password"
+            />
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="showConfirmPassword = !showConfirmPassword"
+            >
+              {{ showConfirmPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary w-full">Create Account</button>
+      </form>
+      
+      <div class="form-footer">
+        <p class="switch-mode">
+          Already have an account? 
+          <button type="button" class="link-button" (click)="toggleMode()">
+            Sign in here
+          </button>
+        </p>
+      </div>
+    }
+  </div>
+</div>

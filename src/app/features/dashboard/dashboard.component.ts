@@ -5,6 +5,8 @@ import { ProjectService } from '../projects/project.service';
 import { Project } from '../../shared/models/project.model';
 import { EmployeeService } from '../employees/employee.service';
 import { ChatService } from '../../shared/services/chat.service';
+import { AdminService } from '../admins/admin.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,7 +29,9 @@ export class DashboardComponent implements OnInit {
   constructor(
     private projectService: ProjectService,
     private employeeService: EmployeeService,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private router: Router, 
+    private adminService: AdminService 
   ) {
     this.loadEmployeesFromService();
     this.initializeChat();
@@ -423,6 +427,16 @@ export class DashboardComponent implements OnInit {
       if (this.editingMom && this.editingMom.id === momId) {
         this.cancelEditMom();
       }
+    }
+  }
+
+    logout(): void {
+    if (confirm('Are you sure you want to logout?')) {
+      // Clear admin session
+      this.adminService.logoutAdmin();
+      
+      // Navigate to auth page
+      this.router.navigate(['/authpage']);
     }
   }
 }
