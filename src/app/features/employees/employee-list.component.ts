@@ -20,16 +20,16 @@ export class EmployeeListComponent implements OnInit {
   searchQuery = '';
 
   newEmployee: Employee = {
-    id: '',
+    id: 0,
     name: '',
     email: '',
     phone: '',
     department: '',
     position: '',
-    joinDate: new Date(),
-    HomeAddress: '',
+    join_date: '',
+    home_address: '',
     status: 'active',
-    IssuedItems: ''
+    issued_items: ''
   };
 
   constructor(private employeeService: EmployeeService) {}
@@ -39,13 +39,21 @@ export class EmployeeListComponent implements OnInit {
   }
 
   loadEmployees(): void {
-    this.employeeService.getEmployees().subscribe(employees => {
-      this.employees = employees;
-      this.filteredEmployees = [...this.employees];
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        console.log('Loaded employees:', employees); 
+        this.employees = employees;
+        this.applyFilter();
+      },
+      error: (error) => {
+        console.error('Error loading employees:', error);
+        alert('Failed to load employees. Please try again.');
+      }
     });
   }
 
-  searchEmployees(): void {
+  // Centralized filtering logic
+  applyFilter(): void {
     if (this.searchQuery.trim() === '') {
       this.filteredEmployees = [...this.employees];
     } else {
@@ -59,6 +67,11 @@ export class EmployeeListComponent implements OnInit {
     }
   }
 
+  // Use applyFilter() method
+  searchEmployees(): void {
+    this.applyFilter();
+  }
+
   toggleAddForm(): void {
     this.showAddForm = !this.showAddForm;
     if (!this.showAddForm) {
@@ -68,10 +81,17 @@ export class EmployeeListComponent implements OnInit {
 
   addEmployee(): void {
     if (this.validateForm()) {
-      this.employeeService.addEmployee({ ...this.newEmployee }).subscribe(() => {
-        this.loadEmployees();
-        this.resetForm();
-        this.showAddForm = false;
+      this.employeeService.addEmployee({ ...this.newEmployee }).subscribe({
+        next: () => {
+          alert('Employee added successfully!');
+          this.loadEmployees(); // This will refresh and apply filter
+          this.resetForm();
+          this.showAddForm = false;
+        },
+        error: (error) => {
+          console.error('Add employee error:', error);
+          alert('Failed to add employee. Please check all fields and try again.');
+        }
       });
     }
   }
@@ -85,18 +105,32 @@ export class EmployeeListComponent implements OnInit {
 
   updateEmployee(): void {
     if (this.editingEmployee && this.validateForm()) {
-      this.employeeService.updateEmployee(this.editingEmployee.id, this.newEmployee).subscribe(() => {
-        this.loadEmployees();
-        this.resetForm();
-        this.showAddForm = false;
+      this.employeeService.updateEmployee(this.editingEmployee.id, this.newEmployee).subscribe({
+        next: () => {
+          alert('Employee updated successfully!');
+          this.loadEmployees();
+          this.resetForm();
+          this.showAddForm = false;
+        },
+        error: (error) => {
+          console.error('Update employee error:', error);
+          alert('Failed to update employee. Please try again.');
+        }
       });
     }
   }
 
-  deleteEmployee(id: string): void {
+  deleteEmployee(id: number): void {
     if (confirm('Are you sure you want to delete this employee?')) {
-      this.employeeService.deleteEmployee(id).subscribe(() => {
-        this.loadEmployees();
+      this.employeeService.deleteEmployee(id).subscribe({
+        next: () => {
+          alert('Employee deleted successfully!');
+          this.loadEmployees();
+        },
+        error: (error) => {
+          console.error('Delete employee error:', error);
+          alert('Failed to delete employee. Please try again.');
+        }
       });
     }
   }
@@ -104,7 +138,7 @@ export class EmployeeListComponent implements OnInit {
   validateForm(): boolean {
     if (!this.newEmployee.name || !this.newEmployee.email || 
         !this.newEmployee.phone || !this.newEmployee.department || 
-        !this.newEmployee.position) {
+        !this.newEmployee.position || !this.newEmployee.join_date) {
       alert('Please fill in all required fields');
       return false;
     }
@@ -113,16 +147,16 @@ export class EmployeeListComponent implements OnInit {
 
   resetForm(): void {
     this.newEmployee = {
-      id: '',
+      id: 0,
       name: '',
       email: '',
       phone: '',
       department: '',
       position: '',
-      joinDate: new Date(),
-      HomeAddress: '',
+      join_date: '',
+      home_address: '',
       status: 'active',
-      IssuedItems: ''
+      issued_items: ''
     };
     this.editingEmployee = null;
   }

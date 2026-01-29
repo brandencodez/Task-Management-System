@@ -1,13 +1,12 @@
 export interface Employee {
-  id: string;
+  id: number;
   name: string;
   email: string;
   phone: string;
   department: string;
   position: string;
-  joinDate: Date;
-  HomeAddress: string;
-  status: 'active' | 'on-leave' | 'inactive';
- IssuedItems: string;
-
+  join_date: string;
+  home_address: string;
+  status: string;
+  issued_items: string;
 }

@@ -51,7 +51,9 @@ export class UserProjectsComponent implements OnInit {
       this.router.navigate(['/user-login']);
       return;
     }
-    this.loadUserProjects();
+    
+    // Load data sequentially to ensure proper order
+    this.loadEmployeeAndProjects();
     this.initializeChatUser();
     this.loadOtherEmployees();
     
@@ -61,18 +63,35 @@ export class UserProjectsComponent implements OnInit {
     }
   }
 
-  loadUserProjects() {
-    this.employeeService.getEmployees().subscribe(employees => {
-      const employee = employees.find(emp => emp.name === this.currentUser);
-      
-      if (employee) {
-        this.userDepartment = employee.department;
+ 
+  loadEmployeeAndProjects() {
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        const employee = employees.find(emp => emp.name === this.currentUser);
         
-        this.projectService.getProjects().subscribe(projects => {
-          this.projects = projects.filter(project => 
-            project.department === this.userDepartment
-          );
-        });
+        if (employee) {
+          this.userDepartment = employee.department;
+          
+          this.projectService.getProjects().subscribe({
+            next: (projects) => {
+              this.projects = projects.filter(project => 
+                project.department === this.userDepartment
+              );
+              console.log('Projects loaded:', this.projects); // Debug
+            },
+            error: (error) => {
+              console.error('Error loading projects:', error);
+              this.projects = [];
+            }
+          });
+        } else {
+          console.warn('Current user not found in employees');
+          this.projects = [];
+        }
+      },
+      error: (error) => {
+        console.error('Error loading employees:', error);
+        this.projects = [];
       }
     });
   }
@@ -87,41 +106,51 @@ export class UserProjectsComponent implements OnInit {
   // ====================
 
   initializeChatUser() {
-    // Subscribe to Observable
-    this.employeeService.getEmployees().subscribe(employees => {
-      const employee = employees.find(emp => emp.name === this.currentUser);
-      
-      if (employee) {
-        this.chatCurrentUser = {
-          id: employee.id,
-          name: employee.name,
-          department: employee.department,
-          role: 'employee' as 'employee'
-        };
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        const employee = employees.find(emp => emp.name === this.currentUser);
         
-        this.chatService.setCurrentUser(
-          employee.id,
-          employee.name,
-          'employee'
-        );
+        if (employee) {
+          this.chatCurrentUser = {
+            id: employee.id.toString(),
+            name: employee.name,
+            department: employee.department,
+            role: 'employee' as 'employee'
+          };
+          
+          this.chatService.setCurrentUser(
+            employee.id.toString(),
+            employee.name,
+            'employee'
+          );
+        }
+      },
+      error: (error) => {
+        console.error('Error initializing chat user:', error);
       }
     });
   }
 
   loadOtherEmployees() {
     try {
-      this.employeeService.getEmployees().subscribe(employees => {
-        this.otherEmployees = employees
-          .filter(emp => emp.name !== this.currentUser)
-          .map(emp => ({
-            id: emp.id,
-            name: emp.name,
-            department: emp.department,
-            role: 'employee' as 'employee'
-          }));
+      this.employeeService.getEmployees().subscribe({
+        next: (employees) => {
+ this.otherEmployees = employees
+            .filter(emp => emp.name !== this.currentUser)
+            .map(emp => ({
+              id: emp.id.toString(),
+              name: emp.name,
+              department: emp.department,
+              role: 'employee' as 'employee'
+            }));
+        },
+        error: (error) => {
+          console.error('Error loading other employees:', error);
+          this.otherEmployees = [];
+        }
       });
     } catch (error) {
-      console.error('Error loading employees:', error);
+      console.error('Error in loadOtherEmployees:', error);
       this.otherEmployees = [];
     }
   }

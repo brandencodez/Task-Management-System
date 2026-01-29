@@ -27,7 +27,7 @@ export class EmployeeService {
     );
   }
 
-  getEmployeeById(id: string): Observable<Employee | undefined> {
+  getEmployeeById(id: number): Observable<Employee | undefined> {
     return this.http.get<Employee>(`${this.apiUrl}/employees/${id}`).pipe(
       catchError(error => {
         console.error('Get employee error:', error);
@@ -49,7 +49,7 @@ export class EmployeeService {
     );
   }
 
-  updateEmployee(id: string, employee: Employee): Observable<Employee> {
+  updateEmployee(id: number, employee: Employee): Observable<Employee> {
     return this.http.put<Employee>(
       `${this.apiUrl}/employees/${id}`,
       employee,
@@ -62,7 +62,7 @@ export class EmployeeService {
     );
   }
 
-  deleteEmployee(id: string): Observable<void> {
+  deleteEmployee(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/employees/${id}`).pipe(
       catchError(error => {
         console.error('Delete employee error:', error);

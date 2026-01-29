@@ -2,24 +2,32 @@ const db = require('../config/database');
 
 class Employee {
   static async create(employeeData) {
-    const { 
-      name, email, phone, department, position, 
-      join_date, home_address, status, issued_items, password_hash 
-    } = employeeData;
-    
-    const query = `
-      INSERT INTO employees 
-      (name, email, phone, department, position, join_date, home_address, status, issued_items, password_hash)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    
-    const [result] = await db.execute(query, [
-      name, email, phone, department, position, 
-      join_date, home_address, status, issued_items, password_hash
-    ]);
-    
-    return { id: result.insertId, ...employeeData };
+  console.log('🔍 Received employee data:', employeeData);
+  
+  const { 
+    name, email, phone, department, position, 
+    join_date, home_address, status = 'active', 
+    issued_items = '', password_hash = null 
+  } = employeeData;
+  
+  // Validate required fields
+  if (!name || !email || !phone || !department || !position || !join_date) {
+    throw new Error('Missing required fields');
   }
+  
+  const query = `
+    INSERT INTO employees 
+    (name, email, phone, department, position, join_date, home_address, status, issued_items, password_hash)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+  
+  const [result] = await db.execute(query, [
+    name, email, phone, department, position, 
+    join_date, home_address, status, issued_items, password_hash
+  ]);
+  
+  return { id: result.insertId, ...employeeData };
+}
 
   static async findAll() {
     const [rows] = await db.execute('SELECT * FROM employees ORDER BY id');
@@ -32,25 +40,26 @@ class Employee {
   }
 
   static async update(id, employeeData) {
-    const { 
-      name, email, phone, department, position, 
-      join_date, home_address, status, issued_items, password_hash 
-    } = employeeData;
-    
-    const query = `
-      UPDATE employees 
-      SET name = ?, email = ?, phone = ?, department = ?, position = ?, 
-          join_date = ?, home_address = ?, status = ?, issued_items = ?, password_hash = ?
-      WHERE id = ?
-    `;
-    
-    await db.execute(query, [
-      name, email, phone, department, position, 
-      join_date, home_address, status, issued_items, password_hash, id
-    ]);
-    
-    return { id, ...employeeData };
-  }
+  const { 
+    name, email, phone, department, position, 
+    join_date, home_address, status = 'active', 
+    issued_items = '', password_hash = null 
+  } = employeeData;
+  
+  const query = `
+    UPDATE employees 
+    SET name = ?, email = ?, phone = ?, department = ?, position = ?, 
+        join_date = ?, home_address = ?, status = ?, issued_items = ?, password_hash = ?
+    WHERE id = ?
+  `;
+  
+  await db.execute(query, [
+    name, email, phone, department, position, 
+    join_date, home_address, status, issued_items, password_hash, id
+  ]);
+  
+  return { id, ...employeeData };
+}
 
   static async delete(id) {
     await db.execute('DELETE FROM employees WHERE id = ?', [id]);
