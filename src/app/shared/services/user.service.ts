@@ -1,17 +1,72 @@
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
-interface UserCredentials {
-  name: string;
-  password: string;
+interface LoginResponse {
+  success: boolean;
+  employee: any;
+}
+
+interface SetPasswordResponse {
+  success: boolean;
+  message: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
+  private apiUrl = 'http://localhost:5000/api';
   private USER_KEY = 'current_user_name';
-  private CREDENTIALS_KEY = 'employee_credentials';
 
+  constructor(private http: HttpClient) {}
+
+  private getHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+  }
+
+  // Login via API
+  login(name: string, password: string): Observable<boolean> {
+    const credentials = { name, password };
+    return this.http.post<LoginResponse>(
+      `${this.apiUrl}/auth/login`,
+      credentials,
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(response => {
+        if (response.success) {
+          this.setCurrentUser(name);
+          return true;
+        }
+        return false;
+      }),
+      catchError(error => {
+        console.error('Login error:', error);
+        return of(false);
+      })
+    );
+  }
+
+  // Set password via API
+  setPassword(name: string, password: string): Observable<boolean> {
+    const credentials = { name, password };
+    return this.http.post<SetPasswordResponse>(
+      `${this.apiUrl}/auth/set-password`,
+      credentials,
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(response => response.success),
+      catchError(error => {
+        console.error('Set password error:', error);
+        return of(false);
+      })
+    );
+  }
+
+  // Local storage methods (for session management only)
   setCurrentUser(name: string): void {
     localStorage.setItem(this.USER_KEY, name);
   }
@@ -20,41 +75,12 @@ export class UserService {
     return localStorage.getItem(this.USER_KEY);
   }
 
-  // Save user credentials (name + password)
-  setCredentials(name: string, password: string): void {
-    const credentials: UserCredentials = { name, password };
-    localStorage.setItem(this.CREDENTIALS_KEY, JSON.stringify(credentials));
-    this.setCurrentUser(name);
-  }
-
-  // Validate login credentials
-  validateCredentials(name: string, password: string): boolean {
-    const saved = localStorage.getItem(this.CREDENTIALS_KEY);
-    if (!saved) return false;
-
-    try {
-      const creds: UserCredentials = JSON.parse(saved);
-      return creds.name.toLowerCase() === name.toLowerCase() && 
-             creds.password === password;
-    } catch {
-      return false;
-    }
-  }
-
-  // Check if employee already has a password set
-  hasPassword(name: string): boolean {
-    const saved = localStorage.getItem(this.CREDENTIALS_KEY);
-    if (!saved) return false;
-
-    try {
-      const creds: UserCredentials = JSON.parse(saved);
-      return creds.name.toLowerCase() === name.toLowerCase();
-    } catch {
-      return false;
-    }
-  }
-
   clearCurrentUser(): void {
     localStorage.removeItem(this.USER_KEY);
+  }
+
+  // Check if user is logged in (session only)
+  isLoggedIn(): boolean {
+    return !!this.getCurrentUser();
   }
 }

@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 import { Employee } from './employee.model';
 import { EmployeeService } from './employee.service';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css']
 })
@@ -38,23 +39,25 @@ export class EmployeeListComponent implements OnInit {
   }
 
   loadEmployees(): void {
-    this.employees = this.employeeService.getEmployees();
-    this.filteredEmployees = [...this.employees];
+    this.employeeService.getEmployees().subscribe(employees => {
+      this.employees = employees;
+      this.filteredEmployees = [...this.employees];
+    });
   }
 
- searchEmployees(): void {
-  if (this.searchQuery.trim() === '') {
-    this.filteredEmployees = [...this.employees];
-  } else {
-    const lowerQuery = this.searchQuery.toLowerCase();
-    this.filteredEmployees = this.employees.filter(emp => 
-      emp.name.toLowerCase().includes(lowerQuery) ||
-      emp.email.toLowerCase().includes(lowerQuery) ||
-      emp.department.toLowerCase().includes(lowerQuery) ||
-      emp.position.toLowerCase().includes(lowerQuery)
-    );
+  searchEmployees(): void {
+    if (this.searchQuery.trim() === '') {
+      this.filteredEmployees = [...this.employees];
+    } else {
+      const lowerQuery = this.searchQuery.toLowerCase();
+      this.filteredEmployees = this.employees.filter(emp => 
+        emp.name.toLowerCase().includes(lowerQuery) ||
+        emp.email.toLowerCase().includes(lowerQuery) ||
+        emp.department.toLowerCase().includes(lowerQuery) ||
+        emp.position.toLowerCase().includes(lowerQuery)
+      );
+    }
   }
-}
 
   toggleAddForm(): void {
     this.showAddForm = !this.showAddForm;
@@ -65,11 +68,11 @@ export class EmployeeListComponent implements OnInit {
 
   addEmployee(): void {
     if (this.validateForm()) {
-      this.newEmployee.id = Date.now().toString();
-      this.employeeService.addEmployee({ ...this.newEmployee });
-      this.loadEmployees();
-      this.resetForm();
-      this.showAddForm = false;
+      this.employeeService.addEmployee({ ...this.newEmployee }).subscribe(() => {
+        this.loadEmployees();
+        this.resetForm();
+        this.showAddForm = false;
+      });
     }
   }
 
@@ -82,17 +85,19 @@ export class EmployeeListComponent implements OnInit {
 
   updateEmployee(): void {
     if (this.editingEmployee && this.validateForm()) {
-      this.employeeService.updateEmployee(this.editingEmployee.id, this.newEmployee);
-      this.loadEmployees();
-      this.resetForm();
-      this.showAddForm = false;
+      this.employeeService.updateEmployee(this.editingEmployee.id, this.newEmployee).subscribe(() => {
+        this.loadEmployees();
+        this.resetForm();
+        this.showAddForm = false;
+      });
     }
   }
 
   deleteEmployee(id: string): void {
     if (confirm('Are you sure you want to delete this employee?')) {
-      this.employeeService.deleteEmployee(id);
-      this.loadEmployees();
+      this.employeeService.deleteEmployee(id).subscribe(() => {
+        this.loadEmployees();
+      });
     }
   }
 
@@ -114,11 +119,10 @@ export class EmployeeListComponent implements OnInit {
       phone: '',
       department: '',
       position: '',
-      HomeAddress: '',
       joinDate: new Date(),
+      HomeAddress: '',
       status: 'active',
       IssuedItems: ''
-
     };
     this.editingEmployee = null;
   }

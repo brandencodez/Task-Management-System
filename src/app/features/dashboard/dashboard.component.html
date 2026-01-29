@@ -205,7 +205,7 @@
 
           <div class="messages-area">
             <div 
-              *ngFor="let msg of getMessagesWithEmployee()"
+              *ngFor="let msg of getMessagesWithEmployee(selectedEmployee?.id)"
               class="single-message"
               [class.sent-msg]="msg.senderId === 'admin'"
               [class.received-msg]="msg.senderId !== 'admin'"
