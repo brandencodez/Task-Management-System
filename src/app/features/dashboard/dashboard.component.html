@@ -1,3 +1,9 @@
+<div class="logout-row">
+  <button class="logout-btn" (click)="logout()">
+    <i class="fas fa-sign-out-alt"></i> Logout
+  </button>
+</div>
+
 <div class="dashboard">
 
   <h1>Admin Dashboard</h1>
@@ -141,12 +147,13 @@
     <p>No projects found. Add some projects to get started.</p>
   </section>
 
-  <!-- Floating Chat Button -->
+<!-- Floating Chat Button -->
 <div class="chat-container">
-  <button class="chat-toggle-btn" (click)="toggleChatPanel()">
-    <span class="chat-icon">💬</span>
-    <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+  <button class="chat-btn" (click)="toggleChatPanel()">
+    💬
+    <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
   </button>
+</div>
 
   <!-- Chat Panel Overlay -->
   <div class="chat-overlay" *ngIf="showChatPanel">
@@ -336,5 +343,4 @@
     </div>
 
   </div>
-</div>
 </div>
