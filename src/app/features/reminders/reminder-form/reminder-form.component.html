@@ -1,0 +1,110 @@
+<div class="reminder-form-container card">
+
+  <h2 class="title">
+    📅 Schedule Meeting Reminder
+  </h2>
+
+  <!-- EMPLOYEE + TITLE (2 columns) -->
+  <div class="form-grid two-col">
+    <div class="form-group">
+      <label>Employee</label>
+      <select [(ngModel)]="employeeId">
+        <option [ngValue]="null">Select employee</option>
+        <option *ngFor="let emp of employees" [ngValue]="emp.id">
+          {{ emp.name }} ({{ emp.department }})
+        </option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Meeting Title</label>
+      <input
+        type="text"
+        placeholder="Enter meeting title"
+        [(ngModel)]="title"
+      />
+    </div>
+  </div>
+
+  <!-- PURPOSE (full width) -->
+  <div class="form-group">
+    <label>Purpose of Meeting</label>
+    <textarea
+      rows="3"
+      placeholder="Explain purpose of the meeting"
+      [(ngModel)]="purpose">
+    </textarea>
+  </div>
+
+  <!-- DEPARTMENT + CLIENT NAME + CONTACT (3 columns) -->
+  <div class="form-grid three-col">
+    <div class="form-group">
+      <label>Department</label>
+      <input
+        type="text"
+        placeholder="Development, Sales"
+        [(ngModel)]="department"
+      />
+    </div>
+
+    <div class="form-group">
+      <label>Client Name</label>
+      <input
+        type="text"
+        placeholder="Client name"
+        [(ngModel)]="clientName"
+      />
+    </div>
+
+    <div class="form-group">
+      <label>Client Contact</label>
+      <input
+        type="text"
+        placeholder="Email or phone"
+        [(ngModel)]="clientContact"
+      />
+    </div>
+  </div>
+
+  <!-- MEETING LINK (full width) -->
+  <div class="form-group">
+    <label>Meeting Link</label>
+    <input
+      type="url"
+      placeholder="Google Meet / Zoom link"
+      [(ngModel)]="meetingLink"
+    />
+  </div>
+
+  <!-- DATES (2 columns) -->
+  <div class="form-grid two-col">
+    <div class="form-group">
+      <label>Meeting Date</label>
+      <input type="date" [(ngModel)]="meetingDate" />
+    </div>
+
+    <div class="form-group">
+      <label>Remind Me On</label>
+      <input type="date" [(ngModel)]="remindOn" />
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button
+      class="save-btn"
+      (click)="addReminder()"
+      [disabled]="
+        !employeeId ||
+        !title ||
+        !purpose ||
+        !department ||
+        !meetingDate ||
+        !remindOn
+      "
+    >
+      💾 Save Reminder
+    </button>
+  </div>
+
+</div>

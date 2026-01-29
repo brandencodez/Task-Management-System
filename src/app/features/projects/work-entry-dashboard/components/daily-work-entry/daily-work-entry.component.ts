@@ -42,12 +42,6 @@ export class DailyWorkEntryComponent implements OnInit {
   progress = 0;
   date = this.today();
 
-  /* ===============================
-     EDIT MODE
-  ================================ */
-  isEditing = false;
-  editingId: number | null = null;
-
   entries: WorkEntry[] = [];
 
   constructor(
@@ -85,28 +79,50 @@ export class DailyWorkEntryComponent implements OnInit {
   }
 
   /* ===============================
-     ADD / UPDATE ENTRY
+     ADD ENTRY (ONLY ADD)
   ================================ */
   addEntry(): void {
     if (!this.project || !this.description || !this.hours) return;
+
+    this.entries.unshift({
+      id: Date.now(),
+      project: this.project,
+      description: this.description,
+      hours: this.hours,
+      progress: this.progress,
+      date: this.date
+    });
+
+    this.save();
+    this.emitEntries();
     this.resetForm();
   }
 
-  editEntry(entry: WorkEntry): void {
-    this.isEditing = true;
-    this.editingId = entry.id;
-
-    this.project = entry.project;
-    this.description = entry.description;
-    this.hours = entry.hours;
-    this.progress = entry.progress;
-    this.date = entry.date;
+  /* ===============================
+     DELETE ENTRY
+  ================================ */
+  deleteEntry(id: number): void {
+    this.entries = this.entries.filter(e => e.id !== id);
+    this.save();
+    this.emitEntries();
   }
 
-  deleteEntry(id: number): void {
-    if (this.editingId === id) {
-      this.resetForm();
+  /* ===============================
+     STORAGE
+  ================================ */
+  private loadEntries(): void {
+    const data = localStorage.getItem(this.STORAGE_KEY);
+    if (data) {
+      this.entries = JSON.parse(data);
     }
+  }
+
+  private save(): void {
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.entries));
+  }
+
+  private emitEntries(): void {
+    this.entriesChange.emit([...this.entries]);
   }
 
   private resetForm(): void {
@@ -115,8 +131,6 @@ export class DailyWorkEntryComponent implements OnInit {
     this.hours = null;
     this.progress = 0;
     this.date = this.today();
-    this.isEditing = false;
-    this.editingId = null;
   }
 
   private today(): string {

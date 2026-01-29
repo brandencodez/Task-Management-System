@@ -1,26 +1,26 @@
 <nav class="navbar">
   <div class="navbar-content">
-    <a routerLink="/" class="logo">Eazy Track</a>
+    <!-- LOGO -->
+    <a
+      routerLink="/"
+      class="logo"
+      aria-label="Go to home"
+    >
+      Eazy Track
+    </a>
 
     <ul class="nav-links">
-      <!-- Home -->
-      <li>
-        <a
-          routerLink="/authpage"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-        >
-          Home
-        </a>
-      </li>
+      
 
-      <!-- USER NAV -->
+      <!-- ================= USER NAV ================= -->
       @if (role === 'user') {
+
         <li>
           <a
             routerLink="/user-dashboard"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }"
+            aria-label="My projects"
           >
             My Projects
           </a>
@@ -30,18 +30,60 @@
           <a
             routerLink="/user-dashboard/work-entry"
             routerLinkActive="active"
+            aria-label="Work entry"
           >
             Work Entry
           </a>
         </li>
       }
 
-      <!-- ADMIN NAV -->
+      <!-- ================= ADMIN NAV ================= -->
       @if (role === 'admin') {
-        <li><a routerLink="/admin-dashboard">Dashboard</a></li>
-        <li><a routerLink="/admin-dashboard/employees">Employees</a></li>
-        <li><a routerLink="/admin-dashboard/projects">Projects</a></li>
+
+        <li>
+          <a
+            routerLink="/admin-dashboard"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            aria-label="Admin dashboard"
+          >
+            Dashboard
+          </a>
+        </li>
+
+        <li>
+          <a
+            routerLink="/admin-dashboard/employees"
+            routerLinkActive="active"
+            aria-label="Employees"
+          >
+            Employees
+          </a>
+        </li>
+
+        <li>
+          <a
+            routerLink="/admin-dashboard/projects"
+            routerLinkActive="active"
+            aria-label="Projects"
+          >
+            Projects
+          </a>
+        </li>
+
+        <!-- 🔔 REMINDERS (no badge, safe) -->
+        <li>
+          <a
+            routerLink="/admin-dashboard/reminders"
+            routerLinkActive="active"
+            class="reminder-link"
+            aria-label="Reminders"
+          >
+            🔔 Reminders
+          </a>
+        </li>
       }
+
     </ul>
   </div>
 </nav>
