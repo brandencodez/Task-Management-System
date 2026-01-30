@@ -1,0 +1,339 @@
+<div class="admin-attendance-container">
+  <!-- Header -->
+  <div class="admin-header">
+    <h1><span class="header-icon">📊</span> Attendance Management</h1>
+    <div class="today-overview">
+      <div class="overview-item present">
+        <span class="count">{{ todayOverview.present }}</span>
+        <span class="label">Present</span>
+      </div>
+      <div class="overview-item absent">
+        <span class="count">{{ todayOverview.absent }}</span>
+        <span class="label">Absent</span>
+      </div>
+      <div class="overview-item half-day">
+        <span class="count">{{ todayOverview.halfDay }}</span>
+        <span class="label">Half Day</span>
+      </div>
+      <div class="overview-item leave">
+        <span class="count">{{ todayOverview.leave }}</span>
+        <span class="label">Leave</span>
+      </div>
+      <div class="overview-item not-marked" *ngIf="todayOverview.notMarked > 0">
+        <span class="count">{{ todayOverview.notMarked }}</span>
+        <span class="label">Not Marked</span>
+      </div>
+      <div class="overview-item total">
+        <span class="count">{{ todayOverview.total }}</span>
+        <span class="label">Total</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Toggle -->
+  <div class="view-toggle">
+    <button 
+      class="toggle-btn" 
+      [class.active]="selectedView === 'daily'"
+      (click)="onViewChange('daily')"
+    >
+      <span class="btn-icon">📅</span> Daily View
+    </button>
+    <button 
+      class="toggle-btn" 
+      [class.active]="selectedView === 'monthly'"
+      (click)="onViewChange('monthly')"
+    >
+      <span class="btn-icon">📈</span> Monthly Summary
+    </button>
+  </div>
+
+  <!-- DAILY VIEW -->
+  @if (selectedView === 'daily') {
+    <div class="daily-view">
+      <!-- Date Selector -->
+      <div class="date-selector">
+        <div class="date-input-group">
+          <label for="attendanceDate">
+            <span class="calendar-icon">📅</span> Select Date:
+          </label>
+          <input 
+            type="date" 
+            id="attendanceDate" 
+            [value]="selectedDate"
+            (change)="onDateChange($event)"
+            class="date-input"
+          />
+          <button class="today-btn" (click)="selectToday()">
+            <span class="today-icon">⚡</span> Today
+          </button>
+        </div>
+        <div class="office-time-info">
+          <span class="time-icon">🕐</span>
+          Office Hours: 9:30 AM - {{ officeEndTime }} PM 
+          <span class="auto-mark-info">(Auto-mark absent after {{ officeEndTime }} PM)</span>
+        </div>
+      </div>
+
+      <!-- Compact Employee Grid -->
+      <div class="compact-employee-grid">
+        @for (record of attendanceRecords; track record.employeeId) {
+          <div class="compact-employee-card" [ngClass]="getStatusClass(record.status)">
+            <div class="compact-card-header">
+              <div class="compact-avatar">
+                {{ record.employeeName.charAt(0) }}
+              </div>
+              <div class="compact-info">
+                <div class="compact-name">{{ record.employeeName }}</div>
+                <div class="compact-dept">{{ getEmployeeDepartment(record.employeeId) }}</div>
+              </div>
+              <div class="compact-status">
+                <span class="status-icon">{{ getStatusIcon(record.status) }}</span>
+                <span class="status-text">{{ getStatusText(record.status) }}</span>
+              </div>
+            </div>
+            
+            <div class="compact-card-body">
+              <div class="compact-time">
+                @if (record.checkInTime) {
+                  <span class="time-icon">🕐</span>
+                  {{ record.checkInTime | date:'shortTime' }}
+                } @else {
+                  <span>--:--</span>
+                }
+              </div>
+              <div class="compact-remarks" *ngIf="record.remarks && record.remarks !== 'Not yet marked'">
+                {{ record.remarks }}
+              </div>
+            </div>
+            
+            <div class="compact-card-footer">
+              @if (record.notMarked) {
+                <span class="status-indicator waiting">⏳ Waiting to mark</span>
+              } @else if (record.autoMarked) {
+                <span class="status-indicator auto">🤖 Auto-marked</span>
+              } @else {
+                <span class="status-indicator marked">✅ Marked by employee</span>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="no-records">
+            <div class="no-records-icon">📭</div>
+            <h3>No employees found</h3>
+            <p>Add employees to start tracking attendance</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- MONTHLY VIEW -->
+  @if (selectedView === 'monthly') {
+    <div class="monthly-view">
+      <!-- Month Selector -->
+      <div class="month-selector">
+        <label for="attendanceMonth">
+          <span class="month-icon">📆</span> Select Month:
+        </label>
+        <select 
+          id="attendanceMonth" 
+          [(ngModel)]="selectedMonth"
+          (change)="onMonthChange()"
+          class="month-select"
+        >
+          @for (month of months; track month) {
+            <option [value]="formatMonth(month)">
+              {{ month | date:'MMMM yyyy' }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <!-- Employee List with Graph View -->
+      <div class="employee-list-container">
+        @for (summary of attendanceSummary; track summary.employeeId) {
+          <div class="employee-summary-card" 
+               [class.expanded]="expandedEmployeeId === summary.employeeId"
+               (click)="toggleEmployeeDetails(summary.employeeId)">
+            
+            <!-- Summary Row -->
+            <div class="summary-row">
+              <div class="employee-col">
+                <div class="employee-avatar-sm">
+                  {{ summary.employeeName.charAt(0) }}
+                </div>
+                <div class="employee-info-sm">
+                  <div class="name">{{ summary.employeeName }}</div>
+                  <div class="dept">{{ getEmployeeDepartment(summary.employeeId) }}</div>
+                </div>
+              </div>
+              
+              <div class="stats-col">
+                <div class="stat-cell">
+                  <div class="stat-value present">{{ summary.totalPresent }}</div>
+                  <div class="stat-label">Present</div>
+                </div>
+                <div class="stat-cell">
+                  <div class="stat-value absent">{{ summary.totalAbsent }}</div>
+                  <div class="stat-label">Absent</div>
+                </div>
+                <div class="stat-cell">
+                  <div class="stat-value half-day">{{ summary.totalHalfDays }}</div>
+                  <div class="stat-label">Half Day</div>
+                </div>
+                <div class="stat-cell">
+                  <div class="stat-value leave">{{ summary.totalLeaves }}</div>
+                  <div class="stat-label">Leave</div>
+                </div>
+              </div>
+              
+              <div class="percentage-col">
+                <div class="percentage-container">
+                  <div class="percentage-bar">
+                    <div 
+                      class="percentage-fill" 
+                      [style.width.%]="summary.attendancePercentage"
+                      [ngClass]="getPercentageClass(summary.attendancePercentage)"
+                    ></div>
+                  </div>
+                  <div class="percentage-value">{{ summary.attendancePercentage }}%</div>
+                </div>
+                <div class="overall-status" [ngClass]="getOverallStatusClass(summary.attendancePercentage)">
+                  {{ getOverallStatusText(summary.attendancePercentage) }}
+                </div>
+              </div>
+              
+              <div class="toggle-col">
+                <span class="toggle-icon">
+                  {{ expandedEmployeeId === summary.employeeId ? '▼' : '▶' }}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Expanded Graph View -->
+            @if (expandedEmployeeId === summary.employeeId) {
+              <div class="graph-container">
+                <h4>Monthly Attendance Breakdown - {{ selectedMonth | date:'MMMM yyyy' }}</h4>
+                
+                <!-- FIXED Side-by-side layout with proper 60:40 ratio -->
+                <div class="side-by-side-container">
+                  <!-- Left side: Bar Graph (60%) -->
+                  <div class="left-panel">
+                    <div class="attendance-bar-graph">
+                      <h3>Attendance Summary</h3>
+                      <div class="graph-bars">
+                        <!-- Present Bar -->
+                        <div class="graph-bar-group">
+                          <div class="bar-label">Present</div>
+                          <div class="bar-container">
+                            <div class="bar present-bar" [style.width.%]="summary.workingDays > 0 ? (summary.totalPresent / summary.workingDays) * 100 : 0">
+                              <span class="bar-value">{{ summary.totalPresent }}</span>
+                              <span class="bar-percentage">{{ summary.workingDays > 0 ? ((summary.totalPresent / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Absent Bar -->
+                        <div class="graph-bar-group">
+                          <div class="bar-label">Absent</div>
+                          <div class="bar-container">
+                            <div class="bar absent-bar" [style.width.%]="summary.workingDays > 0 ? (summary.totalAbsent / summary.workingDays) * 100 : 0">
+                              <span class="bar-value">{{ summary.totalAbsent }}</span>
+                              <span class="bar-percentage">{{ summary.workingDays > 0 ? ((summary.totalAbsent / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Half Day Bar -->
+                        <div class="graph-bar-group">
+                          <div class="bar-label">Half Day</div>
+                          <div class="bar-container">
+                            <div class="bar halfday-bar" [style.width.%]="summary.workingDays > 0 ? (summary.totalHalfDays / summary.workingDays) * 100 : 0">
+                              <span class="bar-value">{{ summary.totalHalfDays }}</span>
+                              <span class="bar-percentage">{{ summary.workingDays > 0 ? ((summary.totalHalfDays / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Leave Bar -->
+                        <div class="graph-bar-group">
+                          <div class="bar-label">Leave</div>
+                          <div class="bar-container">
+                            <div class="bar leave-bar" [style.width.%]="summary.workingDays > 0 ? (summary.totalLeaves / summary.workingDays) * 100 : 0">
+                              <span class="bar-value">{{ summary.totalLeaves }}</span>
+                              <span class="bar-percentage">{{ summary.workingDays > 0 ? ((summary.totalLeaves / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="graph-total">
+                        <span class="total-label">Total Working Days:</span>
+                        <span class="total-value">{{ summary.workingDays }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Right side: Calendar Grid (40%) -->
+                  <div class="right-panel">
+                    <div class="calendar-grid-container">
+                      <h5>Day-by-Day Calendar</h5>
+                      <div class="calendar-grid">
+                        @if (summary.monthlyData && summary.monthlyData.length > 0) {
+                          @for (day of summary.monthlyData; track day.date) {
+                            <div class="calendar-day" [ngClass]="'day-' + day.status" 
+                                 [title]="(day.date | date:'dd MMM') + ': ' + (day.status === 'not-marked' ? 'Not Marked' : day.status)">
+                              <div class="day-number">{{ day.date | date:'d' }}</div>
+                              <div class="day-status">
+                                @switch (day.status) {
+                                  @case ('present') { ✅ }
+                                  @case ('absent') { ❌ }
+                                  @case ('half-day') { ⏰ }
+                                  @case ('leave') { 🏖️ }
+                                  @case ('not-marked') { ❓ }
+                                }
+                              </div>
+                            </div>
+                          }
+                        } @else {
+                          <div class="no-data-message">
+                            No attendance data available for this month
+                          </div>
+                        }
+                      </div>
+                      
+                      <div class="calendar-legend">
+                        <div class="legend-item">
+                          <span class="legend-color present"></span> Present
+                        </div>
+                        <div class="legend-item">
+                          <span class="legend-color absent"></span> Absent
+                        </div>
+                        <div class="legend-item">
+                          <span class="legend-color half-day"></span> Half Day
+                        </div>
+                        <div class="legend-item">
+                          <span class="legend-color leave"></span> Leave
+                        </div>
+                        <div class="legend-item">
+                          <span class="legend-color not-marked"></span> Not Marked
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @empty {
+          <div class="no-summary-records">
+            <div class="no-records-icon">📊</div>
+            <h3>No attendance data for selected month</h3>
+            <p>Attendance records will appear here once employees start marking attendance</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

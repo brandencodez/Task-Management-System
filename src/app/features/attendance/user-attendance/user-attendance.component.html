@@ -1,0 +1,107 @@
+<div class="user-attendance-container">
+  <!-- Header -->
+  <div class="attendance-header">
+    <h1>My Attendance</h1>
+    <div class="current-month">{{ currentMonth }}</div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="quick-stats">
+    <div class="stat-card">
+      <div class="stat-value">{{ presentCount }}</div>
+      <div class="stat-label">Present</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ absentCount }}</div>
+      <div class="stat-label">Absent</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ halfDayCount }}</div>
+      <div class="stat-label">Half Days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ leaveCount }}</div>
+      <div class="stat-label">Leaves</div>
+    </div>
+  </div>
+
+  <!-- Mark Attendance Card -->
+  <div class="mark-attendance-card" *ngIf="!hasMarkedToday">
+    <h3>Mark Today's Attendance</h3>
+    <p class="instruction">Select your status for today and add remarks if needed.</p>
+    
+    <div class="status-options">
+      <div 
+        *ngFor="let option of statusOptions" 
+        class="status-option"
+        [class.selected]="attendanceStatus === option.value"
+        (click)="attendanceStatus = option.value"
+      >
+        <span class="status-icon">{{ option.icon }}</span>
+        <span class="status-label">{{ option.label }}</span>
+      </div>
+    </div>
+
+    <div class="remarks-section">
+      <label for="remarks">Remarks (Optional)</label>
+      <textarea 
+        id="remarks" 
+        [(ngModel)]="remarks" 
+        placeholder="Add any remarks or reason..."
+        rows="2"
+      ></textarea>
+    </div>
+
+    <button 
+      class="mark-attendance-btn" 
+      (click)="markAttendance()"
+      [disabled]="!attendanceStatus"
+    >
+      Mark Attendance as {{ attendanceStatus ? attendanceStatus.toUpperCase() : '' }}
+    </button>
+  </div>
+
+  <!-- Already Marked Message -->
+  <div class="already-marked-card" *ngIf="hasMarkedToday">
+    <div class="already-marked-header">
+      <span class="check-icon">✅</span>
+      <h3>Attendance Already Marked</h3>
+    </div>
+    <p>You have already marked your attendance for today. You can view your attendance history below.</p>
+  </div>
+
+  <!-- Attendance History -->
+  <div class="attendance-history">
+    <h3>Attendance History - {{ currentMonth }}</h3>
+    
+    <div class="history-table">
+      <div class="table-header">
+        <div class="header-cell">Date</div>
+        <div class="header-cell">Status</div>
+        <div class="header-cell">Check-in Time</div>
+        <div class="header-cell">Remarks</div>
+      </div>
+      
+      <div *ngFor="let record of myAttendance" class="table-row">
+        <div class="table-cell date-cell">
+          {{ record.date | date:'dd MMM, yyyy' }}
+        </div>
+        <div class="table-cell">
+          <span class="status-badge" [ngClass]="getStatusColor(record.status)">
+            {{ getStatusIcon(record.status) }} {{ record.status.toUpperCase() }}
+          </span>
+        </div>
+        <div class="table-cell">
+          {{ record.checkInTime ? (record.checkInTime | date:'shortTime') : 'N/A' }}
+        </div>
+        <div class="table-cell remarks-cell">
+          {{ record.remarks || 'No remarks' }}
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="myAttendance.length === 0" class="no-records">
+      <p>No attendance records found for this month.</p>
+    </div>
+  </div>
+</div>

@@ -3,6 +3,8 @@ import { HomeComponent } from './features/home/home';
 import { SimpleLayoutComponent } from './shared/layouts/simple-layout/simple-layout';
 import { UserLayoutComponent } from './shared/layouts/user-layout/user-layout';
 import { AdminLayoutComponent } from './shared/layouts/admin-layout/admin-layout';
+import { UserAttendanceComponent } from './features/attendance/user-attendance/user-attendance.component';
+import { AdminAttendanceComponent } from './features/attendance/admin-attendance/admin-attendance.component';
 
 export const routes: Routes = [
 
@@ -129,6 +131,18 @@ export const routes: Routes = [
     ]
   },
 
+  // ===== ATTENDANCE ROUTES =====
+  {
+    path: 'my-attendance',
+    component: UserAttendanceComponent,
+    title: 'My Attendance'
+  },
+  {
+    path: 'admin/attendance',
+    component: AdminAttendanceComponent,
+    title: 'Attendance Management'
+  },
+  
   // ================= FALLBACK =================
   {
     path: '**',
