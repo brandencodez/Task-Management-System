@@ -1,46 +1,49 @@
 import { Injectable } from '@angular/core';
-
-export interface Reminder {
-  id: number;
-
-  // 🔹 Employee
-  employeeId: number;
-  employeeName: string;
-
-  // 🔹 Meeting info
-  title: string;
-  purpose: string;
-  department: string;
-
-  // 🔹 Client info
-  clientName: string;
-  clientContact: string;
-
-  // 🔹 Meeting
-  meetingLink?: string;
-  meetingDate: string;
-  remindOn: string;
-}
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { Reminder } from '../../shared/models/reminder.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReminderService {
+  private apiUrl = 'http://localhost:5000/api';
+  
+  constructor(private http: HttpClient) {}
 
-  private STORAGE_KEY = 'reminders';
-
-  getReminders(): Reminder[] {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+  private getHeaders(): HttpHeaders {
+    return new HttpHeaders({ 'Content-Type': 'application/json' });
   }
 
-  addReminder(reminder: Reminder): void {
-    const reminders = this.getReminders();
-    reminders.push(reminder);
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(reminders));
+  getReminders(): Observable<Reminder[]> {
+    return this.http.get<Reminder[]>(`${this.apiUrl}/reminders`).pipe(
+      catchError(error => {
+        console.error('Get reminders error:', error);
+        return of([]);
+      })
+    );
   }
 
-  deleteReminder(id: number): void {
-    const reminders = this.getReminders().filter(r => r.id !== id);
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(reminders));
+  addReminder(reminder: Omit<Reminder, 'id' | 'employee_name'>): Observable<Reminder> {
+    return this.http.post<Reminder>(
+      `${this.apiUrl}/reminders`,
+      reminder,
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error('Add reminder error:', error);
+        throw error;
+      })
+    );
+  }
+
+  deleteReminder(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/reminders/${id}`).pipe(
+      catchError(error => {
+        console.error('Delete reminder error:', error);
+        throw error;
+      })
+    );
   }
 }
