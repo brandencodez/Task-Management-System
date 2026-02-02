@@ -65,9 +65,30 @@
   <div class="already-marked-card" *ngIf="hasMarkedToday">
     <div class="already-marked-header">
       <span class="check-icon">✅</span>
-      <h3>Attendance Already Marked</h3>
+      <div>
+        <h3>Attendance Marked</h3>
+        <p class="marked-time" *ngIf="todayRecord?.checkInTime">
+          Check-in: {{ todayRecord.checkInTime | date:'short' }}
+        </p>
+      </div>
     </div>
-    <p>You have already marked your attendance for today. You can view your attendance history below.</p>
+    
+    <div class="checkout-section" *ngIf="todayRecord?.status === 'present'">
+      <p *ngIf="!hasCheckedOutToday" class="checkout-info">
+        ⏱️ Click below to mark your checkout time
+      </p>
+      <p *ngIf="hasCheckedOutToday" class="checkout-info success">
+        ✓ Checkout: {{ todayRecord.checkOutTime | date:'short' }} | Work Hours: {{ todayRecord.workHours }}h
+      </p>
+      
+      <button 
+        *ngIf="!hasCheckedOutToday"
+        class="checkout-btn" 
+        (click)="checkout()"
+      >
+        🚪 Checkout Now
+      </button>
+    </div>
   </div>
 
   <!-- Attendance History -->

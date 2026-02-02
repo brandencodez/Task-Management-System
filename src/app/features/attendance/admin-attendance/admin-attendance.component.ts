@@ -1,7 +1,59 @@
+// admin-attendance.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttendanceService } from '../../../shared/services/attendance.service';
+
+interface Employee {
+  id: string;
+  name: string;
+  department: string;
+  position: string;
+  joinDate: string;
+  avatarColor: string;
+}
+
+interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: Date;
+  status: string;
+  checkInTime: Date | null;
+  checkOutTime: Date | null;
+  remarks: string;
+  autoMarked: boolean;
+  notMarked: boolean;
+  employeeDepartment?: string;
+  checkInLocation?: string;
+  workHours?: number;
+  overtime?: number;
+  lateArrival?: boolean;
+  earlyDeparture?: boolean;
+  workFromHome?: boolean;
+  project?: string;
+  // Add these properties to match the service data
+  location?: string;
+}
+
+interface MonthlySummary {
+  employeeId: string;
+  employeeName: string;
+  employeeDepartment: string;
+  totalPresent: number;
+  totalAbsent: number;
+  totalHalfDays: number;
+  totalLeaves: number;
+  notMarkedDays: number;
+  workingDays: number;
+  attendancePercentage: number;
+  averageWorkHours: string;
+  totalOvertime: string;
+  trend: number;
+  monthlyData: any[];
+  lateArrivals: number;
+  earlyDepartures: number;
+}
 
 @Component({
   selector: 'app-admin-attendance',
@@ -17,14 +69,13 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
   selectedMonth: string;
   
   // Data
-  attendanceRecords: any[] = [];
-  attendanceSummary: any[] = [];
+  attendanceRecords: AttendanceRecord[] = [];
+  attendanceSummary: MonthlySummary[] = [];
   months: Date[] = [];
-  allEmployees: any[] = [];
+  allEmployees: Employee[] = [];
   
   // UI state
   expandedEmployeeId: string | null = null;
-  
   todayOverview = {
     present: 0,
     absent: 0,
@@ -33,10 +84,28 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     notMarked: 0,
     total: 0
   };
+
+  // Search & Filter state
+  searchQuery: string = '';
+  statusFilter: string = 'all';
+  departmentFilter: string = 'all';
+  sortBy: string = 'name';
   
-  officeEndTime = '6:30'; // Display format
-  private officeEndTimeMinutes = 18 * 60 + 30; // 6:30 PM in minutes
+  // Settings
+  officeEndTime = '6:30 PM';
+  autoMarkEnabled = true;
+  notificationsEnabled = true;
+  
+  // Quick stats
+  quickStats = {
+    onTime: 0,
+    lateComers: 0,
+    workFromHome: 0,
+    earlyLeavers: 0
+  };
+  
   private timer: any;
+  private officeEndTimeMinutes = 18 * 60 + 30; // 6:30 PM in minutes
 
   constructor(private attendanceService: AttendanceService) {
     const today = new Date();
@@ -62,56 +131,17 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Check if it's past office time and update status
-  checkOfficeTimeAndUpdate() {
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    if (currentTime >= this.officeEndTimeMinutes) {
-      this.autoMarkAbsentForUnmarked();
-    }
-  }
-
-  // Auto-mark absent for who haven't marked attendance
-  autoMarkAbsentForUnmarked() {
-    const todayStr = this.formatDate(new Date());
-    this.allEmployees.forEach(employee => {
-      const hasMarked = this.attendanceService.hasMarkedAttendanceToday(employee.id);
-      if (!hasMarked) {
-        // Check if already auto-marked today
-        const existingRecord = this.attendanceRecords.find(
-          record => record.employeeId === employee.id && 
-          record.date && 
-          this.formatDate(new Date(record.date)) === todayStr &&
-          record.autoMarked === true
-        );
-        
-        if (!existingRecord) {
-          // Auto-mark as absent
-          this.attendanceService.markAttendance(
-            employee.id,
-            employee.name,
-            'absent',
-            'Auto-marked (Not marked by ' + this.officeEndTime + ' PM)'
-          );
-          
-          // Reload data
-          this.loadDailyData();
-        }
-      }
-    });
-  }
-
-  // View management
+  // View Management
   onViewChange(view: 'daily' | 'monthly') {
     this.selectedView = view;
     if (view === 'daily') {
       this.loadDailyData();
- {
+    } else {
       this.loadMonthlyData();
     }
   }
 
-  // Daily view methods
+  // Daily View Methods
   onDateChange(event?: any) {
     if (event && event.target) {
       this.selectedDate = event.target.value;
@@ -125,42 +155,107 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     this.loadDailyData();
   }
 
-  // Monthly view methods
+  quickDateSelect(daysOffset: number) {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    this.selectedDate = this.formatDate(date);
+    this.loadDailyData();
+  }
+
+  // Monthly View Methods
   onMonthChange() {
     this.loadMonthlyData();
   }
 
   toggleEmployeeDetails(employeeId: string) {
-    this.expandedEmployeeId = this.expandedEmployeeId === employeeId ? null : employeeId;
+    if (this.expandedEmployeeId === employeeId) {
+      this.expandedEmployeeId = null;
+    } else {
+      this.expandedEmployeeId = employeeId;
+    }
   }
 
-  // Data loading
+  // Filter Methods
+  filterByStatus(status: string) {
+    this.statusFilter = status;
+    this.applyFilters();
+  }
+
+  filterByDepartment(department: string) {
+    this.departmentFilter = department;
+    this.applyFilters();
+  }
+
+  onSearch() {
+    this.applyFilters();
+  }
+
+  onSortChange() {
+    this.sortRecords();
+  }
+
+  // Data Loading
   private loadDailyData() {
     const date = new Date(this.selectedDate);
     const todayStr = this.formatDate(date);
     const isToday = todayStr === this.formatDate(new Date());
     
     // Get marked attendance from service
-    const markedRecords = this.attendanceService.getAttendanceByDate(date) || [];
-
-    // Combine with all employees
+    const markedRecords: any[] = this.attendanceService.getAttendanceByDate(date) || [];
+    
+    // Reset quick stats
+    this.quickStats = {
+      onTime: 0,
+      lateComers: 0,
+      workFromHome: 0,
+      earlyLeavers: 0
+    };
+    
+    // Enhanced employee combination with detailed status
     this.attendanceRecords = this.allEmployees.map(employee => {
-      const existingRecord = markedRecords.find(record => record.employeeId === employee.id);
+      const existingRecord = markedRecords.find((record: any) => record.employeeId === employee.id);
       
       if (existingRecord) {
+        const checkInTime = existingRecord.checkInTime ? new Date(existingRecord.checkInTime) : null;
+        const checkOutTime = existingRecord.checkOutTime ? new Date(existingRecord.checkOutTime) : null;
+        const isLate = this.isLateArrival(checkInTime);
+        const isEarly = this.isEarlyDeparture(checkOutTime);
+        const workHours = this.calculateWorkHours(checkInTime, checkOutTime);
+        const overtime = this.calculateOvertime(checkInTime, checkOutTime);
+        
+        // Update quick stats
+        if (isLate) this.quickStats.lateComers++;
+        if (isEarly) this.quickStats.earlyLeavers++;
+        if (!isLate) this.quickStats.onTime++;
+        if (existingRecord.workFromHome) this.quickStats.workFromHome++;
+        
         return {
-          ...existingRecord,
+          id: existingRecord.id || 'record-' + employee.id,
+          employeeId: employee.id,
           employeeName: employee.name,
+          date: date,
+          status: existingRecord.status || 'present',
+          checkInTime: checkInTime,
+          checkOutTime: checkOutTime,
+          remarks: existingRecord.remarks || '',
           autoMarked: false,
-          notMarked: false
-        };
+          notMarked: false,
+          employeeDepartment: employee.department,
+          checkInLocation: existingRecord.location || existingRecord.checkInLocation || 'Office',
+          workHours: workHours,
+          overtime: overtime || 0,
+          lateArrival: isLate,
+          earlyDeparture: isEarly,
+          workFromHome: existingRecord.workFromHome || false,
+          project: existingRecord.project || 'General'
+        } as AttendanceRecord;
       } else {
         // Check if it's past office time for today
         if (isToday) {
           const now = new Date();
           const currentTime = now.getHours() * 60 + now.getMinutes();
           
-          if (currentTime >= this.officeEndTimeMinutes) {
+          if (this.autoMarkEnabled && currentTime >= this.officeEndTimeMinutes) {
             return {
               id: 'auto-' + employee.id,
               employeeId: employee.id,
@@ -168,10 +263,19 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
               date: date,
               status: 'absent',
               checkInTime: null,
-              remarks: 'Auto-marked (Not marked by ' + this.officeEndTime + ' PM)',
+              checkOutTime: null,
+              remarks: 'Auto-marked (Not marked by ' + this.officeEndTime + ')',
               autoMarked: true,
-              notMarked: false
-            };
+              notMarked: false,
+              employeeDepartment: employee.department,
+              checkInLocation: 'System',
+              workHours: 0,
+              overtime: 0,
+              lateArrival: false,
+              earlyDeparture: false,
+              workFromHome: false,
+              project: 'General'
+            } as AttendanceRecord;
           } else {
             return {
               id: 'pending-' + employee.id,
@@ -180,10 +284,19 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
               date: date,
               status: 'not-marked',
               checkInTime: null,
+              checkOutTime: null,
               remarks: 'Not yet marked',
               autoMarked: false,
-              notMarked: true
-            };
+              notMarked: true,
+              employeeDepartment: employee.department,
+              checkInLocation: 'Not available',
+              workHours: 0,
+              overtime: 0,
+              lateArrival: false,
+              earlyDeparture: false,
+              workFromHome: false,
+              project: 'General'
+            } as AttendanceRecord;
           }
         } else {
           // For past dates
@@ -201,10 +314,19 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
               date: date,
               status: 'absent',
               checkInTime: null,
+              checkOutTime: null,
               remarks: 'No attendance marked',
               autoMarked: true,
-              notMarked: false
-            };
+              notMarked: false,
+              employeeDepartment: employee.department,
+              checkInLocation: 'Not available',
+              workHours: 0,
+              overtime: 0,
+              lateArrival: false,
+              earlyDeparture: false,
+              workFromHome: false,
+              project: 'General'
+            } as AttendanceRecord;
           } else {
             // Future date
             return {
@@ -212,18 +334,28 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
               employeeId: employee.id,
               employeeName: employee.name,
               date: date,
-              status: 'not-marked',
+              status: 'future',
               checkInTime: null,
+              checkOutTime: null,
               remarks: 'Future date',
               autoMarked: false,
-              notMarked: true
-            }; 
+              notMarked: true,
+              employeeDepartment: employee.department,
+              checkInLocation: 'Not available',
+              workHours: 0,
+              overtime: 0,
+              lateArrival: false,
+              earlyDeparture: false,
+              workFromHome: false,
+              project: 'General'
+            } as AttendanceRecord;
           }
         }
       }
     });
-
+    
     this.calculateTodayOverview();
+    this.sortRecords();
   }
 
   private loadMonthlyData() {
@@ -232,29 +364,39 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Generate monthly summary for all employees
+    // Generate enhanced monthly summary with detailed analytics
     this.attendanceSummary = this.allEmployees.map(employee => {
-      const monthlyData = this.getEmployeeMonthlyData(employee.id) || [];
+      const monthlyData = this.getEmployeeMonthlyData(employee.id);
       
-      // Filter out future days (we don't show them)
-      const actualData = monthlyData.filter(d => d.status !== 'future');
+      // Calculate detailed statistics
+      const presentDays = monthlyData.filter((d: any) => d.status === 'present').length;
+      const absentDays = monthlyData.filter((d: any) => d.status === 'absent').length;
+      const halfDays = monthlyData.filter((d: any) => d.status === 'half-day').length;
+      const leaveDays = monthlyData.filter((d: any) => d.status === 'leave').length;
+      const notMarkedDays = monthlyData.filter((d: any) => d.status === 'not-marked').length;
+      const workingDays = monthlyData.filter((d: any) => d.status !== 'future').length;
       
-      const presentDays = actualData.filter(d => d.status === 'present').length;
-      const absentDays = actualData.filter(d => d.status === 'absent').length;
-      const halfDays = actualData.filter(d => d.status === 'half-day').length;
-      const leaveDays = actualData.filter(d => d.status === 'leave').length;
-      const notMarkedDays = actualData.filter(d => d.status === 'not-marked').length;
-      const workingDays = actualData.length;
+      // Calculate average work hours for present days
+      const presentRecords = monthlyData.filter((d: any) => d.status === 'present');
+      const totalWorkHours = presentRecords.reduce((sum: number, record: any) => sum + (record.workHours || 0), 0);
+      const averageWorkHours = presentDays > 0 ? (totalWorkHours / presentDays) : 0;
       
-      // Calculate percentage
+      // Calculate overtime
+      const totalOvertime = presentRecords.reduce((sum: number, record: any) => sum + (record.overtime || 0), 0);
+      
+      // Calculate attendance percentage
       let attendancePercentage = 0;
       if (workingDays > 0) {
         attendancePercentage = Math.round((presentDays / workingDays) * 100);
       }
       
+      // Determine trends
+      const trend = this.calculateAttendanceTrend(employee.id);
+      
       return {
         employeeId: employee.id,
         employeeName: employee.name,
+        employeeDepartment: employee.department,
         totalPresent: presentDays,
         totalAbsent: absentDays,
         totalHalfDays: halfDays,
@@ -262,22 +404,238 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
         notMarkedDays: notMarkedDays,
         workingDays: workingDays,
         attendancePercentage: attendancePercentage,
-        monthlyData: actualData // Only actual days (no future)
-      };
+        averageWorkHours: averageWorkHours.toFixed(1),
+        totalOvertime: totalOvertime.toFixed(1),
+        trend: trend,
+        monthlyData: monthlyData,
+        lateArrivals: presentRecords.filter((r: any) => r.lateArrival).length,
+        earlyDepartures: presentRecords.filter((r: any) => r.earlyDeparture).length
+      } as MonthlySummary;
     });
+    
+    // Sort by attendance percentage (descending)
+    this.attendanceSummary.sort((a, b) => b.attendancePercentage - a.attendancePercentage);
   }
 
   private loadEmployees() {
-    // Load only employees that are in the system
-    // These should match what's in your actual system
+    // Load employees with enhanced data
     this.allEmployees = [
-      { id: '1', name: 'Rahul Kumar', department: 'Development' },
-      { id: '2', name: 'Priya Sharma', department: 'HR' },
-      { id: '3', name: 'Amit Patel', department: 'Design' },
-      { id: '4', name: 'Sneha Reddy', department: 'QA' }
+      { 
+        id: '1', 
+        name: 'Rahul Kumar', 
+        department: 'Development',
+        position: 'Senior Developer',
+        joinDate: '2023-01-15',
+        avatarColor: '#4f46e5'
+      },
+      { 
+        id: '2', 
+        name: 'Priya Sharma', 
+        department: 'HR',
+        position: 'HR Manager',
+        joinDate: '2022-08-10',
+        avatarColor: '#10b981'
+      },
+      { 
+        id: '3', 
+        name: 'Amit Patel', 
+        department: 'Design',
+        position: 'UI/UX Designer',
+        joinDate: '2023-03-22',
+        avatarColor: '#f59e0b'
+      },
+      { 
+        id: '4', 
+        name: 'Sneha Reddy', 
+        department: 'QA',
+        position: 'QA Lead',
+        joinDate: '2022-11-30',
+        avatarColor: '#ef4444'
+      },
+      { 
+        id: '5', 
+        name: 'Rohan Mehta', 
+        department: 'Marketing',
+        position: 'Marketing Head',
+        joinDate: '2023-05-18',
+        avatarColor: '#3b82f6'
+      },
+      { 
+        id: '6', 
+        name: 'Anjali Singh', 
+        department: 'Development',
+        position: 'Frontend Developer',
+        joinDate: '2024-01-08',
+        avatarColor: '#8b5cf6'
+      },
+      { 
+        id: '7', 
+        name: 'Vikram Singh', 
+        department: 'Development',
+        position: 'Backend Developer',
+        joinDate: '2023-07-15',
+        avatarColor: '#ec4899'
+      },
+      { 
+        id: '8', 
+        name: 'Neha Gupta', 
+        department: 'Marketing',
+        position: 'Content Writer',
+        joinDate: '2024-02-01',
+        avatarColor: '#14b8a6'
+      }
     ];
   }
 
+  // Filtering & Sorting
+  private applyFilters() {
+    // Start with all records
+    this.loadDailyData();
+    
+    let filtered = [...this.attendanceRecords];
+    
+    // Apply status filter
+    if (this.statusFilter !== 'all') {
+      filtered = filtered.filter(record => record.status === this.statusFilter);
+    }
+    
+    // Apply department filter
+    if (this.departmentFilter !== 'all') {
+      filtered = filtered.filter(record => record.employeeDepartment === this.departmentFilter);
+    }
+    
+    // Apply search filter
+    if (this.searchQuery.trim()) {
+      const query = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(record => 
+        record.employeeName.toLowerCase().includes(query) ||
+        (record.employeeDepartment?.toLowerCase() || '').includes(query) ||
+        record.remarks.toLowerCase().includes(query)
+      );
+    }
+    
+    this.attendanceRecords = filtered;
+    this.sortRecords();
+  }
+
+  private sortRecords() {
+    const records = [...this.attendanceRecords];
+    
+    switch(this.sortBy) {
+      case 'name':
+        records.sort((a, b) => a.employeeName.localeCompare(b.employeeName));
+        break;
+      case 'status':
+        const statusOrder: { [key: string]: number } = { 
+          'present': 1, 
+          'half-day': 2, 
+          'leave': 3, 
+          'not-marked': 4, 
+          'absent': 5, 
+          'future': 6 
+        };
+        records.sort((a, b) => 
+          (statusOrder[a.status] || 7) - (statusOrder[b.status] || 7)
+        );
+        break;
+      case 'department':
+        records.sort((a, b) => 
+          (a.employeeDepartment || '').localeCompare(b.employeeDepartment || '')
+        );
+        break;
+      case 'checkIn':
+        records.sort((a, b) => {
+          if (!a.checkInTime && !b.checkInTime) return 0;
+          if (!a.checkInTime) return 1;
+          if (!b.checkInTime) return -1;
+          return a.checkInTime.getTime() - b.checkInTime.getTime();
+        });
+        break;
+    }
+    
+    this.attendanceRecords = records;
+  }
+
+  // Helper Methods
+  getEmployeeDepartment(employeeId: string): string {
+    const employee = this.allEmployees.find(e => e.id === employeeId);
+    return employee ? employee.department : 'Unknown';
+  }
+
+  getEmployeePosition(employeeId: string): string {
+    const employee = this.allEmployees.find(e => e.id === employeeId);
+    return employee ? employee.position : 'Not specified';
+  }
+
+  getEmployeeColor(employeeId: string): string {
+    const employee = this.allEmployees.find(e => e.id === employeeId);
+    return employee ? employee.avatarColor : '#4f46e5';
+  }
+
+  getStatusClass(status: string): string {
+    const classes: {[key: string]: string} = {
+      'present': 'status-present',
+      'absent': 'status-absent',
+      'half-day': 'status-halfday',
+      'leave': 'status-leave',
+      'not-marked': 'status-notmarked',
+      'future': 'status-future'
+    };
+    return classes[status] || 'status-unknown';
+  }
+
+  getStatusIcon(status: string): string {
+    const icons: {[key: string]: string} = {
+      'present': '✅',
+      'absent': '❌',
+      'half-day': '⏰',
+      'leave': '🏖️',
+      'not-marked': '⏳',
+      'future': '📅'
+    };
+    return icons[status] || '❓';
+  }
+
+  getStatusText(status: string): string {
+    const texts: {[key: string]: string} = {
+      'present': 'PRESENT',
+      'absent': 'ABSENT',
+      'half-day': 'HALF DAY',
+      'leave': 'ON LEAVE',
+      'not-marked': 'NOT MARKED',
+      'future': 'FUTURE DATE'
+    };
+    return texts[status] || 'UNKNOWN';
+  }
+
+  getOverallStatusClass(percentage: number): string {
+    if (percentage >= 90) return 'status-excellent';
+    if (percentage >= 75) return 'status-good';
+    if (percentage >= 60) return 'status-fair';
+    return 'status-poor';
+  }
+
+  getOverallStatusText(percentage: number): string {
+    if (percentage >= 90) return 'Excellent';
+    if (percentage >= 75) return 'Good';
+    if (percentage >= 60) return 'Fair';
+    return 'Needs Attention';
+  }
+
+  getPercentageClass(percentage: number): string {
+    if (percentage >= 90) return 'high';
+    if (percentage >= 75) return 'medium';
+    if (percentage >= 60) return 'low';
+    return 'very-low';
+  }
+
+  getTrendClass(trend: number): string {
+    if (trend >= 80) return 'trend-positive';
+    if (trend >= 60) return 'trend-neutral';
+    return 'trend-negative';
+  }
+
+  // Enhanced Data Processing
   private calculateTodayOverview() {
     const counts = {
       present: 0,
@@ -287,10 +645,12 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
       notMarked: 0,
       total: this.attendanceRecords.length
     };
-    
+
     this.attendanceRecords.forEach(record => {
       switch(record.status) {
-        case 'present': counts.present++; break;
+        case 'present': 
+          counts.present++; 
+          break;
         case 'absent': counts.absent++; break;
         case 'half-day': counts.halfDay++; break;
         case 'leave': counts.leave++; break;
@@ -301,65 +661,185 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     this.todayOverview = counts;
   }
 
-  // Helper methods
-  getEmployeeDepartment(employeeId: string): string {
-    const employee = this.allEmployees.find(e => e.id === employeeId);
-    return employee ? employee.department : 'Unknown';
+  private isLateArrival(checkInTime: Date | null): boolean {
+    if (!checkInTime) return false;
+    const checkInHour = checkInTime.getHours();
+    const checkInMinute = checkInTime.getMinutes();
+    // Consider late if check-in after 9:45 AM
+    return checkInHour > 9 || (checkInHour === 9 && checkInMinute > 45);
   }
 
-  getStatusClass(status: string): string {
-    switch(status) {
-      case 'present': return 'status-present';
-      case 'absent': return 'status-absent';
-      case 'half-day': return 'status-halfday';
-      case 'leave': return 'status-leave';
-      case 'not-marked': return 'status-notmarked';
-      default: return 'status-unknown';
+  private isEarlyDeparture(checkOutTime: Date | null): boolean {
+    if (!checkOutTime) return false;
+    const checkOutHour = checkOutTime.getHours();
+    const checkOutMinute = checkOutTime.getMinutes();
+    // Consider early if check-out before 6:00 PM
+    return checkOutHour < 18;
+  }
+
+  private calculateWorkHours(checkInTime: Date | null, checkOutTime: Date | null): number {
+    if (!checkInTime || !checkOutTime) return 0;
+    
+    const diffMs = checkOutTime.getTime() - checkInTime.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    
+    return parseFloat(diffHours.toFixed(2));
+  }
+
+  private calculateOvertime(checkInTime: Date | null, checkOutTime: Date | null): number {
+    const workHours = this.calculateWorkHours(checkInTime, checkOutTime);
+    const regularHours = 8; // Standard work hours
+    
+    if (workHours > regularHours) {
+      return parseFloat((workHours - regularHours).toFixed(2));
+    }
+    return 0;
+  }
+
+  private calculateAttendanceTrend(employeeId: string): number {
+    // Calculate trend based on last 7 days
+    const today = new Date();
+    const lastWeek = new Date(today);
+    lastWeek.setDate(today.getDate() - 7);
+    
+    let presentDays = 0;
+    let totalDays = 0;
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(lastWeek);
+      date.setDate(lastWeek.getDate() + i);
+      
+      // Simplified trend calculation
+      const records = this.attendanceService.getAttendanceByDate(date) || [];
+      const record = records.find((r: any) => r.employeeId === employeeId);
+      if (record) {
+        totalDays++;
+        if (record.status === 'present') {
+          presentDays++;
+        }
+      }
+    }
+    
+    if (totalDays === 0) return 0;
+    return Math.round((presentDays / totalDays) * 100);
+  }
+
+  // Actions
+  markAllPresent() {
+    if (confirm('Mark all unmarked employees as present?')) {
+      this.attendanceRecords.forEach(record => {
+        if (record.status === 'not-marked' || record.status === 'future') {
+          record.status = 'present';
+          record.remarks = 'Marked present by admin';
+          record.autoMarked = false;
+          record.notMarked = false;
+          record.checkInTime = new Date();
+          record.checkOutTime = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours later
+          record.workHours = 8;
+          record.overtime = 0;
+        }
+      });
+      this.calculateTodayOverview();
     }
   }
 
-  getStatusIcon(status: string): string {
-    switch(status) {
-      case 'present': return '✅';
-      case 'absent': return '❌';
-      case 'half-day': return '⏰';
-      case 'leave': return '🏖️';
-      case 'not-marked': return '⏳';
-      default: return '❓';
+  markAsPresent(record: AttendanceRecord) {
+    record.status = 'present';
+    record.remarks = 'Marked present by admin';
+    record.autoMarked = false;
+    record.notMarked = false;
+    record.checkInTime = new Date();
+    record.checkOutTime = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    record.workHours = 8;
+    record.overtime = 0;
+    this.calculateTodayOverview();
+  }
+
+  markAsAbsent(record: AttendanceRecord) {
+    record.status = 'absent';
+    record.remarks = 'Marked absent by admin';
+    record.autoMarked = false;
+    record.notMarked = false;
+    this.calculateTodayOverview();
+  }
+
+  // Export Functions
+  exportToPDF() {
+    const data = this.selectedView === 'daily' ? this.attendanceRecords : this.attendanceSummary;
+    const title = this.selectedView === 'daily' ? 'Daily Attendance Report' : 'Monthly Attendance Summary';
+    
+    // Create a simple text report
+    let report = `${title}\n`;
+    report += `Generated on: ${new Date().toLocaleDateString()}\n`;
+    report += `Date: ${this.selectedDate}\n\n`;
+    
+    if (this.selectedView === 'daily') {
+      report += 'Employee Attendance:\n';
+      report += '================================\n';
+      this.attendanceRecords.forEach(record => {
+        report += `${record.employeeName} (${record.employeeDepartment}): ${record.status}\n`;
+        if (record.checkInTime) {
+          report += `  Check-in: ${record.checkInTime.toLocaleTimeString()}\n`;
+        }
+        if (record.remarks) {
+          report += `  Remarks: ${record.remarks}\n`;
+        }
+        report += '\n';
+      });
+    } else {
+      report += 'Monthly Attendance Summary:\n';
+      report += '================================\n';
+      this.attendanceSummary.forEach(summary => {
+        report += `${summary.employeeName} (${summary.employeeDepartment}):\n`;
+        report += `  Attendance: ${summary.attendancePercentage}%\n`;
+        report += `  Present: ${summary.totalPresent}/${summary.workingDays} days\n`;
+        report += `  Absent: ${summary.totalAbsent} days\n`;
+        report += `  Leaves: ${summary.totalLeaves} days\n`;
+        report += `  Half Days: ${summary.totalHalfDays} days\n\n`;
+      });
+    }
+    
+    // Create download link
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `attendance-report-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    alert('Report exported successfully!');
+  }
+
+  exportToExcel() {
+    console.log('Exporting to Excel...');
+    alert('Excel export feature coming soon!');
+  }
+
+  // Settings Management
+  toggleAutoMark() {
+    this.autoMarkEnabled = !this.autoMarkEnabled;
+    if (!this.autoMarkEnabled) {
+      alert('Auto-mark feature disabled. Employees will not be auto-marked absent.');
     }
   }
 
-  getStatusText(status: string): string {
-    switch(status) {
-      case 'present': return 'PRESENT';
-      case 'absent': return 'ABSENT';
-      case 'half-day': return 'HALF DAY';
-      case 'leave': return 'ON LEAVE';
-      case 'not-marked': return 'NOT MARKED';
-      default: return 'UNKNOWN';
+  toggleNotifications() {
+    this.notificationsEnabled = !this.notificationsEnabled;
+  }
+
+  // Notification Methods
+  sendReminder() {
+    if (confirm('Send attendance reminder to all employees?')) {
+      console.log('Sending reminders...');
+      alert('Reminders sent successfully!');
     }
   }
 
-  getOverallStatusClass(percentage: number): string {
-    if (percentage >= 90) return 'status-excellent';
-    if (percentage >= 75) return 'status-good';
-    return 'status-poor';
-  }
-
-  getOverallStatusText(percentage: number): string {
-    if (percentage >= 90) return 'Excellent';
-    if (percentage >= 75) return 'Good';
-    return 'Poor';
-  }
-
-  getPercentageClass(percentage: number): string {
-    if (percentage >= 90) return 'high';
-    if (percentage >= 75) return 'medium';
-    return 'low';
-  }
-
+  // Utility Methods
   getEmployeeMonthlyData(employeeId: string): any[] {
     if (!this.selectedMonth) return [];
+    
     try {
       const [year, month] = this.selectedMonth.split('-').map(Number);
       if (!year || !month) return [];
@@ -379,13 +859,15 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
         if (date > today) {
           data.push({
             date: date,
-            status: 'future'
+            status: 'future',
+            workHours: 0,
+            overtime: 0
           });
           continue;
         }
         
         // Check if employee has marked attendance for this day
-        const record = employeeRecords.find(r => {
+        const record = employeeRecords.find((r: any) => {
           if (!r || !r.date) return false;
           const recordDate = new Date(r.date);
           return this.formatDate(recordDate) === dateStr;
@@ -394,29 +876,39 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
         if (record) {
           data.push({
             date: date,
-            status: record.status || 'absent'
+            status: record.status || 'absent',
+            workHours: 8,
+            overtime: 0,
+            lateArrival: false,
+            earlyDeparture: false
           });
         } else {
           // No record found
           if (dateStr === this.formatDate(today)) {
             // Today - check if past office time
             const currentTime = today.getHours() * 60 + today.getMinutes();
-            if (currentTime >= this.officeEndTimeMinutes) {
+            if (this.autoMarkEnabled && currentTime >= this.officeEndTimeMinutes) {
               data.push({
                 date: date,
-                status: 'absent'
+                status: 'absent',
+                workHours: 0,
+                overtime: 0
               });
             } else {
               data.push({
                 date: date,
-                status: 'not-marked'
+                status: 'not-marked',
+                workHours: 0,
+                overtime: 0
               });
             }
           } else {
             // Past date with no record = absent
             data.push({
               date: date,
-              status: 'absent'
+              status: 'absent',
+              workHours: 0,
+              overtime: 0
             });
           }
         }
@@ -429,7 +921,6 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Utility methods
   formatDate(date: Date): string {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -445,16 +936,61 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
 
   private generateMonths() {
     const months: Date[] = [];
-    const startDate = new Date(2026, 0, 1); // January 2026
+    const startDate = new Date(new Date().getFullYear() - 1, 0, 1); // 1 year back
     const today = new Date();
     
-    // Generate months from Jan 2026 to current month
     let current = new Date(startDate);
     while (current <= today) {
       months.push(new Date(current));
       current.setMonth(current.getMonth() + 1);
     }
-
+    
     this.months = months;
+  }
+
+  // Auto-mark functionality
+  private checkOfficeTimeAndUpdate() {
+    if (!this.autoMarkEnabled) return;
+    
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    if (currentTime >= this.officeEndTimeMinutes) {
+      this.autoMarkAbsentForUnmarked();
+    }
+  }
+
+  private autoMarkAbsentForUnmarked() {
+    const todayStr = this.formatDate(new Date());
+    
+    this.allEmployees.forEach(employee => {
+      const hasMarked = this.attendanceService.hasMarkedAttendanceToday(employee.id);
+      if (!hasMarked) {
+        const existingRecord = this.attendanceRecords.find(
+          record => record.employeeId === employee.id && 
+          record.date && 
+          this.formatDate(new Date(record.date)) === todayStr &&
+          record.autoMarked === true
+        );
+        
+        if (!existingRecord) {
+          // Auto-mark as absent
+          this.attendanceService.markAttendance(
+            employee.id,
+            employee.name,
+            'absent',
+            `Auto-marked at ${this.officeEndTime} (System)`
+          );
+          
+          // Update local records
+          this.loadDailyData();
+        }
+      }
+    });
+  }
+
+  // Get unique departments for filter
+  getDepartments(): string[] {
+    return [...new Set(this.allEmployees.map(emp => emp.department))];
   }
 }

@@ -14,12 +14,14 @@ export class UserAttendanceComponent implements OnInit {
   currentMonth: string = '';
   myAttendance: any[] = [];
   hasMarkedToday: boolean = false;
+  hasCheckedOutToday: boolean = false;
   attendanceStatus: 'present' | 'absent' | 'half-day' | 'leave' = 'present';
   remarks: string = '';
+  todayRecord: any = null;
   
-  // Current user info (would come from auth service in real app)
-  currentUserId: string = 'user_1';
-  currentUserName: string = 'Current User';
+  // Current user info (synchronized with employee data)
+  currentUserId: string = '1';
+  currentUserName: string = 'Rahul Kumar';
 
   statusOptions = [
     { value: 'present' as AttendanceStatus, label: 'Present', icon: '✅' },
@@ -50,9 +52,17 @@ export class UserAttendanceComponent implements OnInit {
 
   checkTodayAttendance(): void {
     const today = new Date().toDateString();
-    this.hasMarkedToday = this.myAttendance.some(
+    this.todayRecord = this.myAttendance.find(
       (record: any) => new Date(record.date).toDateString() === today
     );
+    
+    if (this.todayRecord) {
+      this.hasMarkedToday = true;
+      this.hasCheckedOutToday = !!this.todayRecord.checkOutTime;
+    } else {
+      this.hasMarkedToday = false;
+      this.hasCheckedOutToday = false;
+    }
   }
 
   markAttendance(): void {
@@ -68,6 +78,16 @@ export class UserAttendanceComponent implements OnInit {
     this.hasMarkedToday = true;
     this.remarks = '';
     this.loadMyAttendance();
+    this.checkTodayAttendance();
+  }
+
+  checkout(): void {
+    const record = this.attendanceService.checkout(this.currentUserId);
+    if (record) {
+      this.hasCheckedOutToday = true;
+      this.todayRecord = record;
+      this.loadMyAttendance();
+    }
   }
 
   get presentCount(): number {

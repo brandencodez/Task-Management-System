@@ -1,201 +1,91 @@
-.user-attendance-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
+.user-attendance-container { padding: 20px; max-width: 1400px; margin: 0 auto; background: #fafafa; }
 
-.attendance-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
+.attendance-header { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 
-.attendance-header h1 {
-  margin: 0;
-  color: #333;
-}
+.attendance-header h1 { margin: 0; color: #171717; font-size: 20px; font-weight: 700; }
 
-.current-month {
-  font-size: 1.1rem;
-  color: #666;
+.current-month { font-size: 13px; color: #737373; font-weight: 600; background: #f5f5f5; padding: 6px 12px; border-radius: 6px; }
+
+.quick-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+
+.stat-card { background: white; border-radius: 8px; padding: 16px; text-align: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); border: 1px solid #e5e5e5; border-top: 3px solid #2563eb; }
+
+.stat-value { font-size: 28px; font-weight: 700; color: #171717; margin-bottom: 4px; }
+
+.stat-label { color: #737373; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+
+.mark-attendance-card, .already-marked-card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); border: 1px solid #e5e5e5; }
+
+.mark-attendance-card h3, .already-marked-card h3 { margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #171717; }
+
+.instruction { color: #737373; margin-bottom: 16px; font-size: 13px; }
+
+.status-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 16px; }
+
+.status-option { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px; border: 2px solid #e5e5e5; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+
+.status-option:hover { border-color: #2563eb; background: white; }
+
+.status-option.selected { border-color: #2563eb; background: #eff6ff; }
+
+.status-icon { font-size: 20px; }
+
+.status-label { font-size: 11px; font-weight: 600; color: #404040; }
+
+.remarks-section { margin-bottom: 16px; }
+
+.remarks-section label { display: block; margin-bottom: 6px; font-weight: 600; color: #404040; font-size: 13px; }
+
+.remarks-section textarea { width: 100%; padding: 10px 12px; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 12px; background: #fafafa; }
+
+.mark-attendance-btn { background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+
+.mark-attendance-btn:disabled { background: #d4d4d4; cursor: not-allowed; }
+
+.already-marked-header { display: flex; align-items: center; gap: 10px; padding: 12px; background: #d1fae5; border-radius: 6px; margin-bottom: 10px; }
+
+.check-icon { font-size: 24px; }
+
+.checkout-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e5e5; }
+
+.checkout-info { color: #737373; font-size: 12px; margin-bottom: 8px; }
+
+.checkout-info.success { color: #059669; font-weight: 600; }
+
+.checkout-btn { background: linear-gradient(90deg, #059669 0%, #047857 100%); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; width: 100%; }
+
+.marked-time { margin: 0; font-size: 11px; color: #737373; }
+
+.attendance-history { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); border: 1px solid #e5e5e5; }
+
+.attendance-history h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #171717; }
+
+.history-table { width: 100%; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden; }
+
+.table-header { display: grid; grid-template-columns: 1fr 1fr 1fr 2fr; background: #f5f5f5; padding: 10px 12px; font-weight: 600; font-size: 11px; color: #404040; }
+
+.table-row { display: grid; grid-template-columns: 1fr 1fr 1fr 2fr; padding: 10px 12px; border-bottom: 1px solid #e5e5e5; }
+
+.table-row:hover { background: #fafafa; }
+
+.table-cell { font-size: 12px; color: #404040; }
+
+.status-badge { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+
+.status-present { background: #d1fae5; color: #059669; }
+.status-absent { background: #fee2e2; color: #dc2626; }
+.status-halfday { background: #fef3c7; color: #d97706; }
+.status-leave { background: #cffafe; color: #0891b2; }
+
+.no-records { text-align: center; padding: 30px; color: #737373; }
+
+@media (max-width: 768px) {
+  .attendance-header { flex-direction: column; gap: 12px; }
+  .quick-stats { grid-template-columns: repeat(2, 1fr); }
+  .table-header, .table-row { grid-template-columns: 1fr 1fr; }
 }
 
 .quick-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
-
-.stat-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #333;
-}
-
-.stat-label {
-  color: #666;
-  margin-top: 4px;
-}
-
-.mark-attendance-card,
-.already-marked-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.mark-attendance-card h3,
-.already-marked-card h3 {
-  margin: 0 0 8px 0;
-}
-
-.instruction {
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.status-options {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.status-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.status-option:hover {
-  border-color: #007bff;
-}
-
-.status-option.selected {
-  border-color: #007bff;
-  background: #e7f1ff;
-}
-
-.remarks-section {
-  margin-bottom: 20px;
-}
-
-.remarks-section label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.remarks-section textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  resize: vertical;
-}
-
-.mark-attendance-btn {
-  background: #007bff;
-  color: #fff;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.mark-attendance-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.already-marked-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.check-icon {
-  font-size: 1.5rem;
-}
-
-.attendance-history {
-  background: #fff;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.attendance-history h3 {
-  margin: 0 0 20px 0;
-}
-
-.history-table {
-  width: 100%;
-}
-
-.table-header {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 2fr;
-  background: #f5f5f5;
-  padding: 12px;
-  border-radius: 8px 8px 0 0;
-  font-weight: 600;
-}
-
-.table-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 2fr;
-  padding: 12px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-}
-
-.status-present { background: #d4edda; color: #155724; }
-.status-absent { background: #f8d7da; color: #721c24; }
-.status-halfday { background: #fff3cd; color: #856404; }
-.status-leave { background: #d1ecf1; color: #0c5460; }
-
-.no-records {
-  text-align: center;
-  padding: 40px;
-  color: #666;
-}
-
-/* Status colors */
-.bg-green-100 { background: #dcfce7; }
-.text-green-800 { color: #166534; }
-
-.bg-red-100 { background: #fee2e2; }
-.text-red-800 { color: #991b1b; }
-
-.bg-orange-100 { background: #ffedd5; }
-.text-orange-800 { color: #9a3412; }
-
-.bg-blue-100 { background: #dbeafe; }
-.text-blue-800 { color: #1e40af; }
-
-.bg-gray-100 { background: #f3f4f6; }
-.text-gray-800 { color: #374151; }

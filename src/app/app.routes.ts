@@ -65,8 +65,15 @@ export const routes: Routes = [
       {
         path: 'work-entry',
         loadComponent: () =>
-          import('./features/projects/work-entry-dashboard/work-entry-dashboard.component')
-            .then(m => m.WorkEntryDashboardComponent)
+          import(
+            './features/projects/work-entry-dashboard/work-entry-dashboard.component'
+          ).then(m => m.WorkEntryDashboardComponent)
+      },
+      // ✅ USER ATTENDANCE
+      {
+        path: 'attendance',
+        component: UserAttendanceComponent,
+        title: 'My Attendance'
       }
     ]
   },

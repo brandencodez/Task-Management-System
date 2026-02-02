@@ -1,129 +1,305 @@
+<!-- admin-attendance.component.html -->
 <div class="admin-attendance-container">
-  <!-- Header -->
+  <!-- Enhanced Header -->
   <div class="admin-header">
-    <h1><span class="header-icon">📊</span> Attendance Management</h1>
+    <div class="header-top">
+      <div class="header-left">
+        <div class="header-icon">📊</div>
+        <div class="header-text">
+          <h1>Attendance Management System</h1>
+          <div class="header-subtitle">
+            Real-time monitoring & analytics dashboard
+          </div>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <button class="header-btn" (click)="sendReminder()">
+          <span>🔔</span> Send Reminder
+        </button>
+        <button class="header-btn primary" (click)="exportToPDF()">
+          <span>📥</span> Export Report
+        </button>
+        
+        <!-- Settings Dropdown -->
+        <div class="settings-dropdown">
+          <button class="settings-btn" title="Settings">
+            ⚙️
+          </button>
+          <div class="settings-menu">
+            <div class="setting-item">
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="autoMarkEnabled" (change)="toggleAutoMark()">
+                <span class="slider"></span>
+              </label>
+              <span>Auto-mark absent</span>
+            </div>
+            <div class="setting-item">
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="notificationsEnabled" (change)="toggleNotifications()">
+                <span class="slider"></span>
+              </label>
+              <span>Notifications</span>
+            </div>
+            <button class="menu-item" (click)="exportToExcel()">📊 Export to Excel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Today's Overview -->
     <div class="today-overview">
-      <div class="overview-item present">
+      <div class="overview-item present" (click)="filterByStatus('present')">
         <span class="count">{{ todayOverview.present }}</span>
         <span class="label">Present</span>
       </div>
-      <div class="overview-item absent">
+      <div class="overview-item absent" (click)="filterByStatus('absent')">
         <span class="count">{{ todayOverview.absent }}</span>
         <span class="label">Absent</span>
       </div>
-      <div class="overview-item half-day">
+      <div class="overview-item half-day" (click)="filterByStatus('half-day')">
         <span class="count">{{ todayOverview.halfDay }}</span>
         <span class="label">Half Day</span>
       </div>
-      <div class="overview-item leave">
+      <div class="overview-item leave" (click)="filterByStatus('leave')">
         <span class="count">{{ todayOverview.leave }}</span>
-        <span class="label">Leave</span>
+        <span class="label">On Leave</span>
       </div>
-      <div class="overview-item not-marked" *ngIf="todayOverview.notMarked > 0">
+      <div class="overview-item not-marked" (click)="filterByStatus('not-marked')" *ngIf="todayOverview.notMarked > 0">
         <span class="count">{{ todayOverview.notMarked }}</span>
-        <span class="label">Not Marked</span>
+        <span class="label">Pending</span>
       </div>
       <div class="overview-item total">
         <span class="count">{{ todayOverview.total }}</span>
-        <span class="label">Total</span>
+        <span class="label">Total Employees</span>
       </div>
     </div>
   </div>
 
-  <!-- View Toggle -->
-  <div class="view-toggle">
-    <button 
-      class="toggle-btn" 
-      [class.active]="selectedView === 'daily'"
-      (click)="onViewChange('daily')"
-    >
-      <span class="btn-icon">📅</span> Daily View
-    </button>
-    <button 
-      class="toggle-btn" 
-      [class.active]="selectedView === 'monthly'"
-      (click)="onViewChange('monthly')"
-    >
-      <span class="btn-icon">📈</span> Monthly Summary
-    </button>
+  <!-- View Toggle Container -->
+  <div class="view-toggle-container">
+    <div class="view-toggle-header">
+      <h2>Dashboard Views</h2>
+      <div class="view-actions">
+        <span class="current-date">{{ selectedDate | date:'fullDate' }}</span>
+      </div>
+    </div>
+    
+    <div class="view-toggle">
+      <button 
+        class="toggle-btn" 
+        [class.active]="selectedView === 'daily'"
+        (click)="onViewChange('daily')"
+      >
+        <span class="btn-icon">📅</span> Daily Attendance
+        <span class="view-badge" *ngIf="selectedView === 'daily'">Active</span>
+      </button>
+      <button 
+        class="toggle-btn" 
+        [class.active]="selectedView === 'monthly'"
+        (click)="onViewChange('monthly')"
+      >
+        <span class="btn-icon">📈</span> Monthly Analytics
+        <span class="view-badge" *ngIf="selectedView === 'monthly'">Active</span>
+      </button>
+    </div>
   </div>
 
   <!-- DAILY VIEW -->
   @if (selectedView === 'daily') {
     <div class="daily-view">
-      <!-- Date Selector -->
-      <div class="date-selector">
-        <div class="date-input-group">
-          <label for="attendanceDate">
-            <span class="calendar-icon">📅</span> Select Date:
-          </label>
-          <input 
-            type="date" 
-            id="attendanceDate" 
-            [value]="selectedDate"
-            (change)="onDateChange($event)"
-            class="date-input"
-          />
-          <button class="today-btn" (click)="selectToday()">
-            <span class="today-icon">⚡</span> Today
-          </button>
+      <!-- Date & Stats Section -->
+      <div class="date-section">
+        <div class="date-selector">
+          <div class="date-input-group">
+            <label for="attendanceDate">
+              <span class="calendar-icon">📅</span> Select Date:
+            </label>
+            <input 
+              type="date" 
+              id="attendanceDate" 
+              [value]="selectedDate"
+              (change)="onDateChange($event)"
+              class="date-input"
+            />
+            <button class="today-btn" (click)="selectToday()">
+              <span class="today-icon">⚡</span> Today
+            </button>
+          </div>
+          
+          <div class="office-time-info">
+            <span class="time-icon">🕐</span>
+            <span>Office Hours: 9:30 AM - {{ officeEndTime }}</span>
+            <span class="auto-mark-info" *ngIf="autoMarkEnabled">
+              • Auto-mark enabled ({{ officeEndTime }})
+            </span>
+          </div>
         </div>
-        <div class="office-time-info">
-          <span class="time-icon">🕐</span>
-          Office Hours: 9:30 AM - {{ officeEndTime }} PM 
-          <span class="auto-mark-info">(Auto-mark absent after {{ officeEndTime }} PM)</span>
+
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+          <div class="quick-stat">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-content">
+              <h3>{{ quickStats.onTime }}</h3>
+              <p>On Time Arrivals</p>
+            </div>
+          </div>
+          <div class="quick-stat">
+            <div class="stat-icon">🚨</div>
+            <div class="stat-content">
+              <h3>{{ quickStats.lateComers }}</h3>
+              <p>Late Arrivals</p>
+            </div>
+          </div>
+          <div class="quick-stat">
+            <div class="stat-icon">🏠</div>
+            <div class="stat-content">
+              <h3>{{ quickStats.workFromHome }}</h3>
+              <p>Work From Home</p>
+            </div>
+          </div>
+          <div class="quick-stat">
+            <div class="stat-icon">🚪</div>
+            <div class="stat-content">
+              <h3>{{ quickStats.earlyLeavers }}</h3>
+              <p>Early Departures</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Compact Employee Grid -->
-      <div class="compact-employee-grid">
-        @for (record of attendanceRecords; track record.employeeId) {
-          <div class="compact-employee-card" [ngClass]="getStatusClass(record.status)">
-            <div class="compact-card-header">
-              <div class="compact-avatar">
-                {{ record.employeeName.charAt(0) }}
-              </div>
-              <div class="compact-info">
-                <div class="compact-name">{{ record.employeeName }}</div>
-                <div class="compact-dept">{{ getEmployeeDepartment(record.employeeId) }}</div>
-              </div>
-              <div class="compact-status">
-                <span class="status-icon">{{ getStatusIcon(record.status) }}</span>
-                <span class="status-text">{{ getStatusText(record.status) }}</span>
-              </div>
+      <!-- Search & Filter Section -->
+      <div class="search-filter-section">
+        <div class="search-container">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search employees by name, department, or remarks..." 
+              [(ngModel)]="searchQuery"
+              (input)="onSearch()"
+              class="search-input"
+            />
+          </div>
+          
+          <div class="filter-buttons">
+            <button 
+              class="filter-btn" 
+              [class.active]="statusFilter === 'all'"
+              (click)="filterByStatus('all')"
+            >
+              <span class="filter-icon">📋</span> All
+            </button>
+            <button 
+              class="filter-btn" 
+              [class.active]="statusFilter === 'present'"
+              (click)="filterByStatus('present')"
+            >
+              <span class="filter-icon">✅</span> Present
+            </button>
+            <button 
+              class="filter-btn" 
+              [class.active]="statusFilter === 'absent'"
+              (click)="filterByStatus('absent')"
+            >
+              <span class="filter-icon">❌</span> Absent
+            </button>
+            <button 
+              class="filter-btn" 
+              [class.active]="statusFilter === 'not-marked'"
+              (click)="filterByStatus('not-marked')"
+            >
+              <span class="filter-icon">⏳</span> Pending
+            </button>
+          </div>
+          
+          <div class="quick-actions">
+            <button class="action-btn secondary" (click)="markAllPresent()">
+              <span>✅</span> Mark All Present
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Employee Grid -->
+      <div class="employee-grid-section">
+        <div class="grid-header">
+          <h3>Employee Attendance Details</h3>
+          <div class="grid-actions">
+            <div class="view-toggle-small">
+              <button class="view-btn active">Cards</button>
+              <button class="view-btn">List</button>
             </div>
-            
-            <div class="compact-card-body">
-              <div class="compact-time">
-                @if (record.checkInTime) {
-                  <span class="time-icon">🕐</span>
-                  {{ record.checkInTime | date:'shortTime' }}
+            <select class="sort-select" [(ngModel)]="sortBy" (change)="onSortChange()">
+              <option value="name">Sort by Name</option>
+              <option value="status">Sort by Status</option>
+              <option value="department">Sort by Department</option>
+              <option value="checkIn">Sort by Check-in Time</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="enhanced-employee-grid">
+          @for (record of attendanceRecords; track record.employeeId) {
+            <div class="enhanced-employee-card-compact" [ngClass]="getStatusClass(record.status)">
+              <div class="card-header-compact">
+                <div class="employee-avatar-compact" [style.background]="getEmployeeColor(record.employeeId)">
+                  {{ record.employeeName.charAt(0) }}
+                </div>
+                <div class="employee-info-compact">
+                  <div class="employee-name">{{ record.employeeName }}</div>
+                  <div class="employee-dept">{{ record.employeeDepartment }}</div>
+                </div>
+                <div class="status-badge-compact">
+                  {{ getStatusIcon(record.status) }}
+                </div>
+              </div>
+              
+              <div class="card-body-compact">
+                <div class="time-row">
+                  <span class="time-label">In:</span>
+                  <span class="time-value">
+                    @if (record.checkInTime) {
+                      {{ record.checkInTime | date:'shortTime' }}
+                    } @else {
+                      --
+                    }
+                  </span>
+                </div>
+                <div class="time-row">
+                  <span class="time-label">Out:</span>
+                  <span class="time-value">
+                    @if (record.checkOutTime) {
+                      {{ record.checkOutTime | date:'shortTime' }}
+                    } @else {
+                      --
+                    }
+                  </span>
+                </div>
+                <div class="time-row">
+                  <span class="time-label">Work:</span>
+                  <span class="time-value">{{ record.workHours || 0 }}h</span>
+                </div>
+              </div>
+              
+              <div class="card-footer-compact">
+                @if (record.status === 'not-marked') {
+                  <button class="card-action-btn-sm" (click)="markAsPresent(record)" title="Mark Present">✅</button>
+                  <button class="card-action-btn-sm" (click)="markAsAbsent(record)" title="Mark Absent">❌</button>
                 } @else {
-                  <span>--:--</span>
+                  <button class="card-action-btn-sm" title="View Details">👁️</button>
                 }
               </div>
-              <div class="compact-remarks" *ngIf="record.remarks && record.remarks !== 'Not yet marked'">
-                {{ record.remarks }}
-              </div>
             </div>
-            
-            <div class="compact-card-footer">
-              @if (record.notMarked) {
-                <span class="status-indicator waiting">⏳ Waiting to mark</span>
-              } @else if (record.autoMarked) {
-                <span class="status-indicator auto">🤖 Auto-marked</span>
-              } @else {
-                <span class="status-indicator marked">✅ Marked by employee</span>
-              }
+          } @empty {
+            <div class="no-records">
+              <div class="no-records-icon">📭</div>
+              <h3>No employees found</h3>
+              <p>Try changing your search or filter criteria</p>
             </div>
-          </div>
-        } @empty {
-          <div class="no-records">
-            <div class="no-records-icon">📭</div>
-            <h3>No employees found</h3>
-            <p>Add employees to start tracking attendance</p>
-          </div>
-        }
+          }
+        </div>
       </div>
     </div>
   }
@@ -133,24 +309,26 @@
     <div class="monthly-view">
       <!-- Month Selector -->
       <div class="month-selector">
-        <label for="attendanceMonth">
-          <span class="month-icon">📆</span> Select Month:
-        </label>
-        <select 
-          id="attendanceMonth" 
-          [(ngModel)]="selectedMonth"
-          (change)="onMonthChange()"
-          class="month-select"
-        >
-          @for (month of months; track month) {
-            <option [value]="formatMonth(month)">
-              {{ month | date:'MMMM yyyy' }}
-            </option>
-          }
-        </select>
+        <div class="selector-left">
+          <label for="attendanceMonth">
+            <span class="month-icon">📆</span> Select Month:
+          </label>
+          <select 
+            id="attendanceMonth" 
+            [(ngModel)]="selectedMonth"
+            (change)="onMonthChange()"
+            class="month-select"
+          >
+            @for (month of months; track month) {
+              <option [value]="formatMonth(month)">
+                {{ month | date:'MMMM yyyy' }}
+              </option>
+            }
+          </select>
+        </div>
       </div>
 
-      <!-- Employee List with Graph View -->
+      <!-- Employee List with Analytics -->
       <div class="employee-list-container">
         @for (summary of attendanceSummary; track summary.employeeId) {
           <div class="employee-summary-card" 
@@ -160,29 +338,32 @@
             <!-- Summary Row -->
             <div class="summary-row">
               <div class="employee-col">
-                <div class="employee-avatar-sm">
+                <div class="employee-avatar-sm" [style.background]="getEmployeeColor(summary.employeeId)">
                   {{ summary.employeeName.charAt(0) }}
                 </div>
                 <div class="employee-info-sm">
                   <div class="name">{{ summary.employeeName }}</div>
-                  <div class="dept">{{ getEmployeeDepartment(summary.employeeId) }}</div>
+                  <div class="dept">{{ summary.employeeDepartment }}</div>
+                  <div class="trend" [ngClass]="getTrendClass(summary.trend)">
+                    Trend: {{ summary.trend }}%
+                  </div>
                 </div>
               </div>
               
               <div class="stats-col">
-                <div class="stat-cell">
+                <div class="stat-cell" title="Present Days">
                   <div class="stat-value present">{{ summary.totalPresent }}</div>
                   <div class="stat-label">Present</div>
                 </div>
-                <div class="stat-cell">
+                <div class="stat-cell" title="Absent Days">
                   <div class="stat-value absent">{{ summary.totalAbsent }}</div>
                   <div class="stat-label">Absent</div>
                 </div>
-                <div class="stat-cell">
+                <div class="stat-cell" title="Half Days">
                   <div class="stat-value half-day">{{ summary.totalHalfDays }}</div>
                   <div class="stat-label">Half Day</div>
                 </div>
-                <div class="stat-cell">
+                <div class="stat-cell" title="Leave Days">
                   <div class="stat-value leave">{{ summary.totalLeaves }}</div>
                   <div class="stat-label">Leave</div>
                 </div>
@@ -211,17 +392,16 @@
               </div>
             </div>
             
-            <!-- Expanded Graph View -->
+            <!-- Expanded Analytics View -->
             @if (expandedEmployeeId === summary.employeeId) {
               <div class="graph-container">
-                <h4>Monthly Attendance Breakdown - {{ selectedMonth | date:'MMMM yyyy' }}</h4>
+                <h4>{{ summary.employeeName }} - {{ selectedMonth | date:'MMMM yyyy' }} Analytics</h4>
                 
-                <!-- FIXED Side-by-side layout with proper 60:40 ratio -->
                 <div class="side-by-side-container">
-                  <!-- Left side: Bar Graph (60%) -->
+                  <!-- Left Panel: Bar Graph -->
                   <div class="left-panel">
                     <div class="attendance-bar-graph">
-                      <h3>Attendance Summary</h3>
+                      <h3>Attendance Distribution</h3>
                       <div class="graph-bars">
                         <!-- Present Bar -->
                         <div class="graph-bar-group">
@@ -229,7 +409,9 @@
                           <div class="bar-container">
                             <div class="bar present-bar" [style.width.%]="summary.workingDays > 0 ? (summary.totalPresent / summary.workingDays) * 100 : 0">
                               <span class="bar-value">{{ summary.totalPresent }}</span>
-                              <span class="bar-percentage">{{ summary.workingDays > 0 ? ((summary.totalPresent / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}</span>
+                              <span class="bar-percentage">
+                                {{ summary.workingDays > 0 ? ((summary.totalPresent / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -240,7 +422,9 @@
                           <div class="bar-container">
                             <div class="bar absent-bar" [style.width.%]="summary.workingDays > 0 ? (summary.totalAbsent / summary.workingDays) * 100 : 0">
                               <span class="bar-value">{{ summary.totalAbsent }}</span>
-                              <span class="bar-percentage">{{ summary.workingDays > 0 ? ((summary.totalAbsent / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}</span>
+                              <span class="bar-percentage">
+                                {{ summary.workingDays > 0 ? ((summary.totalAbsent / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -251,7 +435,9 @@
                           <div class="bar-container">
                             <div class="bar halfday-bar" [style.width.%]="summary.workingDays > 0 ? (summary.totalHalfDays / summary.workingDays) * 100 : 0">
                               <span class="bar-value">{{ summary.totalHalfDays }}</span>
-                              <span class="bar-percentage">{{ summary.workingDays > 0 ? ((summary.totalHalfDays / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}</span>
+                              <span class="bar-percentage">
+                                {{ summary.workingDays > 0 ? ((summary.totalHalfDays / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -262,7 +448,9 @@
                           <div class="bar-container">
                             <div class="bar leave-bar" [style.width.%]="summary.workingDays > 0 ? (summary.totalLeaves / summary.workingDays) * 100 : 0">
                               <span class="bar-value">{{ summary.totalLeaves }}</span>
-                              <span class="bar-percentage">{{ summary.workingDays > 0 ? ((summary.totalLeaves / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}</span>
+                              <span class="bar-percentage">
+                                {{ summary.workingDays > 0 ? ((summary.totalLeaves / summary.workingDays) * 100).toFixed(1) + '%' : '0%' }}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -272,18 +460,38 @@
                         <span class="total-label">Total Working Days:</span>
                         <span class="total-value">{{ summary.workingDays }}</span>
                       </div>
+                      
+                      <!-- Additional Metrics -->
+                      <div class="additional-metrics">
+                        <div class="metric">
+                          <span class="metric-label">Avg. Work Hours:</span>
+                          <span class="metric-value">{{ summary.averageWorkHours }}h</span>
+                        </div>
+                        <div class="metric">
+                          <span class="metric-label">Total Overtime:</span>
+                          <span class="metric-value">{{ summary.totalOvertime }}h</span>
+                        </div>
+                        <div class="metric">
+                          <span class="metric-label">Late Arrivals:</span>
+                          <span class="metric-value">{{ summary.lateArrivals || 0 }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
-                  <!-- Right side: Calendar Grid (40%) -->
+                  <!-- Right Panel: Calendar Grid -->
                   <div class="right-panel">
                     <div class="calendar-grid-container">
-                      <h5>Day-by-Day Calendar</h5>
+                      <h5>Daily Attendance Calendar</h5>
                       <div class="calendar-grid">
                         @if (summary.monthlyData && summary.monthlyData.length > 0) {
                           @for (day of summary.monthlyData; track day.date) {
                             <div class="calendar-day" [ngClass]="'day-' + day.status" 
-                                 [title]="(day.date | date:'dd MMM') + ': ' + (day.status === 'not-marked' ? 'Not Marked' : day.status)">
+                                 [title]="(day.date | date:'dd MMM') + ': ' + 
+                                          (day.status === 'not-marked' ? 'Not Marked' : 
+                                           day.status === 'half-day' ? 'Half Day' : 
+                                           day.status) + 
+                                          (day.workHours ? ' (' + day.workHours + 'h)' : '')">
                               <div class="day-number">{{ day.date | date:'d' }}</div>
                               <div class="day-status">
                                 @switch (day.status) {
@@ -292,8 +500,12 @@
                                   @case ('half-day') { ⏰ }
                                   @case ('leave') { 🏖️ }
                                   @case ('not-marked') { ❓ }
+                                  @case ('future') { 📅 }
                                 }
                               </div>
+                              @if (day.overtime > 0) {
+                                <div class="overtime-badge">+{{ day.overtime }}h</div>
+                              }
                             </div>
                           }
                         } @else {
@@ -317,7 +529,7 @@
                           <span class="legend-color leave"></span> Leave
                         </div>
                         <div class="legend-item">
-                          <span class="legend-color not-marked"></span> Not Marked
+                          <span class="legend-color not-marked"></span> Pending
                         </div>
                       </div>
                     </div>
@@ -336,4 +548,11 @@
       </div>
     </div>
   }
+
+  <!-- Export Button -->
+  <div class="export-container">
+    <button class="export-btn-floating" (click)="exportToPDF()" title="Export Report">
+      📥
+    </button>
+  </div>
 </div>
