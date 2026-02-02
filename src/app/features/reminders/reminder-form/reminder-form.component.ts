@@ -1,28 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-import { ReminderService, Reminder } from '../reminder.service';
+import { HttpClientModule } from '@angular/common/http';
+import { ReminderService } from '../reminder.service';
 import { EmployeeService } from '../../employees/employee.service';
 import { Employee } from '../../employees/employee.model';
 
 @Component({
   selector: 'app-reminder-form',
   standalone: true,
-
-  // ✅ REQUIRED MODULES FOR ngModel, ngFor, ngValue
-  imports: [CommonModule, FormsModule],
-
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './reminder-form.component.html',
   styleUrls: ['./reminder-form.component.css']
 })
 export class ReminderFormComponent implements OnInit {
-
-  // ================= EMPLOYEE =================
-  employees: any[] = [];
+  employees: Employee[] = [];
   employeeId: number | null = null;
 
-  // ================= FORM FIELDS =================
   title = '';
   purpose = '';
   department = '';
@@ -34,7 +28,8 @@ export class ReminderFormComponent implements OnInit {
 
   constructor(
     private reminderService: ReminderService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -45,34 +40,45 @@ export class ReminderFormComponent implements OnInit {
   }
 
   addReminder(): void {
-    if (!this.employeeId) return;
+    if (!this.employeeId || !this.validateForm()) return;
 
-    const selectedEmployee = this.employees.find(
-      e => e.id === this.employeeId
-    );
-
-    if (!selectedEmployee) return;
-
-    const reminder: Reminder = {
-      id: Date.now(),
-
-      // ✅ REQUIRED BY Reminder INTERFACE
-      employeeId: selectedEmployee.id,
-      employeeName: selectedEmployee.name,
-
+    const reminder = {
+      employee_id: this.employeeId,
       title: this.title,
       purpose: this.purpose,
       department: this.department,
-      clientName: this.clientName,
-      clientContact: this.clientContact,
-      meetingLink: this.meetingLink,
-      meetingDate: this.meetingDate,
-      remindOn: this.remindOn
+      client_name: this.clientName,
+      client_contact: this.clientContact,
+      meeting_link: this.meetingLink,
+      meeting_date: this.meetingDate,
+      remind_on: this.remindOn
     };
 
-    this.reminderService.addReminder(reminder);
+    this.reminderService.addReminder(reminder).subscribe({
+      next: () => {
+        alert('Reminder added successfully!');
+        this.resetForm();
+      },
+      error: (error) => {
+        console.error('Add reminder error:', error);
+        alert('Failed to add reminder. Please try again.');
+      }
+    });
+  }
 
-    // ================= RESET FORM =================
+  private validateForm(): boolean {
+    if (!this.title || !this.meetingDate || !this.remindOn) {
+      alert('Please fill all required fields');
+      return false;
+    }
+    if (new Date(this.remindOn) > new Date(this.meetingDate)) {
+      alert('Remind date must be before or on meeting date');
+      return false;
+    }
+    return true;
+  }
+
+  private resetForm(): void {
     this.employeeId = null;
     this.title = '';
     this.purpose = '';

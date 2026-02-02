@@ -52,22 +52,14 @@
 
       <p class="purpose">{{ r.purpose }}</p>
 
-      <div class="meta">
-        <p><strong>Employee:</strong> {{ r.employeeName }}</p>
-        <p><strong>Client:</strong> {{ r.clientName }}</p>
-        <p><strong>Contact:</strong> {{ r.clientContact }}</p>
-        <p><strong>Meeting:</strong> {{ r.meetingDate }}</p>
-        <p><strong>Reminder:</strong> {{ r.remindOn }}</p>
-      </div>
-
-      <a
-        *ngIf="r.meetingLink"
-        [href]="r.meetingLink"
-        target="_blank"
-        class="meeting-link"
-      >
-        Join Meeting
-      </a>
+      <p><strong>Employee:</strong> {{ r.employee_name }}</p>
+<p><strong>Client:</strong> {{ r.client_name }}</p>
+<p><strong>Contact:</strong> {{ r.client_contact }}</p>
+<p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+<p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
+<div *ngIf="r.meeting_link">
+  <a [href]="r.meeting_link" target="_blank">Join Meeting</a>
+</div>
 
       <button class="delete-btn" (click)="delete(r.id)">
         Delete
