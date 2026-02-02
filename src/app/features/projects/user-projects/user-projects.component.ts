@@ -8,6 +8,7 @@ import { EmployeeService } from '../../employees/employee.service';
 import { Project } from '../../../shared/models/project.model';
 import { Router } from '@angular/router';
 import { ChatService } from '../../../shared/services/chat.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-user-projects',
@@ -20,6 +21,7 @@ export class UserProjectsComponent implements OnInit {
   projects: Project[] = [];
   currentUser: string | null = null;
   userDepartment: string | null = null;
+  isLoading = true; // Add loading state
 
   // ====================
   // CHAT SYSTEM PROPERTIES
@@ -52,65 +54,31 @@ export class UserProjectsComponent implements OnInit {
       return;
     }
     
-    // Load data sequentially to ensure proper order
-    this.loadEmployeeAndProjects();
-    this.initializeChatUser();
-    this.loadOtherEmployees();
-    
-    // Auto-select admin for chat
-    if (!this.selectedParticipant) {
-      this.selectParticipant(this.adminParticipant);
-    }
+    // Load all data in parallel using forkJoin for better reliability
+    this.loadAllData();
   }
 
- 
-  loadEmployeeAndProjects() {
-    this.employeeService.getEmployees().subscribe({
-      next: (employees) => {
+  loadAllData() {
+    this.isLoading = true;
+    
+    // Load employees and projects in parallel
+    forkJoin({
+      employees: this.employeeService.getEmployees(),
+      projects: this.projectService.getProjects()
+    }).subscribe({
+      next: ({ employees, projects }) => {
+        // Find current employee
         const employee = employees.find(emp => emp.name === this.currentUser);
         
         if (employee) {
           this.userDepartment = employee.department;
           
-          this.projectService.getProjects().subscribe({
-            next: (projects) => {
-              this.projects = projects.filter(project => 
-                project.department === this.userDepartment
-              );
-              console.log('Projects loaded:', this.projects); // Debug
-            },
-            error: (error) => {
-              console.error('Error loading projects:', error);
-              this.projects = [];
-            }
-          });
-        } else {
-          console.warn('Current user not found in employees');
-          this.projects = [];
-        }
-      },
-      error: (error) => {
-        console.error('Error loading employees:', error);
-        this.projects = [];
-      }
-    });
-  }
-
-  logout() {
-    this.userService.clearCurrentUser();
-    this.router.navigate(['/user-login']);
-  }
-
-  // ====================
-  // CHAT METHODS
-  // ====================
-
-  initializeChatUser() {
-    this.employeeService.getEmployees().subscribe({
-      next: (employees) => {
-        const employee = employees.find(emp => emp.name === this.currentUser);
-        
-        if (employee) {
+          // Filter projects by department
+          this.projects = projects.filter(project => 
+            project.department === this.userDepartment
+          );
+          
+          // Initialize chat user
           this.chatCurrentUser = {
             id: employee.id.toString(),
             name: employee.name,
@@ -123,19 +91,9 @@ export class UserProjectsComponent implements OnInit {
             employee.name,
             'employee'
           );
-        }
-      },
-      error: (error) => {
-        console.error('Error initializing chat user:', error);
-      }
-    });
-  }
-
-  loadOtherEmployees() {
-    try {
-      this.employeeService.getEmployees().subscribe({
-        next: (employees) => {
- this.otherEmployees = employees
+          
+          // Load other employees for chat
+          this.otherEmployees = employees
             .filter(emp => emp.name !== this.currentUser)
             .map(emp => ({
               id: emp.id.toString(),
@@ -143,17 +101,41 @@ export class UserProjectsComponent implements OnInit {
               department: emp.department,
               role: 'employee' as 'employee'
             }));
-        },
-        error: (error) => {
-          console.error('Error loading other employees:', error);
-          this.otherEmployees = [];
+          
+          console.log('✅ Data loaded:', {
+            department: this.userDepartment,
+            projectCount: this.projects.length,
+            employeeCount: this.otherEmployees.length
+          });
+        } else {
+          console.warn('Current user not found in employees');
+          this.projects = [];
         }
-      });
-    } catch (error) {
-      console.error('Error in loadOtherEmployees:', error);
-      this.otherEmployees = [];
-    }
+        
+        this.isLoading = false;
+        
+        // Auto-select admin for chat if no participant selected
+        if (!this.selectedParticipant) {
+          this.selectParticipant(this.adminParticipant);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading data:', error);
+        this.projects = [];
+        this.otherEmployees = [];
+        this.isLoading = false;
+      }
+    });
   }
+
+  logout() {
+    this.userService.clearCurrentUser();
+    this.router.navigate(['/user-login']);
+  }
+
+  // ====================
+  // CHAT METHODS
+  // ====================
 
   get filteredEmployees() {
     if (!this.employeeSearch) return this.otherEmployees;

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { ReminderService, Reminder } from '../reminder.service';
 import { EmployeeService } from '../../employees/employee.service';
+import { Employee } from '../../employees/employee.model';
 
 @Component({
   selector: 'app-reminder-form',
@@ -38,7 +39,9 @@ export class ReminderFormComponent implements OnInit {
 
   ngOnInit(): void {
     // ✅ Load employees created in Employee Management
-    this.employees = this.employeeService.getEmployees();
+   this.employeeService.getEmployees().subscribe((employees: Employee[]) => {
+  this.employees = employees; // Assign inside subscribe callback
+});
   }
 
   addReminder(): void {

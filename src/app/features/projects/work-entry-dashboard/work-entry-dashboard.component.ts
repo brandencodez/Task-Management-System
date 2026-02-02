@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { DailyWorkEntryComponent } from './components/daily-work-entry/daily-work-entry.component';
-import { WorkEntry } from './components/daily-work-entry/daily-work-entry.component';
+import { WorkEntry } from '../../../shared/models/work-entry.model';
 
 @Component({
   selector: 'app-work-entry-dashboard',

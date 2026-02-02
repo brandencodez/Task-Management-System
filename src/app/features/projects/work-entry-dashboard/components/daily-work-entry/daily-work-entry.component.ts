@@ -8,14 +8,8 @@ import { EmployeeService } from '../../../../employees/employee.service';
 import { UserService } from '../../../../../shared/services/user.service';
 import { Project } from '../../../../../shared/models/project.model';
 import { Employee } from '../../../../employees/employee.model';
-export interface WorkEntry {
-  id: number;
-  project: string;
-  description: string;
-  hours: number;
-  progress: number;
-  date: string;
-}
+import { WorkEntry } from '../../../../../shared/models/work-entry.model';
+import { WorkEntryService } from '../../../../../shared/services/work-entry.service';
 
 @Component({
   selector: 'app-daily-work-entry',
@@ -43,15 +37,19 @@ export class DailyWorkEntryComponent implements OnInit {
   date = this.today();
 
   entries: WorkEntry[] = [];
+  private currentEmployeeId: string | null = null;
 
   constructor(
     private projectService: ProjectService,
     private employeeService: EmployeeService,
-    private userService: UserService
+    private userService: UserService,
+    private workEntryService: WorkEntryService
+    
   ) {}
 
   ngOnInit(): void {
     this.loadProjectsForLoggedUser();
+    this.loadEmployeeId();
   }
 
   /* ===============================
@@ -77,50 +75,110 @@ export class DailyWorkEntryComponent implements OnInit {
       });
     });
   }
+   /* ===============================
+     LOAD EMPLOYEE ID
+  ================================ */
+
+  private loadEmployeeId(): void {
+  const currentUser = this.userService.getCurrentUser();
+  if (!currentUser) return;
+
+  const cleanCurrentUser = currentUser.trim().toLowerCase();
+
+  this.employeeService.getEmployees().subscribe({
+    next: (employees: Employee[]) => {
+      const employee = employees.find(emp =>
+        emp.name?.trim().toLowerCase() === cleanCurrentUser
+      );
+
+      if (employee) {
+        this.currentEmployeeId = String(employee.id); // Ensure string
+        this.loadEntries();
+        this.loadProjectsForLoggedUser();
+      } else {
+        console.warn('Employee not found for current user:', currentUser, 'Available employees:', employees.map(e => e.name));
+        alert('Your employee record was not found. Please contact admin.');
+      }
+    },
+    error: (err) => {
+      console.error('Failed to load employee for work entries:', err);
+      alert('Failed to load your profile. Please log in again.');
+    }
+  });
+}
 
   /* ===============================
-     ADD ENTRY (ONLY ADD)
+     LOAD ENTRIES FROM API
+  ================================ */
+ private loadEntries(): void {
+  if (!this.currentEmployeeId) {
+    console.warn('Cannot load entries: employeeId not available');
+    return;
+  }
+  this.workEntryService.getEntries(this.currentEmployeeId).subscribe({
+    next: (entries) => {
+      this.entries = entries;
+      this.emitEntries();
+    },
+    error: (err) => {
+      console.error('Failed to load work entries:', err);
+      alert('Failed to load work entries. Please log in again.');
+    }
+  });
+}
+
+  /* ===============================
+     ADD ENTRY
   ================================ */
   addEntry(): void {
-    if (!this.project || !this.description || !this.hours) return;
-
-    this.entries.unshift({
-      id: Date.now(),
-      project: this.project,
-      description: this.description,
-      hours: this.hours,
-      progress: this.progress,
-      date: this.date
-    });
-
-    this.save();
-    this.emitEntries();
-    this.resetForm();
+  if (!this.project || !this.description || !this.hours || !this.currentEmployeeId) {
+    alert('Please fill all required fields and ensure you are logged in.');
+    return;
   }
+
+  const newEntry: WorkEntry & { employeeId: string } = {
+    id: Date.now(),
+    project: this.project,
+    description: this.description,
+    hours: this.hours,
+    progress: this.progress,
+    date: this.date,
+    employeeId: this.currentEmployeeId // ✅ added
+  };
+
+  this.workEntryService.createEntry(newEntry).subscribe({
+    next: (createdEntry) => {
+      this.entries.unshift(createdEntry);
+      this.emitEntries();
+      this.resetForm();
+    },
+    error: (err) => {
+      console.error('Failed to create work entry:', err);
+      alert('Failed to save work entry. Please try again.');
+    }
+  });
+}
 
   /* ===============================
      DELETE ENTRY
   ================================ */
-  deleteEntry(id: number): void {
-    this.entries = this.entries.filter(e => e.id !== id);
-    this.save();
-    this.emitEntries();
-  }
+ deleteEntry(id: number): void {
+  if (!this.currentEmployeeId) return;
+  this.workEntryService.deleteEntry(id, this.currentEmployeeId).subscribe({
+    next: () => {
+      this.entries = this.entries.filter(e => e.id !== id);
+      this.emitEntries();
+    },
+    error: (err) => {
+      console.error('Failed to delete work entry:', err);
+      alert('Failed to delete entry.');
+    }
+  });
+}
 
   /* ===============================
-     STORAGE
+     EMIT CHANGES
   ================================ */
-  private loadEntries(): void {
-    const data = localStorage.getItem(this.STORAGE_KEY);
-    if (data) {
-      this.entries = JSON.parse(data);
-    }
-  }
-
-  private save(): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.entries));
-  }
-
   private emitEntries(): void {
     this.entriesChange.emit([...this.entries]);
   }
