@@ -1,15 +1,22 @@
 const db = require('../config/database');
+const bcrypt = require('bcrypt');
 
 class Employee {
   static async create(employeeData) {
     console.log('🔍 Received employee data:', employeeData);
-    
-    const { 
-      name, email, phone, department, position, 
-      join_date, home_address, status = 'active', 
-      issued_items = '', password_hash = null 
+
+    const {
+      name,
+      email,
+      phone,
+      department,
+      position,
+      join_date,
+      home_address,
+      status = 'active',
+      issued_items = ''
     } = employeeData;
-    
+
     // Validate required fields
     if (!name || !email || !phone || !department || !position || !join_date) {
       throw new Error('Missing required fields');
@@ -38,36 +45,71 @@ class Employee {
     if (existingPhone.length > 0) {
       throw new Error('An employee with this phone number already exists');
     }
-    
+
+    // 🔐 Default password logic
+    const defaultPassword = '123456';
+    const password_hash = await bcrypt.hash(defaultPassword, 10);
+
     const query = `
-      INSERT INTO employees 
+      INSERT INTO employees
       (name, email, phone, department, position, join_date, home_address, status, issued_items, password_hash)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    
+
     const [result] = await db.execute(query, [
-      name, email, phone, department, position, 
-      join_date, home_address, status, issued_items, password_hash
+      name,
+      email,
+      phone,
+      department,
+      position,
+      join_date,
+      home_address,
+      status,
+      issued_items,
+      password_hash
     ]);
-    
-    return { id: result.insertId, ...employeeData };
+
+    return {
+      id: result.insertId,
+      name,
+      email,
+      phone,
+      department,
+      position,
+      join_date,
+      home_address,
+      status,
+      issued_items
+      // ❌ never return password_hash
+    };
   }
 
   static async findAll() {
-    const [rows] = await db.execute('SELECT * FROM employees ORDER BY id');
+    const [rows] = await db.execute(
+      'SELECT id, name, email, phone, department, position, join_date, home_address, status, issued_items FROM employees ORDER BY id'
+    );
     return rows;
   }
 
   static async findById(id) {
-    const [rows] = await db.execute('SELECT * FROM employees WHERE id = ?', [id]);
+    const [rows] = await db.execute(
+      'SELECT id, name, email, phone, department, position, join_date, home_address, status, issued_items FROM employees WHERE id = ?',
+      [id]
+    );
     return rows[0];
   }
 
   static async update(id, employeeData) {
-    const { 
-      name, email, phone, department, position, 
-      join_date, home_address, status = 'active', 
-      issued_items = '', password_hash = null 
+    const {
+      name,
+      email,
+      phone,
+      department,
+      position,
+      join_date,
+      home_address,
+      status = 'active',
+      issued_items = ''
     } = employeeData;
 
     // Validate phone is 10 digits
@@ -93,19 +135,27 @@ class Employee {
     if (existingPhone.length > 0) {
       throw new Error('An employee with this phone number already exists');
     }
-    
+
     const query = `
-      UPDATE employees 
-      SET name = ?, email = ?, phone = ?, department = ?, position = ?, 
-          join_date = ?, home_address = ?, status = ?, issued_items = ?, password_hash = ?
+      UPDATE employees
+      SET name = ?, email = ?, phone = ?, department = ?, position = ?,
+          join_date = ?, home_address = ?, status = ?, issued_items = ?
       WHERE id = ?
     `;
-    
+
     await db.execute(query, [
-      name, email, phone, department, position, 
-      join_date, home_address, status, issued_items, password_hash, id
+      name,
+      email,
+      phone,
+      department,
+      position,
+      join_date,
+      home_address,
+      status,
+      issued_items,
+      id
     ]);
-    
+
     return { id, ...employeeData };
   }
 
@@ -114,9 +164,28 @@ class Employee {
   }
 
   static async findByName(name) {
-    const [rows] = await db.execute('SELECT * FROM employees WHERE name LIKE ?', [`%${name}%`]);
+    const [rows] = await db.execute(
+      'SELECT id, name, email, phone, department, position FROM employees WHERE name LIKE ?',
+      [`%${name}%`]
+    );
     return rows;
   }
+  static async findForAuthByName(name) {
+  const [rows] = await db.execute(
+    'SELECT * FROM employees WHERE LOWER(name) = LOWER(?) LIMIT 1',
+    [name]
+  );
+  return rows[0];
 }
+
+static async updatePassword(id, password_hash) {
+  await db.execute(
+    'UPDATE employees SET password_hash = ? WHERE id = ?',
+    [password_hash, id]
+  );
+}
+
+}
+
 
 module.exports = Employee;

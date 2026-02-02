@@ -1,9 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ProjectService } from '../project.service';
 import { Project, ProjectStatus } from '../../../shared/models/project.model';
+import { ActivatedRoute } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-project-list',
@@ -12,7 +17,9 @@ import { Project, ProjectStatus } from '../../../shared/models/project.model';
   templateUrl: './project-list.component.html',
   styleUrls: ['./project-list.component.css']
 })
-export class ProjectListComponent implements OnInit {
+export class ProjectListComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  isLoading = false;
   projects: Project[] = [];
   
   // single form object for both add and edit
@@ -34,6 +41,7 @@ export class ProjectListComponent implements OnInit {
   
   showForm = false;
   isEditing = false;
+  isSaving = false;
   statuses: ProjectStatus[] = ['UPCOMING', 'ONGOING', 'COMPLETED'];
 
   projectTypesByDepartment: { [key: string]: string[] } = {
@@ -89,16 +97,52 @@ export class ProjectListComponent implements OnInit {
     ]
   };
 
-  constructor(private projectService: ProjectService) {}
+  constructor(
+    private projectService: ProjectService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit() {
+    // Load projects immediately on component initialization
     this.loadProjects();
+
+    // Also reload when navigating back to this route
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      takeUntil(this.destroy$)
+    ).subscribe((event) => {
+      // Only reload if we're on the projects route and not showing the form
+      if (this.router.url.includes('/projects') && !this.showForm) {
+        this.loadProjects();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadProjects() {
-    this.projectService.getProjects().subscribe(projects => {
-      this.projects = projects;
-    });
+    this.isLoading = true;
+    console.log('🔄 Loading projects...');
+    
+    this.projectService.getProjects()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (projects) => {
+          this.projects = [...projects];
+          this.isLoading = false;
+          console.log('✅ Projects loaded successfully:', this.projects.length, 'projects');
+        },
+        error: (err) => {
+          console.error('❌ Failed to load projects:', err);
+          this.isLoading = false;
+          this.projects = []; // Ensure projects is always an array
+          alert('Failed to load projects. Please refresh the page.');
+        }
+      });
   }
 
   // OPEN ADD FORM
@@ -122,15 +166,25 @@ export class ProjectListComponent implements OnInit {
     this.showForm = true;
   }
 
-  // OPEN EDIT FORM
+  // OPEN EDIT FORM - FIXED with deep copy
   openEditForm(project: Project) {
-    this.currentProject = { ...project };
+    // Deep copy the project to avoid reference issues
+    this.currentProject = {
+      ...project,
+      clientDetails: {
+        ...project.clientDetails,
+        contacts: project.clientDetails.contacts.map(contact => ({ ...contact }))
+      }
+    };
     this.isEditing = true;
     this.showForm = true;
   }
 
   // SAVE OR UPDATE
   saveProject() {
+    // Prevent double submission
+    if (this.isSaving) return;
+
     if (!this.currentProject.name || !this.currentProject.startDate || 
         !this.currentProject.finishDate || !this.currentProject.department ||
         !this.currentProject.clientDetails.companyName) {
@@ -138,7 +192,6 @@ export class ProjectListComponent implements OnInit {
       return;
     }
 
-    // Validate at least one contact has a name
     const hasValidContact = this.currentProject.clientDetails.contacts.some(contact => contact.name.trim());
     if (!hasValidContact) {
       alert('Please add at least one contact with a name');
@@ -149,23 +202,49 @@ export class ProjectListComponent implements OnInit {
       alert('Finish date must be after start date!');
       return;
     }
-    
+
+    this.isSaving = true;
+
     if (this.isEditing) {
       // Update existing project
-      this.projectService.updateProject(this.currentProject).subscribe(() => {
-        this.cancelForm();
-        this.loadProjects();
-      });
+      this.projectService.updateProject(this.currentProject)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('✅ Project updated successfully');
+            this.isSaving = false;
+            this.cancelForm();
+            this.loadProjects(); // Reload to show updated data
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
+          },
+          error: (err) => {
+            console.error('❌ Failed to update project:', err);
+            alert('Failed to update project. Please try again.');
+            this.isSaving = false;
+          }
+        });
     } else {
       // Add new project
-      const newProject: Project = {
-        ...this.currentProject,
-        id: Date.now()
-      };
-      this.projectService.addProject(newProject).subscribe(() => {
-        this.cancelForm();
-        this.loadProjects();
-      });
+      this.projectService.addProject(this.currentProject)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('✅ Project added successfully');
+            this.isSaving = false;
+            this.cancelForm();
+            this.loadProjects(); // Reload to show new project
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
+          },
+          error: (err) => {
+            console.error('❌ Failed to add project:', err);
+            alert('Failed to add project. Please try again.');
+            this.isSaving = false;
+          }
+        });
     }
   }
 
@@ -176,9 +255,18 @@ export class ProjectListComponent implements OnInit {
 
   deleteProject(id: number) {
     if (confirm('Are you sure you want to delete this project?')) {
-      this.projectService.deleteProject(id).subscribe(() => {
-        this.loadProjects();
-      });
+      this.projectService.deleteProject(id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('✅ Project deleted successfully');
+            this.loadProjects(); // Reload to reflect deletion
+          },
+          error: (err) => {
+            console.error('❌ Failed to delete project:', err);
+            alert('Failed to delete project. Please try again.');
+          }
+        });
     }
   }
 
@@ -207,6 +295,8 @@ export class ProjectListComponent implements OnInit {
 
   // REMOVE CONTACT
   removeClientContact(index: number) {
-    this.currentProject.clientDetails.contacts.splice(index, 1);
+    if (this.currentProject.clientDetails.contacts.length > 1) {
+      this.currentProject.clientDetails.contacts.splice(index, 1);
+    }
   }
 }

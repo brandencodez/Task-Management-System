@@ -1,10 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ProjectService } from '../projects/project.service';
 import { Project } from '../../shared/models/project.model';
 import { EmployeeService } from '../employees/employee.service';
+import { Router } from '@angular/router';
+import { UserService } from '../../shared/services/user.service';
+import { ProjectMemoService } from './project-memo.service';
+
 
 @Component({
   selector: 'app-dashboard',
@@ -13,7 +19,9 @@ import { EmployeeService } from '../employees/employee.service';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  isLoading = false;
 
   searchTerm = '';
 
@@ -24,9 +32,21 @@ export class DashboardComponent implements OnInit {
   warning: Project[] = [];
   overdue: Project[] = [];
 
+  // ====================
+  // MOM (Memo of Moment) SYSTEM
+  // ====================
+  selectedProjectForMom: any = null;
+  newMomText: string = '';
+  editingMom: any = null;
+  projectMoms: Map<number, any[]> = new Map(); // Cache memos by project ID
+  loadingMoms = false;
+
   constructor(
     private projectService: ProjectService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private projectMemoService: ProjectMemoService,
+    private userService: UserService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -34,11 +54,27 @@ export class DashboardComponent implements OnInit {
     this.loadEmployeesFromService();
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadProjects() {
-    this.projectService.getProjects().subscribe(projects => {
-      this.allProjects = projects;
-      this.categorizeProjects();
-    });
+    this.isLoading = true;
+    this.projectService.getProjects()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (projects) => {
+          this.allProjects = projects;
+          this.categorizeProjects();
+          this.isLoading = false;
+          console.log('✅ Dashboard: Projects loaded:', this.allProjects.length, 'projects');
+        },
+        error: (err) => {
+          console.error('Failed to load projects in dashboard:', err);
+          this.isLoading = false;
+        }
+      });
   }
 
   categorizeProjects() {
@@ -143,15 +179,22 @@ export class DashboardComponent implements OnInit {
 
   // Load real employees from your EmployeeService
   loadEmployeesFromService() {
-    this.employeeService.getEmployees().subscribe(employees => {
-      this.employees = employees.map(emp => ({
-        id: emp.id,
-        name: emp.name,
-        department: emp.department,
-        position: emp.position,
-        email: emp.email
-      }));
-    });
+    this.employeeService.getEmployees()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (employees) => {
+          this.employees = employees.map(emp => ({
+            id: emp.id,
+            name: emp.name,
+            department: emp.department,
+            position: emp.position,
+            email: emp.email
+          }));
+        },
+        error: (err) => {
+          console.error('Failed to load employees:', err);
+        }
+      });
   }
 
   toggleChatPanel() {
@@ -206,18 +249,14 @@ export class DashboardComponent implements OnInit {
     return 0;
   }
 
-  // ====================
-  // MOM (Memo of Moment) SYSTEM
-  // ====================
-  selectedProjectForMom: any = null;
-  newMomText: string = '';
-  editingMom: any = null;
-
   // Open MoM popup for a project
   openMomPopup(project: any) {
     this.selectedProjectForMom = project;
     this.newMomText = '';
     this.editingMom = null;
+    
+    // Load memos from database
+    this.loadProjectMoms(project.id);
   }
 
   // Close MoM popup
@@ -280,48 +319,73 @@ export class DashboardComponent implements OnInit {
     return 'Not specified';
   }
 
-  // Get all MoMs for a project
-  getProjectMoms(projectId: number): any[] {
-    const saved = localStorage.getItem(`project_moms_${projectId}`);
-    return saved ? JSON.parse(saved) : [];
+  // Get all MoMs for a project from service
+  loadProjectMoms(projectId: number) {
+    this.loadingMoms = true;
+    this.projectMemoService.getMemosByProject(projectId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (memos) => {
+          this.projectMoms.set(projectId, memos);
+          this.loadingMoms = false;
+          console.log('✅ Memos loaded for project', projectId, ':', memos.length, 'memos');
+        },
+        error: (err) => {
+          console.error('Failed to load memos:', err);
+          this.loadingMoms = false;
+          this.projectMoms.set(projectId, []);
+        }
+      });
   }
 
-  // Save MoMs for a project
-  saveProjectMoms(projectId: number, moms: any[]) {
-    localStorage.setItem(`project_moms_${projectId}`, JSON.stringify(moms));
+  // Get cached MoMs for a project
+  getProjectMoms(projectId: number): any[] {
+    return this.projectMoms.get(projectId) || [];
   }
 
   // Add new MoM
   addNewMom() {
     if (!this.newMomText.trim() || !this.selectedProjectForMom) return;
 
-    const moms = this.getProjectMoms(this.selectedProjectForMom.id);
-    
     if (this.editingMom) {
       // Update existing MoM
-      const index = moms.findIndex((m: any) => m.id === this.editingMom.id);
-      if (index !== -1) {
-        moms[index] = {
-          ...moms[index],
-          content: this.newMomText.trim(),
-          updatedAt: new Date()
-        };
-      }
+      this.projectMemoService.updateMemo(this.editingMom.id, {
+        projectId: this.selectedProjectForMom.id,
+        content: this.newMomText.trim()
+      })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('✅ Memo updated successfully');
+            this.newMomText = '';
+            this.editingMom = null;
+            this.loadProjectMoms(this.selectedProjectForMom.id);
+          },
+          error: (err) => {
+            console.error('Failed to update memo:', err);
+            alert('Failed to update memo. Please try again.');
+          }
+        });
     } else {
       // Add new MoM
-      const newMom = {
-        id: Date.now(),
-        content: this.newMomText.trim(),
-        date: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      moms.push(newMom);
+      this.projectMemoService.createMemo({
+        projectId: this.selectedProjectForMom.id,
+        content: this.newMomText.trim()
+      })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('✅ Memo created successfully');
+            this.newMomText = '';
+            this.editingMom = null;
+            this.loadProjectMoms(this.selectedProjectForMom.id);
+          },
+          error: (err) => {
+            console.error('Failed to create memo:', err);
+            alert('Failed to create memo. Please try again.');
+          }
+        });
     }
-
-    this.saveProjectMoms(this.selectedProjectForMom.id, moms);
-    this.newMomText = '';
-    this.editingMom = null;
   }
 
   // Start editing a MoM
@@ -341,14 +405,30 @@ export class DashboardComponent implements OnInit {
     if (!this.selectedProjectForMom) return;
     
     if (confirm('Are you sure you want to delete this memo?')) {
-      const moms = this.getProjectMoms(this.selectedProjectForMom.id);
-      const filteredMoms = moms.filter((m: any) => m.id !== momId);
-      this.saveProjectMoms(this.selectedProjectForMom.id, filteredMoms);
-      
-      // If we were editing this mom, clear the form
-      if (this.editingMom && this.editingMom.id === momId) {
-        this.cancelEditMom();
-      }
+      this.projectMemoService.deleteMemo(momId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('✅ Memo deleted successfully');
+            
+            // If we were editing this memo, clear the form
+            if (this.editingMom && this.editingMom.id === momId) {
+              this.cancelEditMom();
+            }
+            
+            // Reload memos
+            this.loadProjectMoms(this.selectedProjectForMom.id);
+          },
+          error: (err) => {
+            console.error('Failed to delete memo:', err);
+            alert('Failed to delete memo. Please try again.');
+          }
+        });
     }
   }
+    logout(): void {
+      this.userService.logout();
+      this.router.navigate(['/authpage']);
+    }
+
 }
