@@ -8,14 +8,15 @@ require('dotenv').config();
 const employeeRoutes = require('./routes/employees');
 const projectRoutes = require('./routes/projects');
 const authRoutes = require('./routes/auth');
-const reminderRoutes = require('./routes/reminders');
+const reminderRoutes = require('./routes/reminder');
+const workEntriesRouter = require('./routes/work-entries');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:4200', // Angular default port
+  origin: 'http://localhost:4200', 
   credentials: true
 }));
 app.use(morgan('combined'));
@@ -27,6 +28,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/reminders', reminderRoutes);
+app.use('/api/work-entries', workEntriesRouter);
 
 // Health check
 app.get('/health', (req, res) => {

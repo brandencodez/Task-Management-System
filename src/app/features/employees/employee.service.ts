@@ -56,8 +56,10 @@ export class EmployeeService {
       { headers: this.getHeaders() }
     ).pipe(
       catchError(error => {
-        console.error('Update employee error:', error);
-        throw error;
+        const errorMessage = error.error?.error || 'Failed to update employee';
+      console.error('Update employee error:', errorMessage);
+      alert(`Update failed: ${errorMessage}`);
+      throw error;
       })
     );
   }

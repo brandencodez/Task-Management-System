@@ -177,7 +177,8 @@
             </div>
             <div class="info-row">
               <span class="info-label">Join Date:</span>
-              <span class="info-value">{{ employee.join_date | date: 'dd MMM, yyyy' }}</span>
+              <!-- Display in DD-MM-YY format -->
+              <span class="info-value">{{ formatDateForDisplay(employee.join_date) }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Home Address:</span>

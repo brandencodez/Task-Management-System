@@ -81,6 +81,36 @@ export class EmployeeListComponent implements OnInit {
     }
   }
 
+  // Helper to ensure proper date format for HTML date input
+  private ensureValidDate(dateString: string): string {
+    if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    
+    // If it's a valid date but in different format, convert it
+    if (dateString) {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+    
+    // If invalid or empty, return today's date
+    return new Date().toISOString().split('T')[0];
+  }
+
+  // Format YYYY-MM-DD to DD-MM-YY for display
+  formatDateForDisplay(dateString: string): string {
+    if (!dateString) return '';
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      const shortYear = year.slice(-2); 
+      return `${day}-${month}-${shortYear}`;
+    }
+    return dateString;
+  }
+
   addEmployee(): void {
     if (this.validateForm()) {
       this.employeeService.addEmployee({ ...this.newEmployee }).subscribe({
@@ -98,9 +128,14 @@ export class EmployeeListComponent implements OnInit {
     }
   }
 
+  // FIXED: Ensure proper date format when editing
   editEmployee(employee: Employee): void {
-    this.editingEmployee = { ...employee };
-    this.newEmployee = { ...employee };
+    // Create a proper deep copy using JSON.parse(JSON.stringify())
+    const employeeCopy = JSON.parse(JSON.stringify(employee));
+    employeeCopy.join_date = this.ensureValidDate(employeeCopy.join_date);
+    
+    this.editingEmployee = employeeCopy;
+    this.newEmployee = employeeCopy;
     this.showAddForm = true;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -191,7 +226,7 @@ export class EmployeeListComponent implements OnInit {
       phone: '',
       department: '',
       position: '',
-      join_date: '',
+      join_date: new Date().toISOString().split('T')[0], 
       home_address: '',
       status: 'active',
       issued_items: ''
