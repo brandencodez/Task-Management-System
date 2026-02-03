@@ -56,6 +56,7 @@ export class UserService {
     return this.http.post<SetPasswordResponse>(
       `${this.apiUrl}/auth/set-password`,
       credentials,
+      
       { headers: this.getHeaders() }
     ).pipe(
       map(response => response.success),
