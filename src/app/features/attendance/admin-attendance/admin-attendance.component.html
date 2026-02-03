@@ -17,9 +17,47 @@
         <button class="header-btn" (click)="sendReminder()">
           <span>🔔</span> Send Reminder
         </button>
-        <button class="header-btn primary" (click)="exportToPDF()">
-          <span>📥</span> Export Report
+        
+        <!-- Upload Button - Always visible in header -->
+        <button 
+          class="header-btn upload-btn" 
+          (click)="triggerFileUpload()"
+          title="Upload Attendance Excel/CSV"
+        >
+          <span>📤</span> Upload
         </button>
+        <input 
+          type="file" 
+          #fileInput 
+          accept=".xlsx,.xls,.csv" 
+          (change)="onFileSelected($event)" 
+          style="display: none;"
+        />
+        
+        <!-- Download Button (Right) with Dropdown - Always visible in header -->
+        <div class="download-dropdown">
+          <button 
+            class="header-btn download-btn" 
+            (click)="toggleDownloadMenu()"
+            title="Download Attendance in different formats"
+          >
+            <span>📥</span> Download
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          
+          <!-- Dropdown Menu -->
+          <div class="download-menu" *ngIf="showDownloadMenu">
+            <button class="menu-option" (click)="exportToExcel(); toggleDownloadMenu()">
+              <span>📊</span> Export as Excel
+            </button>
+            <button class="menu-option" (click)="exportToCSV(); toggleDownloadMenu()">
+              <span>📋</span> Export as CSV
+            </button>
+            <button class="menu-option" (click)="exportToPDF(); toggleDownloadMenu()">
+              <span>📄</span> Export as Report (PDF)
+            </button>
+          </div>
+        </div>
         
         <!-- Settings Dropdown -->
         <div class="settings-dropdown">
@@ -150,13 +188,6 @@
             <div class="stat-content">
               <h3>{{ quickStats.lateComers }}</h3>
               <p>Late Arrivals</p>
-            </div>
-          </div>
-          <div class="quick-stat">
-            <div class="stat-icon">🏠</div>
-            <div class="stat-content">
-              <h3>{{ quickStats.workFromHome }}</h3>
-              <p>Work From Home</p>
             </div>
           </div>
           <div class="quick-stat">
@@ -561,10 +592,4 @@
     </div>
   }
 
-  <!-- Export Button -->
-  <div class="export-container">
-    <button class="export-btn-floating" (click)="exportToPDF()" title="Export Report">
-      📥
-    </button>
-  </div>
 </div>

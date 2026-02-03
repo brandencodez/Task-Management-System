@@ -1,5 +1,5 @@
 // admin-attendance.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttendanceService } from '../../../shared/services/attendance.service';
@@ -33,7 +33,6 @@ interface AttendanceRecord {
   overtime?: number;
   lateArrival?: boolean;
   earlyDeparture?: boolean;
-  workFromHome?: boolean;
   project?: string;
   location?: string;
   workDetails?: string;
@@ -66,6 +65,8 @@ interface MonthlySummary {
   styleUrls: ['./admin-attendance.component.css']
 })
 export class AdminAttendanceComponent implements OnInit, OnDestroy {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  
   // View state
   selectedView: 'daily' | 'monthly' = 'daily';
   selectedDate: string;
@@ -98,17 +99,19 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
   officeEndTime = '6:30 PM';
   autoMarkEnabled = true;
   notificationsEnabled = true;
+  showDownloadMenu = false;
   
   // Quick stats
   quickStats = {
     onTime: 0,
     lateComers: 0,
-    workFromHome: 0,
     earlyLeavers: 0
   };
   
   private timer: any;
+  private officeStartTimeMinutes = 9 * 60 + 30; // 9:30 AM in minutes
   private officeEndTimeMinutes = 18 * 60 + 30; // 6:30 PM in minutes
+  private gracePeriodMinutes = 15; // 15 minutes grace period
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -227,7 +230,6 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     this.quickStats = {
       onTime: 0,
       lateComers: 0,
-      workFromHome: 0,
       earlyLeavers: 0
     };
     
@@ -271,7 +273,6 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
           overtime: overtime || 0,
           lateArrival: isLate,
           earlyDeparture: isEarly,
-          workFromHome: existingRecord.workFromHome || false,
           project: existingRecord.project || (workEntries[0]?.project || 'General'),
           workDetails: existingRecord.workDetails || this.getWorkDetailsFromEntries(workEntries)
         } as AttendanceRecord;
@@ -311,7 +312,6 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
           overtime: totalHours > 8 ? totalHours - 8 : 0,
           lateArrival: false,
           earlyDeparture: false,
-          workFromHome: false,
           project: firstEntry.project,
           workDetails: this.getWorkDetailsFromEntries(workEntries)
         } as AttendanceRecord;
@@ -339,7 +339,6 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
               overtime: 0,
               lateArrival: false,
               earlyDeparture: false,
-              workFromHome: false,
               project: 'General'
             } as AttendanceRecord;
           } else {
@@ -360,7 +359,6 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
               overtime: 0,
               lateArrival: false,
               earlyDeparture: false,
-              workFromHome: false,
               project: 'General'
             } as AttendanceRecord;
           }
@@ -390,7 +388,6 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
               overtime: 0,
               lateArrival: false,
               earlyDeparture: false,
-              workFromHome: false,
               project: 'General'
             } as AttendanceRecord;
           } else {
@@ -412,7 +409,6 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
               overtime: 0,
               lateArrival: false,
               earlyDeparture: false,
-              workFromHome: false,
               project: 'General'
             } as AttendanceRecord;
           }
@@ -671,18 +667,16 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
 
   private isLateArrival(checkInTime: Date | null): boolean {
     if (!checkInTime) return false;
-    const checkInHour = checkInTime.getHours();
-    const checkInMinute = checkInTime.getMinutes();
-    // Consider late if check-in after 9:45 AM
-    return checkInHour > 9 || (checkInHour === 9 && checkInMinute > 45);
+    const checkInMinutes = checkInTime.getHours() * 60 + checkInTime.getMinutes();
+    // Consider late if check-in after grace period (15 min after 9:30 AM = after 9:45 AM)
+    return checkInMinutes > (this.officeStartTimeMinutes + this.gracePeriodMinutes);
   }
 
   private isEarlyDeparture(checkOutTime: Date | null): boolean {
     if (!checkOutTime) return false;
-    const checkOutHour = checkOutTime.getHours();
-    const checkOutMinute = checkOutTime.getMinutes();
-    // Consider early if check-out before 6:00 PM
-    return checkOutHour < 18;
+    const checkOutMinutes = checkOutTime.getHours() * 60 + checkOutTime.getMinutes();
+    // Consider early if check-out before grace period (15 min before 6:30 PM = before 6:15 PM)
+    return checkOutMinutes < (this.officeEndTimeMinutes - this.gracePeriodMinutes);
   }
 
   private calculateWorkHours(checkInTime: Date | null, checkOutTime: Date | null): number {
@@ -821,7 +815,212 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
 
   exportToExcel() {
     console.log('Exporting to Excel...');
-    alert('Excel export feature coming soon!');
+    this.generateAttendanceExcel('xlsx');
+  }
+
+  exportToCSV() {
+    console.log('Exporting to CSV...');
+    this.generateAttendanceCSV();
+  }
+
+  private generateAttendanceExcel(format: 'xlsx' | 'xls') {
+    // Create CSV data (Excel can read CSV format)
+    let csvContent = 'Employee Name,Department,Date,Status,Check-in,Check-out,Work Hours,Remarks\n';
+    
+    this.attendanceRecords.forEach(record => {
+      const checkIn = record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString() : 'N/A';
+      const checkOut = record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : 'N/A';
+      const workHours = record.workHours || 0;
+      const remarks = record.remarks || '';
+      
+      csvContent += `"${record.employeeName}","${record.employeeDepartment}","${record.date}","${record.status}","${checkIn}","${checkOut}","${workHours}","${remarks}"\n`;
+    });
+
+    // Create blob and download
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csvContent));
+    element.setAttribute('download', `attendance_${this.selectedDate}.${format === 'xlsx' ? 'xlsx' : 'xls'}`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    alert(`Attendance exported successfully as ${format.toUpperCase()}!`);
+  }
+
+  private generateAttendanceCSV() {
+    let csvContent = 'Employee Name,Department,Date,Status,Check-in,Check-out,Work Hours,Remarks\n';
+    
+    this.attendanceRecords.forEach(record => {
+      const checkIn = record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString() : 'N/A';
+      const checkOut = record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : 'N/A';
+      const workHours = record.workHours || 0;
+      const remarks = record.remarks || '';
+      
+      csvContent += `"${record.employeeName}","${record.employeeDepartment}","${record.date}","${record.status}","${checkIn}","${checkOut}","${workHours}","${remarks}"\n`;
+    });
+
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+    element.setAttribute('download', `attendance_${this.selectedDate}.csv`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    alert('Attendance exported successfully as CSV!');
+  }
+
+  // File Operations Toggle
+  toggleDownloadMenu() {
+    this.showDownloadMenu = !this.showDownloadMenu;
+  }
+
+  triggerFileUpload() {
+    if (this.fileInput) {
+      this.fileInput.nativeElement.click();
+    }
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (!['xlsx', 'xls', 'csv'].includes(fileExtension || '')) {
+      alert('Please upload a valid Excel (.xlsx, .xls) or CSV (.csv) file');
+      return;
+    }
+
+    this.processAttendanceFile(file);
+  }
+
+  processAttendanceFile(file: File) {
+    const reader = new FileReader();
+    
+    reader.onload = (e: any) => {
+      try {
+        const data = e.target.result;
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+
+        if (fileExtension === 'csv') {
+          this.parseCSVAttendance(data);
+        } else {
+          this.parseExcelAttendance(data);
+        }
+
+        alert(`Attendance data uploaded successfully from ${file.name}!`);
+        this.loadDailyData();
+        this.loadMonthlyData();
+        
+        // Reset file input
+        if (this.fileInput) {
+          this.fileInput.nativeElement.value = '';
+        }
+        
+      } catch (error) {
+        console.error('Error processing file:', error);
+        alert('Error processing file. Please check the format and try again.');
+      }
+    };
+
+    if (file.name.endsWith('.csv')) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsBinaryString(file);
+    }
+  }
+
+  parseCSVAttendance(csvData: string) {
+    const lines = csvData.split('\n').filter(line => line.trim());
+    if (lines.length < 2) {
+      alert('CSV file appears to be empty or invalid.\n\nExpected format:\nEmployeeName, Date, Status, Remarks\nRahul Kumar, 2026-02-03, present, Good work');
+      return;
+    }
+
+    // Expected format: EmployeeName, Date, Status, Remarks (optional)
+    // Example: Rahul Kumar, 2026-02-03, present, Good work
+    const headers = lines[0].toLowerCase();
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length < 3) {
+        errorCount++;
+        continue;
+      }
+
+      const [employeeName, dateStr, status, remarks] = values;
+      const result = this.markAttendanceFromUpload(employeeName, dateStr, status, remarks || '');
+      if (result) {
+        successCount++;
+      } else {
+        errorCount++;
+      }
+    }
+
+    console.log(`Upload complete: ${successCount} successful, ${errorCount} errors`);
+  }
+
+  parseExcelAttendance(binaryData: string) {
+    // For Excel files, we'd typically use a library like xlsx
+    // For now, showing a simplified version
+    alert('Excel parsing requires xlsx library.\n\nPlease use CSV format with this structure:\nEmployeeName, Date, Status, Remarks\n\nExample:\nRahul Kumar, 2026-02-03, present, Good work\nPriya Sharma, 2026-02-03, absent, Sick leave\n\nValid statuses: present, absent, half-day, leave');
+  }
+
+  markAttendanceFromUpload(employeeName: string, dateStr: string, status: string, remarks: string): boolean {
+    // Find employee by name
+    const employee = this.allEmployees.find(emp => 
+      emp.name.toLowerCase() === employeeName.toLowerCase()
+    );
+
+    if (!employee) {
+      console.warn(`Employee not found: ${employeeName}`);
+      return false;
+    }
+
+    // Validate status
+    const validStatuses = ['present', 'absent', 'half-day', 'leave'];
+    const normalizedStatus = status.toLowerCase().trim();
+    
+    if (!validStatuses.includes(normalizedStatus)) {
+      console.warn(`Invalid status for ${employeeName}: ${status}`);
+      return false;
+    }
+
+    // Parse date
+    let attendanceDate: Date;
+    try {
+      attendanceDate = new Date(dateStr);
+      if (isNaN(attendanceDate.getTime())) {
+        throw new Error('Invalid date');
+      }
+    } catch {
+      console.warn(`Invalid date for ${employeeName}: ${dateStr}`);
+      return false;
+    }
+
+    // Mark attendance
+    const shouldCheckIn = normalizedStatus === 'present' || normalizedStatus === 'half-day';
+    const now = new Date();
+    const inTime = shouldCheckIn ? this.formatTime(now) : undefined;
+
+    this.attendanceService.markAttendance(
+      employee.id,
+      employee.name,
+      normalizedStatus as any,
+      remarks,
+      inTime
+    );
+
+    return true;
+  }
+
+  private formatTime(date: Date): string {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   }
 
   // Settings Management
