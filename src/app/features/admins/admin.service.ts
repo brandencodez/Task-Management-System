@@ -1,143 +1,201 @@
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, of, BehaviorSubject } from 'rxjs';
+import { catchError, tap, map } from 'rxjs/operators';
 import { Admin } from './admin.model';
+
+interface LoginResponse {
+  success: boolean;
+  message?: string;
+  admin: Admin;
+}
+
+interface RegisterResponse {
+  success: boolean;
+  message: string;
+  admin: Admin;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AdminService {
-  private storageKey = 'admins';
-  private currentAdminKey = 'currentAdmin';
-  private admins: Admin[] = [];
 
-  constructor() {
-    this.loadFromStorage();
+  private apiUrl = 'http://localhost:5000/api/admins';
+  private ADMIN_KEY = 'current_admin';
+  private ADMIN_EMAIL_KEY = 'current_admin_email';
+  
+  // Observable for components to subscribe to login state changes
+  private currentAdminSubject = new BehaviorSubject<Admin | null>(this.getCurrentAdmin());
+  public currentAdmin$ = this.currentAdminSubject.asObservable();
+
+  constructor(private http: HttpClient) {
+    // Initialize the subject with stored admin if exists
+    this.currentAdminSubject.next(this.getCurrentAdmin());
   }
 
-  private loadFromStorage(): void {
-    const storedData = localStorage.getItem(this.storageKey);
-    if (storedData) {
-      this.admins = JSON.parse(storedData);
-      // Convert string dates back to Date objects
-      this.admins = this.admins.map(admin => ({
-        ...admin,
-        joinDate: new Date(admin.joinDate)
-      }));
-    }
+  private getHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
   }
 
-  private saveToStorage(): void {
-    localStorage.setItem(this.storageKey, JSON.stringify(this.admins));
-  }
-
-  // Check if an admin exists by email
-  adminExists(email: string): boolean {
-    return this.admins.some(admin => 
-      admin.email.toLowerCase() === email.toLowerCase()
+  // ✅ Register Admin
+  registerAdmin(full_name: string, email: string, password: string): Observable<Admin> {
+    return this.http.post<RegisterResponse>(
+      this.apiUrl,
+      { full_name, email, password },
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(response => response.admin),
+      catchError(error => {
+        console.error('Admin registration error:', error);
+        throw error;
+      })
     );
   }
 
-  // Register a new admin
-  registerAdmin(name: string, email: string, password: string): boolean {
-    if (this.adminExists(email)) {
-      return false;
-    }
-
-    const newAdmin: Admin = {
-      id: Date.now().toString(),
-      name: name,
-      email: email,
-      phone: '',  // Default empty, can be updated later
-      department: 'Administration',  // Default department
-      position: 'Admin',  // Default position
-      joinDate: new Date(),
-      HomeAddress: '',  // Default empty
-      status: 'active'
-    };
-
-    this.admins.push(newAdmin);
-    this.saveToStorage();
-
-    // Store password separately (in production, this should be hashed)
-    this.setPassword(email, password);
-    
-    return true;
-  }
-
-  // Validate admin credentials
-  validateCredentials(email: string, password: string): boolean {
-    const storedPassword = localStorage.getItem(`admin_pwd_${email.toLowerCase()}`);
-    return storedPassword === password;
-  }
-
-  // Set/update password for admin
-  private setPassword(email: string, password: string): void {
-    localStorage.setItem(`admin_pwd_${email.toLowerCase()}`, password);
-  }
-
-  // Get admin by email
-  getAdminByEmail(email: string): Admin | undefined {
-    return this.admins.find(admin => 
-      admin.email.toLowerCase() === email.toLowerCase()
+  // ✅ Admin Login (Enhanced with session management)
+  login(email: string, password: string): Observable<boolean> {
+    return this.http.post<LoginResponse>(
+      `${this.apiUrl}/login`,
+      { email, password },
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(response => {
+        if (response.success && response.admin) {
+          // Store admin data in localStorage
+          this.setCurrentAdmin(response.admin);
+          return true;
+        }
+        return false;
+      }),
+      catchError(error => {
+        console.error('Admin login error:', error);
+        throw error;
+      })
     );
   }
 
-  // Set current logged-in admin
-  setCurrentAdmin(email: string): void {
-    const admin = this.getAdminByEmail(email);
-    if (admin) {
-      localStorage.setItem(this.currentAdminKey, JSON.stringify(admin));
-    }
+  // ✅ Set current admin (session management)
+  setCurrentAdmin(admin: Admin): void {
+    localStorage.setItem(this.ADMIN_KEY, JSON.stringify(admin));
+    localStorage.setItem(this.ADMIN_EMAIL_KEY, admin.email);
+    // Notify all subscribers about the login
+    this.currentAdminSubject.next(admin);
   }
 
-  // Get current logged-in admin
+  // ✅ Get current logged-in admin
   getCurrentAdmin(): Admin | null {
-    const storedAdmin = localStorage.getItem(this.currentAdminKey);
-    if (storedAdmin) {
-      const admin = JSON.parse(storedAdmin);
-      admin.joinDate = new Date(admin.joinDate);
-      return admin;
-    }
-    return null;
+    const data = localStorage.getItem(this.ADMIN_KEY);
+    return data ? JSON.parse(data) : null;
   }
 
-  // Check if an admin is logged in
+  // ✅ Get current admin email (quick access)
+  getCurrentAdminEmail(): string | null {
+    return localStorage.getItem(this.ADMIN_EMAIL_KEY);
+  }
+
+  // ✅ Clear current admin session
+  clearCurrentAdmin(): void {
+    localStorage.removeItem(this.ADMIN_KEY);
+    localStorage.removeItem(this.ADMIN_EMAIL_KEY);
+    // Notify all subscribers about the logout
+    this.currentAdminSubject.next(null);
+  }
+
+  // ✅ Logout
+  logout(): void {
+    this.clearCurrentAdmin();
+  }
+
+  // ✅ Check login status
   isLoggedIn(): boolean {
     return this.getCurrentAdmin() !== null;
   }
 
-  // Logout current admin
-  logoutAdmin(): void {
-    localStorage.removeItem(this.currentAdminKey);
-  }
-
-  // Get all admins (for admin management if needed)
-  getAdmins(): Admin[] {
-    return this.admins;
-  }
-
-  // Update admin profile
-  updateAdmin(id: string, adminData: Partial<Admin>): boolean {
-    const index = this.admins.findIndex(admin => admin.id === id);
-    if (index !== -1) {
-      this.admins[index] = { ...this.admins[index], ...adminData };
-      this.saveToStorage();
-      
-      // Update current admin if it's the same one
-      const currentAdmin = this.getCurrentAdmin();
-      if (currentAdmin && currentAdmin.id === id) {
-        this.setCurrentAdmin(this.admins[index].email);
-      }
-      return true;
+  // ✅ Update current admin data in session (after profile update)
+  updateCurrentAdminSession(updatedAdmin: Admin): void {
+    const currentAdmin = this.getCurrentAdmin();
+    if (currentAdmin && currentAdmin.id === updatedAdmin.id) {
+      this.setCurrentAdmin(updatedAdmin);
     }
-    return false;
   }
 
-  // Change password
-  changePassword(email: string, oldPassword: string, newPassword: string): boolean {
-    if (this.validateCredentials(email, oldPassword)) {
-      this.setPassword(email, newPassword);
-      return true;
+  // ✅ Get all admins
+  getAdmins(): Observable<Admin[]> {
+    return this.http.get<Admin[]>(this.apiUrl).pipe(
+      catchError(error => {
+        console.error('Get admins error:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // ✅ Update admin
+  updateAdmin(id: number, adminData: Partial<Admin>): Observable<Admin> {
+    return this.http.put<Admin>(
+      `${this.apiUrl}/${id}`,
+      adminData,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(updatedAdmin => {
+        // If updating current admin, update session too
+        this.updateCurrentAdminSession(updatedAdmin);
+      }),
+      catchError(error => {
+        console.error('Update admin error:', error);
+        throw error;
+      })
+    );
+  }
+
+  // ✅ Change password
+  changePassword(id: number, password: string): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/${id}/password`,
+      { password },
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error('Change password error:', error);
+        throw error;
+      })
+    );
+  }
+
+  // ✅ Delete admin
+  deleteAdmin(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        // If deleting current admin, logout
+        const currentAdmin = this.getCurrentAdmin();
+        if (currentAdmin && currentAdmin.id === id) {
+          this.logout();
+        }
+      }),
+      catchError(error => {
+        console.error('Delete admin error:', error);
+        throw error;
+      })
+    );
+  }
+
+  // ✅ Check if admin session is valid (optional - for security)
+  validateSession(): Observable<boolean> {
+    const currentAdmin = this.getCurrentAdmin();
+    if (!currentAdmin) {
+      return of(false);
     }
-    return false;
+
+    // Optional: Verify session with backend
+    return this.http.get<{ valid: boolean }>(`${this.apiUrl}/validate-session`).pipe(
+      map(response => response.valid),
+      catchError(() => {
+        // If validation fails, clear session
+        this.clearCurrentAdmin();
+        return of(false);
+      })
+    );
   }
 }

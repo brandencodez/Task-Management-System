@@ -1,12 +1,8 @@
 export interface Admin {
-  id: string;
-  name: string;
+  id: number;
+  full_name: string;
   email: string;
-  phone: string;
-  department: string;
-  position: string;
-  joinDate: Date;
-  HomeAddress: string;
-  status: 'active' | 'on-leave' | 'inactive';
-
+  role: 'admin' | 'super_admin';
+  status: 'active' | 'inactive';
+  created_at?: Date;
 }
