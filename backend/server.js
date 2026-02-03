@@ -8,6 +8,7 @@ require('dotenv').config();
 const employeeRoutes = require('./routes/employees');
 const projectRoutes = require('./routes/projects');
 const authRoutes = require('./routes/auth');
+const AdminRoutes = require('./routes/admin')
 const reminderRoutes = require('./routes/reminder');
 const workEntriesRouter = require('./routes/work-entries');
 const app = express();
@@ -29,6 +30,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/work-entries', workEntriesRouter);
+app.use('/api/admins', AdminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
