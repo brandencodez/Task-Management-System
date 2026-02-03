@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -6,7 +6,6 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ProjectService } from '../project.service';
 import { Project, ProjectStatus } from '../../../shared/models/project.model';
-import { ActivatedRoute } from '@angular/router';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
@@ -99,8 +98,8 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
   constructor(
     private projectService: ProjectService,
-    private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit() {
@@ -135,12 +134,15 @@ export class ProjectListComponent implements OnInit, OnDestroy {
           this.projects = [...projects];
           this.isLoading = false;
           console.log('✅ Projects loaded successfully:', this.projects.length, 'projects');
+          // ✅ Force change detection
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('❌ Failed to load projects:', err);
           this.isLoading = false;
           this.projects = []; // Ensure projects is always an array
           alert('Failed to load projects. Please refresh the page.');
+          this.cdr.detectChanges(); // ✅ Force change detection
         }
       });
   }
@@ -166,7 +168,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     this.showForm = true;
   }
 
-  // OPEN EDIT FORM - FIXED with deep copy
+ 
   openEditForm(project: Project) {
     // Deep copy the project to avoid reference issues
     this.currentProject = {

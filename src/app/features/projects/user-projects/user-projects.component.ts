@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http'; 
@@ -44,7 +44,8 @@ export class UserProjectsComponent implements OnInit {
     private userService: UserService,
     private employeeService: EmployeeService,
     private router: Router,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit() {
@@ -113,6 +114,7 @@ export class UserProjectsComponent implements OnInit {
         }
         
         this.isLoading = false;
+        this.cdr.detectChanges(); // ✅ Force UI update
         
         // Auto-select admin for chat if no participant selected
         if (!this.selectedParticipant) {
@@ -124,6 +126,7 @@ export class UserProjectsComponent implements OnInit {
         this.projects = [];
         this.otherEmployees = [];
         this.isLoading = false;
+        this.cdr.detectChanges(); // Force UI update on error
       }
     });
   }
