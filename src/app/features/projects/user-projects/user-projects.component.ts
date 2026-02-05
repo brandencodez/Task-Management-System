@@ -20,7 +20,8 @@ import { forkJoin } from 'rxjs';
 export class UserProjectsComponent implements OnInit {
   projects: Project[] = [];
   currentUser: string | null = null;
-  userDepartment: string | null = null;
+  userDepartment_id!: number;        // logic
+  userDepartment_name: string = '';  // display
   isLoading = true; // Add loading state
 
   // ====================
@@ -58,7 +59,10 @@ export class UserProjectsComponent implements OnInit {
     // Load all data in parallel using forkJoin for better reliability
     this.loadAllData();
   }
-
+   loadUserInfo(user: any) {
+    this.userDepartment_id = user.department_id;
+    this.userDepartment_name = user.department_name;
+  }
   loadAllData() {
     this.isLoading = true;
     
@@ -72,18 +76,18 @@ export class UserProjectsComponent implements OnInit {
         const employee = employees.find(emp => emp.name === this.currentUser);
         
         if (employee) {
-          this.userDepartment = employee.department;
+          this.userDepartment_id = employee.department_id;
           
           // Filter projects by department
           this.projects = projects.filter(project => 
-            project.department === this.userDepartment
+            this.userDepartment_id !== null && project.department === this.userDepartment_id.toString()
           );
           
           // Initialize chat user
           this.chatCurrentUser = {
             id: employee.id.toString(),
             name: employee.name,
-            department: employee.department,
+            department: employee.department_id.toString(),
             role: 'employee' as 'employee'
           };
           
@@ -99,12 +103,12 @@ export class UserProjectsComponent implements OnInit {
             .map(emp => ({
               id: emp.id.toString(),
               name: emp.name,
-              department: emp.department,
+              department: emp.department_id.toString(),
               role: 'employee' as 'employee'
             }));
           
           console.log('✅ Data loaded:', {
-            department: this.userDepartment,
+            department: this.userDepartment_id,
             projectCount: this.projects.length,
             employeeCount: this.otherEmployees.length
           });
@@ -167,6 +171,8 @@ export class UserProjectsComponent implements OnInit {
       this.selectedParticipant.id
     );
   }
+
+  
 
   sendMessage() {
     if (!this.newMessage.trim() || !this.selectedParticipant || !this.chatCurrentUser) return;

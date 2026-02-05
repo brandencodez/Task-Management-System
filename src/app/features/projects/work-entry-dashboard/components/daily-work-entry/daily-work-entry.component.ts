@@ -66,11 +66,11 @@ export class DailyWorkEntryComponent implements OnInit {
 
       if (!employee) return;
 
-      const department = employee.department.toLowerCase();
+const departmentId = employee.department_id;
 
       this.projectService.getProjects().subscribe((projects: Project[]) => { 
         this.assignedProjects = projects.filter((p: Project) => 
-          p.department?.toLowerCase() === department
+          p.department?.toLowerCase() === departmentId.toString()
         );
       });
     });

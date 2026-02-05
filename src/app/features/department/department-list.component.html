@@ -1,0 +1,95 @@
+<div class="department-page">
+  <!-- ================= HEADER ================= -->
+  <div class="page-header">
+    <h2>Departments</h2>
+
+    <button class="btn-primary" (click)="toggleAddForm()">
+      {{ showAddForm ? 'Close' : '+ Add Department' }}
+    </button>
+  </div>
+
+  <!-- ================= ADD / EDIT FORM ================= -->
+  <div class="form-card" *ngIf="showAddForm">
+    <h3>{{ editingDepartment ? 'Edit Department' : 'Add Department' }}</h3>
+
+    <form (ngSubmit)="editingDepartment ? updateDepartment() : addDepartment()">
+      <div class="form-group">
+        <label>Department Name *</label>
+        <input type="text" [(ngModel)]="newDepartment.name" name="name" required />
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <textarea rows="3" [(ngModel)]="newDepartment.description" name="description"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          {{ editingDepartment ? 'Update' : 'Add' }}
+        </button>
+
+        <button type="button" class="btn-secondary" (click)="toggleAddForm()">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ================= SEARCH ================= -->
+  <div class="search-box">
+    <input
+      type="text"
+      placeholder="Search departments..."
+      [(ngModel)]="searchQuery"
+      (input)="applyFilter()"
+    />
+  </div>
+
+  <!-- ================= TABLE ================= -->
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Department Name</th>
+          <th>Employees</th>
+          <th>Projects</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+       <tr *ngFor="let dept of departments; index as i">
+  <td>{{ dept.name }}</td>
+  <td>{{ dept.employee_count }}</td>
+  <td>{{ dept.project_count }}</td>
+
+  <td>
+    <span 
+      class="status-badge"
+      [ngClass]="dept.status === 'active' ? 'active' : 'inactive'">
+      {{ dept.status | titlecase }}
+    </span>
+  </td>
+
+  <td>
+    <button class="btn-edit" (click)="editDepartment(dept)">Edit</button>
+
+    <button
+      *ngIf="dept.status === 'active'"
+      class="btn-disable"
+      (click)="disableDepartment(dept.id)">
+      Disable
+    </button>
+
+    <button
+      *ngIf="dept.status === 'inactive'"
+      class="btn-enable"
+      (click)="enableDepartment(dept.id)">
+      Enable
+    </button>
+  </td>
+</tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>

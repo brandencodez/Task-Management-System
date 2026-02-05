@@ -1,0 +1,194 @@
+.department-page {
+  padding: 24px;
+}
+
+/* Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #1e4fd8;
+}
+
+.btn-edit {
+  background-color: #facc15;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-toggle {
+  background-color: #e5e7eb;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Table */
+.table-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background-color: #f3f4f6;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Status badges */
+.status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status.active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status.inactive {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+/* ================= ADD / EDIT FORM ================= */
+.form-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  max-width: 520px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.form-card h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Form layout */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #374151;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Form buttons */
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-secondary {
+  background-color: #e5e7eb;
+  color: #111827;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #d1d5db;
+}
+
+/* ================= SEARCH ================= */
+.search-box {
+  margin-bottom: 16px;
+  max-width: 320px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+/* ================= EMPTY STATE ================= */
+.empty {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+  font-size: 14px;
+}

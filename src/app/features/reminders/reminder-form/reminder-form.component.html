@@ -11,7 +11,7 @@
       <select [(ngModel)]="employeeId">
         <option [ngValue]="null">Select employee</option>
         <option *ngFor="let emp of employees" [ngValue]="emp.id">
-          {{ emp.name }} ({{ emp.department }})
+         {{ emp.name }} (Dept ID: {{ emp.department_id }})
         </option>
       </select>
     </div>

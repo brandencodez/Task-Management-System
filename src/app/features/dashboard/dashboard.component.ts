@@ -189,7 +189,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.employees = employees.map(emp => ({
             id: emp.id,
             name: emp.name,
-            department: emp.department,
+            department_id: emp.department_id,
             position: emp.position,
             email: emp.email
           }));

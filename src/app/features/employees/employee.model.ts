@@ -3,7 +3,8 @@ export interface Employee {
   name: string;
   email: string;
   phone: string;
-  department: string;
+  department_id: number;   // 👈 FK
+  department_name?: string; // 👈 for display only
   position: string;
   join_date: string;
   home_address: string;

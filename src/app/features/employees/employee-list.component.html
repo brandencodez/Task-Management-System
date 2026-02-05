@@ -51,19 +51,17 @@
 
         <div class="form-group">
           <label class="form-label">Department *</label>
-          <select 
-            [(ngModel)]="newEmployee.department" 
-            name="department" 
-            required 
-            class="form-control"
-          >
-            <option value="">Select Department</option>
-            <option value="Development">Development</option>
-            <option value="HR">HR</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Sales">Sales</option>
-            <option value="Finance">Finance</option>
-          </select>
+         <select
+  [(ngModel)]="newEmployee.department_id"
+  name="department_id"
+  required
+  class="form-control"
+>
+  <option value="0">Select Department</option>
+  <option *ngFor="let dept of departments" [value]="dept.id">
+    {{ dept.name }}
+  </option>
+</select>
         </div>
 
         <div class="form-group">
@@ -165,7 +163,7 @@
             </div>
             <div class="info-row">
               <span class="info-label">Department:</span>
-              <span class="info-value">{{ employee.department }}</span>
+              <span class="info-value">{{ employee.department_name }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Email:</span>

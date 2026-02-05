@@ -45,11 +45,23 @@ class Department {
 
   // ✅ Get all departments (admin view)
   static async findAll() {
-    const [rows] = await db.execute(
-      'SELECT id, name, description, status FROM departments ORDER BY name'
-    );
-    return rows;
-  }
+  const [rows] = await db.execute(`
+    SELECT 
+      d.id,
+      d.name,
+      d.description,
+      d.status,
+      COUNT(DISTINCT e.id) AS employee_count,
+      COUNT(DISTINCT p.id) AS project_count
+    FROM departments d
+    LEFT JOIN employees e ON e.department_id = d.id
+    LEFT JOIN projects p ON p.department_id = d.id
+    GROUP BY d.id
+    ORDER BY d.name
+  `);
+  return rows;
+}
+
 
   // ✅ Get only active departments (dropdowns)
   static async findActive() {
