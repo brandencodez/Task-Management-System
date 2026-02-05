@@ -152,15 +152,18 @@
                 </div>
                 
                 <!-- Phone -->
-                <div class="form-group contact-phone">
-                  <input 
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index].phone" 
-                    [name]="'contactPhone' + $index" 
-                    class="form-control"
-                    placeholder="Phone *"
-                    required
-                  />
-                </div>
+              <div class="form-group contact-phone">
+              <input 
+              [(ngModel)]="currentProject.clientDetails.contacts[$index].phone" 
+              [name]="'contactPhone' + $index" 
+              class="form-control"
+              placeholder="Phone *"
+              required
+              maxlength="10"
+              pattern="[0-9]{10}"
+              oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"
+                />
+            </div>
                 
                 <!-- Remove Button -->
                 @if (currentProject.clientDetails.contacts.length > 1) {

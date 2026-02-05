@@ -134,7 +134,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
           this.projects = [...projects];
           this.isLoading = false;
           console.log('✅ Projects loaded successfully:', this.projects.length, 'projects');
-          // ✅ Force change detection
+          // Force change detection
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -142,7 +142,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
           this.isLoading = false;
           this.projects = []; // Ensure projects is always an array
           alert('Failed to load projects. Please refresh the page.');
-          this.cdr.detectChanges(); // ✅ Force change detection
+          this.cdr.detectChanges(); 
         }
       });
   }
@@ -182,6 +182,13 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     this.showForm = true;
   }
 
+  // phone validation method
+  private validatePhone(phone: string | undefined): boolean {
+    if (!phone) return false;
+    const phoneDigits = phone.replace(/\D/g, '');
+    return phoneDigits.length === 10;
+  }
+
   // SAVE OR UPDATE
   saveProject() {
     // Prevent double submission
@@ -191,6 +198,16 @@ export class ProjectListComponent implements OnInit, OnDestroy {
         !this.currentProject.finishDate || !this.currentProject.department ||
         !this.currentProject.clientDetails.companyName) {
       alert('Please fill all required fields!');
+      return;
+    }
+
+    // VALIDATE PHONE NUMBERS FOR ALL CONTACTS
+    const invalidPhoneContact = this.currentProject.clientDetails.contacts.find(contact => {
+      return !contact.phone || !this.validatePhone(contact.phone);
+    });
+
+    if (invalidPhoneContact) {
+      alert('Phone number is required and must be exactly 10 digits');
       return;
     }
 
