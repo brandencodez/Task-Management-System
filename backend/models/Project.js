@@ -23,10 +23,16 @@ class Project {
 
   static async findAll() {
     const query = `
-      SELECT p.*, cc.company_name, cc.address
-      FROM projects p
-      LEFT JOIN client_companies cc ON p.client_company_id = cc.id
-      ORDER BY p.id
+      SELECT 
+  p.*,
+  d.name AS department_name,
+  cc.company_name,
+  cc.address
+FROM projects p
+LEFT JOIN departments d ON p.department_id = d.id
+LEFT JOIN client_companies cc ON p.client_company_id = cc.id
+ORDER BY p.id
+
     `;
     const [rows] = await db.execute(query);
     return rows;

@@ -18,10 +18,11 @@ export interface Project {
   id: number;
   name: string;
   projectType: string;
-  clientDetails: ClientDetails;
+  clientDetails: ClientDetails; 
   projectBrief: string;
   startDate: string;
   finishDate: string;
-  department: string;
+  department_id: number;        // ✅ FK
+  department_name?: string;     // ✅ display only
   status: ProjectStatus;
 }

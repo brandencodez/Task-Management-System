@@ -16,9 +16,7 @@ router.get('/', async (req, res) => {
       projects.map(async (project) => {
         let contacts = [];
         if (project.client_company_id) {
-          contacts = await ClientContact.findByCompanyId(
-            project.client_company_id
-          );
+          contacts = await ClientContact.findByCompanyId(project.client_company_id);
         }
 
         // Transform to match frontend structure
@@ -26,7 +24,8 @@ router.get('/', async (req, res) => {
           id: project.id,
           name: project.project_name,
           projectType: project.project_type,
-          department: project.department,
+          department_id: project.department_id,
+          department_name: project.department_name,
           projectBrief: project.project_brief,
           startDate: project.start_date,
           finishDate: project.finish_date,
@@ -34,16 +33,16 @@ router.get('/', async (req, res) => {
           clientDetails: {
             companyName: project.company_name || '',
             address: project.address || '',
-            contacts: contacts.map(c => ({
+            contacts: contacts.map((c) => ({
               name: c.contact_name || '',
               designation: c.designation || '',
               'contact for': c.contact_for || '',
               email: c.email || '',
-              phone: c.phone || ''
-            }))
-          }
+              phone: c.phone || '',
+            })),
+          },
         };
-      })
+      }),
     );
 
     res.json(projectsWithContacts);
@@ -68,13 +67,13 @@ router.post('/', async (req, res) => {
 
     // ✅ Map frontend field names to backend field names
     const projectData = {
-      project_name: req.body.name,           // Frontend sends 'name'
-      project_type: req.body.projectType,    // Frontend sends 'projectType'
-      department: req.body.department,
-      project_brief: req.body.projectBrief,  // Frontend sends 'projectBrief'
-      start_date: req.body.startDate,        // Frontend sends 'startDate'
-      finish_date: req.body.finishDate,      // Frontend sends 'finishDate'
-      status: req.body.status
+      project_name: req.body.name, // Frontend sends 'name'
+      project_type: req.body.projectType, // Frontend sends 'projectType'
+      department_id: req.body.department_id,
+      project_brief: req.body.projectBrief, // Frontend sends 'projectBrief'
+      start_date: req.body.startDate, // Frontend sends 'startDate'
+      finish_date: req.body.finishDate, // Frontend sends 'finishDate'
+      status: req.body.status,
     };
 
     // 🔒 Validate required fields
@@ -86,25 +85,25 @@ router.post('/', async (req, res) => {
 
     const company = await ClientCompany.create({
       company_name: clientDetails.companyName,
-      address: clientDetails.address
+      address: clientDetails.address,
     });
 
     await Promise.all(
-      clientDetails.contacts.map(contact =>
+      clientDetails.contacts.map((contact) =>
         ClientContact.create({
           company_id: company.id,
           contact_name: contact.name,
           designation: contact.designation,
           contact_for: contact['contact for'],
           email: contact.email,
-          phone: contact.phone
-        })
-      )
+          phone: contact.phone,
+        }),
+      ),
     );
 
     const project = await Project.create({
       ...projectData,
-      client_company_id: company.id
+      client_company_id: company.id,
     });
 
     const fullProject = await Project.findById(project.id);
@@ -123,14 +122,14 @@ router.post('/', async (req, res) => {
       clientDetails: {
         companyName: fullProject.company_name || '',
         address: fullProject.address || '',
-        contacts: contacts.map(c => ({
+        contacts: contacts.map((c) => ({
           name: c.contact_name || '',
           designation: c.designation || '',
           'contact for': c.contact_for || '',
           email: c.email || '',
-          phone: c.phone || ''
-        }))
-      }
+          phone: c.phone || '',
+        })),
+      },
     };
 
     res.status(201).json(response);
@@ -139,7 +138,6 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 /**
  * UPDATE project
@@ -150,7 +148,7 @@ router.put('/:id', async (req, res) => {
 
     await Project.update(req.params.id, {
       ...projectData,
-      client_company_id: clientDetails?.id || null
+      client_company_id: clientDetails?.id || null,
     });
 
     res.json({ message: 'Project updated successfully' });
@@ -176,17 +174,15 @@ router.delete('/:id', async (req, res) => {
 /**
  * GET projects by department
  */
-router.get('/department/:department', async (req, res) => {
+router.get('/department/:department_id', async (req, res) => {
   try {
-    const projects = await Project.findByDepartment(req.params.department);
+    const projects = await Project.findByDepartment(req.params.department_id);
 
     const projectsWithContacts = await Promise.all(
       projects.map(async (project) => {
         let contacts = [];
         if (project.client_company_id) {
-          contacts = await ClientContact.findByCompanyId(
-            project.client_company_id
-          );
+          contacts = await ClientContact.findByCompanyId(project.client_company_id);
         }
 
         // Transform to match frontend structure
@@ -202,16 +198,16 @@ router.get('/department/:department', async (req, res) => {
           clientDetails: {
             companyName: project.company_name || '',
             address: project.address || '',
-            contacts: contacts.map(c => ({
+            contacts: contacts.map((c) => ({
               name: c.contact_name || '',
               designation: c.designation || '',
               'contact for': c.contact_for || '',
               email: c.email || '',
-              phone: c.phone || ''
-            }))
-          }
+              phone: c.phone || '',
+            })),
+          },
         };
-      })
+      }),
     );
 
     res.json(projectsWithContacts);

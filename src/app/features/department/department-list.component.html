@@ -57,38 +57,40 @@
       </thead>
 
       <tbody>
-       <tr *ngFor="let dept of departments; index as i">
-  <td>{{ dept.name }}</td>
-  <td>{{ dept.employee_count }}</td>
-  <td>{{ dept.project_count }}</td>
+        <tr *ngFor="let dept of departments; index as i">
+          <td>{{ dept.name }}</td>
+          <td>{{ dept.employee_count }}</td>
+          <td>{{ dept.project_count }}</td>
 
-  <td>
-    <span 
-      class="status-badge"
-      [ngClass]="dept.status === 'active' ? 'active' : 'inactive'">
-      {{ dept.status | titlecase }}
-    </span>
-  </td>
+          <td>
+            <span 
+              class="status-badge"
+              [ngClass]="dept.status === 'active' ? 'active' : 'inactive'">
+              {{ dept.status | titlecase }}
+            </span>
+          </td>
 
-  <td>
-    <button class="btn-edit" (click)="editDepartment(dept)">Edit</button>
+          <td>
+            <!-- WRAP BUTTONS IN A DIV WITH CLASS "actions" -->
+            <div class="actions">
+              <button class="btn-edit" (click)="editDepartment(dept)">Edit</button>
 
-    <button
-      *ngIf="dept.status === 'active'"
-      class="btn-disable"
-      (click)="disableDepartment(dept.id)">
-      Disable
-    </button>
+              <button
+                *ngIf="dept.status === 'active'"
+                class="btn-disable"
+                (click)="disableDepartment(dept.id)">
+                Disable
+              </button>
 
-    <button
-      *ngIf="dept.status === 'inactive'"
-      class="btn-enable"
-      (click)="enableDepartment(dept.id)">
-      Enable
-    </button>
-  </td>
-</tr>
-
+              <button
+                *ngIf="dept.status === 'inactive'"
+                class="btn-enable"
+                (click)="enableDepartment(dept.id)">
+                Enable
+              </button>
+            </div>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>

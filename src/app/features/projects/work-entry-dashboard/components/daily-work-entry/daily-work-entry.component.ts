@@ -70,7 +70,7 @@ const departmentId = employee.department_id;
 
       this.projectService.getProjects().subscribe((projects: Project[]) => { 
         this.assignedProjects = projects.filter((p: Project) => 
-          p.department?.toLowerCase() === departmentId.toString()
+          p.department_name?.toLowerCase() === departmentId.toString()
         );
       });
     });

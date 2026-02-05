@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http'; 
+import { HttpClientModule } from '@angular/common/http';
 import { ProjectService } from '../../projects/project.service';
 import { UserService } from '../../../shared/services/user.service';
 import { EmployeeService } from '../../employees/employee.service';
@@ -13,15 +13,15 @@ import { forkJoin } from 'rxjs';
 @Component({
   selector: 'app-user-projects',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule], 
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './user-projects.component.html',
-  styleUrls: ['./user-projects.component.css']
+  styleUrls: ['./user-projects.component.css'],
 })
 export class UserProjectsComponent implements OnInit {
   projects: Project[] = [];
   currentUser: string | null = null;
-  userDepartment_id!: number;        // logic
-  userDepartment_name: string = '';  // display
+  userDepartment_id!: number; // logic
+  userDepartment_name: string = ''; // display
   isLoading = true; // Add loading state
 
   // ====================
@@ -33,11 +33,11 @@ export class UserProjectsComponent implements OnInit {
   employeeSearch = '';
   otherEmployees: any[] = [];
   chatCurrentUser: any = null;
-  
+
   adminParticipant = {
     id: 'admin',
     name: 'Admin',
-    role: 'admin' as 'admin'
+    role: 'admin' as 'admin',
   };
 
   constructor(
@@ -46,7 +46,7 @@ export class UserProjectsComponent implements OnInit {
     private employeeService: EmployeeService,
     private router: Router,
     private chatService: ChatService,
-    private cdr: ChangeDetectorRef 
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -55,71 +55,67 @@ export class UserProjectsComponent implements OnInit {
       this.router.navigate(['/user-login']);
       return;
     }
-    
+
     // Load all data in parallel using forkJoin for better reliability
     this.loadAllData();
   }
-   loadUserInfo(user: any) {
+  loadUserInfo(user: any) {
     this.userDepartment_id = user.department_id;
     this.userDepartment_name = user.department_name;
   }
   loadAllData() {
     this.isLoading = true;
-    
+
     // Load employees and projects in parallel
     forkJoin({
       employees: this.employeeService.getEmployees(),
-      projects: this.projectService.getProjects()
+      projects: this.projectService.getProjects(),
     }).subscribe({
       next: ({ employees, projects }) => {
         // Find current employee
-        const employee = employees.find(emp => emp.name === this.currentUser);
-        
+        const employee = employees.find((emp) => emp.name === this.currentUser);
+
         if (employee) {
           this.userDepartment_id = employee.department_id;
-          
+
           // Filter projects by department
-          this.projects = projects.filter(project => 
-            this.userDepartment_id !== null && project.department === this.userDepartment_id.toString()
+          this.projects = projects.filter(
+            (project) => project.department_id === this.userDepartment_id,
           );
-          
+
           // Initialize chat user
           this.chatCurrentUser = {
             id: employee.id.toString(),
             name: employee.name,
             department: employee.department_id.toString(),
-            role: 'employee' as 'employee'
+            role: 'employee' as 'employee',
           };
-          
-          this.chatService.setCurrentUser(
-            employee.id.toString(),
-            employee.name,
-            'employee'
-          );
-          
+
+          this.chatService.setCurrentUser(employee.id.toString(), employee.name, 'employee');
+
           // Load other employees for chat
           this.otherEmployees = employees
-            .filter(emp => emp.name !== this.currentUser)
-            .map(emp => ({
+            .filter((emp) => emp.name !== this.currentUser)
+            .map((emp) => ({
               id: emp.id.toString(),
               name: emp.name,
               department: emp.department_id.toString(),
-              role: 'employee' as 'employee'
+              role: 'employee' as 'employee',
             }));
-          
+
           console.log('✅ Data loaded:', {
             department: this.userDepartment_id,
             projectCount: this.projects.length,
-            employeeCount: this.otherEmployees.length
+            employeeCount: this.otherEmployees.length,
           });
         } else {
           console.warn('Current user not found in employees');
           this.projects = [];
         }
-        
+
         this.isLoading = false;
         this.cdr.detectChanges(); // ✅ Force UI update
-        
+
         // Auto-select admin for chat if no participant selected
         if (!this.selectedParticipant) {
           this.selectParticipant(this.adminParticipant);
@@ -131,7 +127,7 @@ export class UserProjectsComponent implements OnInit {
         this.otherEmployees = [];
         this.isLoading = false;
         this.cdr.detectChanges(); // Force UI update on error
-      }
+      },
     });
   }
 
@@ -147,9 +143,10 @@ export class UserProjectsComponent implements OnInit {
   get filteredEmployees() {
     if (!this.employeeSearch) return this.otherEmployees;
     const term = this.employeeSearch.toLowerCase().trim();
-    return this.otherEmployees.filter(emp =>
-      emp.name.toLowerCase().includes(term) ||
-      (emp.department && emp.department.toLowerCase().includes(term))
+    return this.otherEmployees.filter(
+      (emp) =>
+        emp.name.toLowerCase().includes(term) ||
+        (emp.department && emp.department.toLowerCase().includes(term)),
     );
   }
 
@@ -168,11 +165,9 @@ export class UserProjectsComponent implements OnInit {
     if (!this.selectedParticipant || !this.chatCurrentUser) return [];
     return this.chatService.getMessagesBetween(
       this.chatCurrentUser.id,
-      this.selectedParticipant.id
+      this.selectedParticipant.id,
     );
   }
-
-  
 
   sendMessage() {
     if (!this.newMessage.trim() || !this.selectedParticipant || !this.chatCurrentUser) return;
@@ -184,10 +179,13 @@ export class UserProjectsComponent implements OnInit {
       senderRole: 'employee' as 'admin' | 'employee',
       receiverId: this.selectedParticipant.id,
       receiverName: this.selectedParticipant.name,
-      receiverRole: this.selectedParticipant.id === 'admin' ? 'admin' as 'admin' | 'employee' : 'employee' as 'admin' | 'employee',
+      receiverRole:
+        this.selectedParticipant.id === 'admin'
+          ? ('admin' as 'admin' | 'employee')
+          : ('employee' as 'admin' | 'employee'),
       content: this.newMessage.trim(),
       timestamp: new Date(),
-      read: false
+      read: false,
     };
 
     this.chatService.sendMessage(message);
@@ -201,14 +199,14 @@ export class UserProjectsComponent implements OnInit {
 
   getLastMessageTime(participantId: string): string {
     if (!this.chatCurrentUser) return '';
-    
+
     const lastTime = this.chatService.getLastMessageTime(this.chatCurrentUser.id, participantId);
     if (lastTime.getTime() === 0) return '';
-    
+
     const now = new Date();
     const diffMs = now.getTime() - lastTime.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
-    
+
     if (diffMins < 1) return 'Now';
     if (diffMins < 60) return `${diffMins}m`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h`;

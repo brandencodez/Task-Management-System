@@ -140,9 +140,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const term = this.searchTerm.toLowerCase().trim();
     
-    return list.filter(p =>
-      p.department?.toLowerCase().includes(term)
-    );
+   return list.filter(p =>
+  p.department_name?.toLowerCase().includes(term)
+);
+
   }
 
   // Helper to check if a project is overdue
