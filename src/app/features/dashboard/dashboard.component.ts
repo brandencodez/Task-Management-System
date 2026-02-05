@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -46,7 +46,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private employeeService: EmployeeService,
     private projectMemoService: ProjectMemoService,
     private userService: UserService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef // ✅ Only change: added ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -69,10 +70,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.categorizeProjects();
           this.isLoading = false;
           console.log('✅ Dashboard: Projects loaded:', this.allProjects.length, 'projects');
+          this.cdr.detectChanges(); //  Force change detection
         },
         error: (err) => {
           console.error('Failed to load projects in dashboard:', err);
           this.isLoading = false;
+          this.cdr.detectChanges(); // Force change detection
         }
       });
   }
@@ -190,9 +193,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
             position: emp.position,
             email: emp.email
           }));
+          this.cdr.detectChanges(); // Force change detection
         },
         error: (err) => {
           console.error('Failed to load employees:', err);
+          this.cdr.detectChanges(); //  Force change detection
         }
       });
   }
@@ -329,11 +334,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.projectMoms.set(projectId, memos);
           this.loadingMoms = false;
           console.log('✅ Memos loaded for project', projectId, ':', memos.length, 'memos');
+          this.cdr.detectChanges(); // Force change detection
         },
         error: (err) => {
           console.error('Failed to load memos:', err);
           this.loadingMoms = false;
           this.projectMoms.set(projectId, []);
+          this.cdr.detectChanges(); // Force change detection
         }
       });
   }
