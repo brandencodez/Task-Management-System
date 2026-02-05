@@ -24,12 +24,14 @@
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="btn-primary">
-          {{ editingDepartment ? 'Update' : 'Add' }}
-        </button>
+  <button 
+    type="submit" 
+    [class]="editingDepartment ? 'btn-update' : 'btn-primary'">
+    {{ editingDepartment ? 'Update' : 'Add' }}
+  </button>
 
-        <button type="button" class="btn-secondary" (click)="toggleAddForm()">Cancel</button>
-      </div>
+  <button type="button" class="btn-secondary" (click)="toggleAddForm()">Cancel</button>
+</div>
     </form>
   </div>
 

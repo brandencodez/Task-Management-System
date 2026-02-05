@@ -411,3 +411,46 @@ tbody tr:last-child {
 .btn-update:active {
   transform: translateY(0);
 }
+/* Primary button - Default Blue (for Add Department, Close, etc.) */
+.btn-primary {
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-primary:hover {
+  background-color: #1e4fd8;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Update button - Green style */
+.btn-update {
+  background-color: #10b981;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-update:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-update:active {
+  transform: translateY(0);
+}

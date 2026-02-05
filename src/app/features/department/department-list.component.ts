@@ -80,6 +80,7 @@ export class DepartmentListComponent implements OnInit {
         alert('Department added successfully!');
         this.loadDepartments();
         this.resetForm();
+        this.cdr.detectChanges();
         this.showAddForm = false;
       },
       error: (error) => {
@@ -96,25 +97,25 @@ export class DepartmentListComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  updateDepartment(): void {
-    if (!this.editingDepartment || !this.validateForm()) return;
+ updateDepartment(): void {
+  if (!this.editingDepartment || !this.validateForm()) return;
 
-    this.departmentService
-      .updateDepartment(this.editingDepartment.id, this.newDepartment)
-      .subscribe({
-        next: () => {
-          alert('Department updated successfully!');
-          this.loadDepartments();
-          this.resetForm();
-          this.showAddForm = false;
-        },
-        error: (error) => {
-          console.error('Update department error:', error);
-          alert(error.error?.error || 'Failed to update department');
-        }
-      });
-  }
-
+  this.departmentService
+    .updateDepartment(this.editingDepartment.id, this.newDepartment)
+    .subscribe({
+      next: () => {
+        alert('Department updated successfully!');
+        this.resetForm();
+        this.showAddForm = false;
+        this.loadDepartments();
+        this.cdr.detectChanges(); // Force change detection
+      },
+      error: (error) => {
+        console.error('Update department error:', error);
+        alert(error.error?.error || 'Failed to update department');
+      }
+    });
+}
   toggleStatus(department: Department): void {
     const action = department.status === 'active'
       ? this.departmentService.disableDepartment(department.id)
