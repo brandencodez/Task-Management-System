@@ -53,6 +53,17 @@
 
         <li>
           <a
+            routerLink="/admin-dashboard/departments"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            aria-label="Departments"
+          >
+            Department
+          </a>
+        </li>
+
+        <li>
+          <a
             routerLink="/admin-dashboard/employees"
             routerLinkActive="active"
             aria-label="Employees"

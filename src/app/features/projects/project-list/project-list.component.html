@@ -1,12 +1,8 @@
 <div class="container">
   <div class="page-header">
     <h2>Project Management</h2>
-    <button class="btn btn-primary" (click)="openAddForm()">
-      Add Project
-    </button>
+    <button class="btn btn-primary" (click)="openAddForm()">Add Project</button>
   </div>
-
- 
 
   <!-- Project Form (Add/Edit) -->
   @if (showForm) {
@@ -15,10 +11,10 @@
       <form (ngSubmit)="saveProject()" class="form-grid">
         <div class="form-group">
           <label class="form-label">Project Name *</label>
-          <input 
-            [(ngModel)]="currentProject.name" 
-            name="name" 
-            required 
+          <input
+            [(ngModel)]="currentProject.name"
+            name="name"
+            required
             class="form-control"
             placeholder="e.g., Website Redesign"
           />
@@ -26,48 +22,38 @@
 
         <div class="form-group">
           <label class="form-label">Project Type</label>
-          <select 
-            [(ngModel)]="currentProject.projectType" 
-            name="projectType" 
-            class="form-control"
-            [disabled]="!currentProject.department"
-          >
-            <option value="">Select Project Type</option>
-            @for (type of getProjectTypes(); track type) {
-              <option [value]="type">{{ type }}</option>
-            }
-          </select>
-          @if (!currentProject.department) {
-            <p class="help-text">Select a department first to see project types</p>
-          }
+          <input
+  [(ngModel)]="currentProject.projectType"
+  name="projectType"
+  class="form-control"
+  placeholder="Enter project type"
+/>
         </div>
 
         <div class="form-group">
           <label class="form-label">Department *</label>
-          <select 
-            [(ngModel)]="currentProject.department" 
-            name="department" 
-            required 
+          <select
+            [(ngModel)]="currentProject.department_id"
+            name="department_id"
+            required
             class="form-control"
           >
-            <option value="">Select Department</option>
-            <option value="Development">Development</option>
-            <option value="HR">HR</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Sales">Sales</option>
-            <option value="Finance">Finance</option>
+            <option value="0">Select Department</option>
+            @for (dept of departments; track dept.id) {
+              <option [value]="dept.id">{{ dept.name }}</option>
+            }
           </select>
         </div>
 
         <!-- COMPACT CLIENT DETAILS SECTION -->
         <div class="form-group client-section">
           <label class="form-label">Client Details *</label>
-          
+
           <!-- Company Name -->
           <div class="form-group">
-            <input 
-              [(ngModel)]="currentProject.clientDetails.companyName" 
-              name="companyName" 
+            <input
+              [(ngModel)]="currentProject.clientDetails.companyName"
+              name="companyName"
               class="form-control"
               placeholder="Company Name *"
               required
@@ -76,9 +62,9 @@
 
           <!-- Address -->
           <div class="form-group">
-            <input 
-              [(ngModel)]="currentProject.clientDetails.address" 
-              name="address" 
+            <input
+              [(ngModel)]="currentProject.clientDetails.address"
+              name="address"
               class="form-control"
               placeholder="Address *"
             />
@@ -90,9 +76,9 @@
               <div class="contact-row">
                 <!-- Contact Name -->
                 <div class="form-group contact-name">
-                  <input 
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index].name" 
-                    [name]="'contactName' + $index" 
+                  <input
+                    [(ngModel)]="currentProject.clientDetails.contacts[$index].name"
+                    [name]="'contactName' + $index"
                     class="form-control"
                     placeholder="Contact Name *"
                     required
@@ -101,56 +87,55 @@
 
                 <!-- Designation -->
                 <div class="form-group contact-designation">
-  <select
-    [(ngModel)]="currentProject.clientDetails.contacts[$index].designation"
-    [name]="'contactDesignation' + $index"
-    class="form-control"
-    required
-  >
-    <option value="">Select Designation *</option>
+                  <select
+                    [(ngModel)]="currentProject.clientDetails.contacts[$index].designation"
+                    [name]="'contactDesignation' + $index"
+                    class="form-control"
+                    required
+                  >
+                    <option value="">Select Designation *</option>
 
-    <!-- Most common defaults -->
-    <option value="Owner">Owner</option>
-    <option value="Founder">Founder</option>
-    <option value="CEO">CEO</option>
-    <option value="Managing Director">Managing Director</option>
-    <option value="Director">Director</option>
-    <option value="Manager">Manager</option>
-    <option value="Project Manager">Project Manager</option>
-    <option value="Team Lead">Team Lead</option>
-    <option value="Consultant">Consultant</option>
-    <option value="Administrator">Administrator</option>
-    <option value="Coordinator">Coordinator</option>
+                    <!-- Most common defaults -->
+                    <option value="Owner">Owner</option>
+                    <option value="Founder">Founder</option>
+                    <option value="CEO">CEO</option>
+                    <option value="Managing Director">Managing Director</option>
+                    <option value="Director">Director</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Project Manager">Project Manager</option>
+                    <option value="Team Lead">Team Lead</option>
+                    <option value="Consultant">Consultant</option>
+                    <option value="Administrator">Administrator</option>
+                    <option value="Coordinator">Coordinator</option>
 
-    <!-- Fallback -->
-    <option value="Other">Other</option>
-  </select>
-</div>
-
+                    <!-- Fallback -->
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
 
                 <!-- Contact For -->
                 <div class="form-group contact-for">
-                  <input 
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index]['contact for']" 
-                    [name]="'contactFor' + $index" 
+                  <input
+                    [(ngModel)]="currentProject.clientDetails.contacts[$index]['contact for']"
+                    [name]="'contactFor' + $index"
                     class="form-control"
                     placeholder="Contact For *"
                     required
                   />
                 </div>
-                
+
                 <!-- Email -->
                 <div class="form-group contact-email">
-                  <input 
+                  <input
                     type="email"
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index].email" 
-                    [name]="'contactEmail' + $index" 
+                    [(ngModel)]="currentProject.clientDetails.contacts[$index].email"
+                    [name]="'contactEmail' + $index"
                     class="form-control"
                     placeholder="Email *"
                     required
                   />
                 </div>
-                
+
                 <!-- Phone -->
               <div class="form-group contact-phone">
               <input 
@@ -167,25 +152,29 @@
                 
                 <!-- Remove Button -->
                 @if (currentProject.clientDetails.contacts.length > 1) {
-                  <button type="button" class="btn-remove-contact" (click)="removeClientContact($index)">
+                  <button
+                    type="button"
+                    class="btn-remove-contact"
+                    (click)="removeClientContact($index)"
+                  >
                     ×
                   </button>
                 }
               </div>
             }
-            
+
             <!-- Add Contact Button -->
             <button type="button" class="btn-add-contact" (click)="addClientContact()">
               + Add Contact
             </button>
           </div>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">Project Brief</label>
-          <textarea 
-            [(ngModel)]="currentProject.projectBrief" 
-            name="projectBrief" 
+          <textarea
+            [(ngModel)]="currentProject.projectBrief"
+            name="projectBrief"
             class="form-control"
             rows="4"
             placeholder="Describe project scope, requirements, deliverables"
@@ -195,22 +184,22 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Start Date *</label>
-            <input 
-              type="date" 
-              [(ngModel)]="currentProject.startDate" 
-              name="startDate" 
-              required 
+            <input
+              type="date"
+              [(ngModel)]="currentProject.startDate"
+              name="startDate"
+              required
               class="form-control"
             />
           </div>
-          
+
           <div class="form-group">
             <label class="form-label">Finish Date *</label>
-            <input 
-              type="date" 
-              [(ngModel)]="currentProject.finishDate" 
-              name="finishDate" 
-              required 
+            <input
+              type="date"
+              [(ngModel)]="currentProject.finishDate"
+              name="finishDate"
+              required
               class="form-control"
             />
           </div>
@@ -218,17 +207,13 @@
 
         <div class="form-group">
           <label class="form-label">Status</label>
-          <select 
-            [(ngModel)]="currentProject.status" 
-            name="status" 
-            class="form-control"
-          >
+          <select [(ngModel)]="currentProject.status" name="status" class="form-control">
             @for (status of statuses; track status) {
               <option [value]="status">{{ status }}</option>
             }
           </select>
         </div>
-        
+
         <div class="form-actions">
           <button type="submit" class="btn btn-success">
             {{ isEditing ? 'Update Project' : 'Save Project' }}
@@ -251,35 +236,42 @@
                 <h4>{{ project.name }}</h4>
                 <span class="badge badge-{{ status.toLowerCase() }}">{{ status }}</span>
               </div>
-              
+
               <div class="project-details">
                 <p><strong>Type:</strong> {{ project.projectType || 'Not specified' }}</p>
                 <div class="client-details">
-                  <p><strong>Company:</strong> {{ project.clientDetails.companyName || 'Not specified' }}</p>
+                  <p>
+                    <strong>Company:</strong>
+                    {{ project.clientDetails.companyName || 'Not specified' }}
+                  </p>
                   @for (contact of project.clientDetails.contacts; track $index) {
                     <p>
                       <strong>Contact {{ $index + 1 }}:</strong> {{ contact.name }}
-                      @if (contact.designation) { ({{ contact.designation }}) } 
-                      @if (contact['contact for']) { - {{ contact['contact for'] }} }
-                      @if (contact.email || contact.phone) { ({{ contact.email || contact.phone }}) }
+                      @if (contact.designation) {
+                        ({{ contact.designation }})
+                      }
+                      @if (contact['contact for']) {
+                        - {{ contact['contact for'] }}
+                      }
+                      @if (contact.email || contact.phone) {
+                        ({{ contact.email || contact.phone }})
+                      }
                     </p>
                   }
                   @if (project.clientDetails.address) {
                     <p><strong>Address:</strong> {{ project.clientDetails.address }}</p>
                   }
                 </div>
-                <p><strong>Department:</strong> {{ project.department || 'Not specified' }}</p>
-                <p><strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}</p>
+                <p><strong>Department:</strong> {{ project.department_name || 'Not specified' }}</p>
+                <p>
+                  <strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}
+                </p>
                 <p>{{ project.projectBrief || 'No brief provided' }}</p>
               </div>
-              
+
               <div class="project-actions">
-                <button class="btn btn-outline" (click)="openEditForm(project)">
-                  Edit
-                </button>
-                <button class="btn btn-danger" (click)="deleteProject(project.id)">
-                  Delete
-                </button>
+                <button class="btn btn-outline" (click)="openEditForm(project)">Edit</button>
+                <button class="btn btn-danger" (click)="deleteProject(project.id)">Delete</button>
               </div>
             </div>
           }

@@ -32,12 +32,12 @@ router.put('/:id', async (req, res) => {
     }
     
     const { 
-      name, email, phone, department, position, 
+      name, email, phone, department_id, position, 
       join_date, home_address, status, issued_items 
     } = req.body;
     
     // Validate required fields
-    if (!name || !email || !phone || !department || !position || !join_date) {
+    if (!name || !email || !phone || !department_id || !position || !join_date) {
       return res.status(400).json({ 
         error: 'All required fields must be provided: name, email, phone, department, position, join_date' 
       });

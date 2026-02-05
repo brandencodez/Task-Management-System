@@ -7,10 +7,10 @@
     <button (click)="logout()" class="btn-logout">Logout</button>
   </div>
   
-  @if (userDepartment) {
+  @if ( userDepartment_name ) {
     <div class="department-badge">
       <span class="dept-label">Department:</span>
-      <span class="dept-name">{{ userDepartment }}</span>
+      <span class="dept-name">{{ userDepartment_name }}</span>
     </div>
   }
 
@@ -51,14 +51,14 @@
     </div>
   } @else {
     <div class="no-projects">
-      @if (userDepartment) {
+      @if (userDepartment_name) {
         <div class="empty-state">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-5.656-3.656L12 14m-4 6v-2a4 4 0 0 1 5.656-3.656L12 14m-4 6v-2a4 4 0 0 1 5.656-3.656L12 14"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <h3>No Projects Assigned</h3>
-          <p>No projects assigned to your department ({{ userDepartment }}).</p>
+          <p>No projects assigned to your department ({{ userDepartment_name }}).</p>
         </div>
       } @else {
         <div class="empty-state">

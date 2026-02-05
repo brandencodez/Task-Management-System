@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { Employee } from './employee.model';
 import { EmployeeService } from './employee.service';
+import { Department } from '../department/department.model';
+import { DepartmentService } from '../department/department.service';
+
 
 @Component({
   selector: 'app-employee-list',
@@ -18,13 +21,14 @@ export class EmployeeListComponent implements OnInit {
   showAddForm = false;
   editingEmployee: Employee | null = null;
   searchQuery = '';
+ departments: Department[] = [];
 
   newEmployee: Employee = {
     id: 0,
     name: '',
     email: '',
     phone: '',
-    department: '',
+    department_id: 0,
     position: '',
     join_date: '',
     home_address: '',
@@ -34,11 +38,13 @@ export class EmployeeListComponent implements OnInit {
 
   constructor(
     private employeeService: EmployeeService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private departmentService: DepartmentService
   ) {}
 
   ngOnInit(): void {
     this.loadEmployees();
+      this.loadDepartments();
   }
 
   loadEmployees(): void {
@@ -55,6 +61,15 @@ export class EmployeeListComponent implements OnInit {
       }
     });
   }
+  loadDepartments(): void {
+  this.departmentService.getDepartments().subscribe({
+    next: (data) => {
+      this.departments = data.filter(d => d.status === 'active');
+      this.cdr.detectChanges();
+    },
+    error: (err) => console.error('Failed to load departments', err)
+  });
+}
 
   applyFilter(): void {
     if (this.searchQuery.trim() === '') {
@@ -64,7 +79,7 @@ export class EmployeeListComponent implements OnInit {
       this.filteredEmployees = this.employees.filter(emp =>
         emp.name.toLowerCase().includes(lowerQuery) ||
         emp.email.toLowerCase().includes(lowerQuery) ||
-        emp.department.toLowerCase().includes(lowerQuery) ||
+        (emp.department_name || '').toLowerCase().includes(lowerQuery) ||
         emp.position.toLowerCase().includes(lowerQuery)
       );
     }
@@ -174,7 +189,7 @@ export class EmployeeListComponent implements OnInit {
 
   validateForm(): boolean {
     if (!this.newEmployee.name || !this.newEmployee.email ||
-        !this.newEmployee.phone || !this.newEmployee.department ||
+        !this.newEmployee.phone ||!this.newEmployee.department_id||
         !this.newEmployee.position || !this.newEmployee.join_date) {
       alert('Please fill in all required fields');
       return false;
@@ -224,7 +239,7 @@ export class EmployeeListComponent implements OnInit {
       name: '',
       email: '',
       phone: '',
-      department: '',
+      department_id: 0,
       position: '',
       join_date: new Date().toISOString().split('T')[0], 
       home_address: '',

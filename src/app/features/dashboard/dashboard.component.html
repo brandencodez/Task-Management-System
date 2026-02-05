@@ -47,7 +47,7 @@
             </p>
           }
         </div>
-        <p><b>Department:</b> {{ p.department }}</p>
+<p><b>Department:</b> {{ p.department_name || 'Not assigned' }}</p>
         <p><b>Duration:</b> {{ p.startDate | date:'mediumDate' }} → {{ p.finishDate | date:'mediumDate' }}</p>
       </div>
     </div>
@@ -83,7 +83,7 @@
         </div>
 
         <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
-        <p><b>Department:</b> {{ p.department }}</p>
+<p><b>Department:</b> {{ p.department_name || 'Not assigned' }}</p>
         <p><b>Deadline:</b> {{ p.finishDate | date:'mediumDate' }}</p>
         <div class="client-info">
           <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>
@@ -126,7 +126,7 @@
         </div>
 
         <p><b>Type:</b> {{ p.projectType || 'Not specified' }}</p>
-        <p><b>Department:</b> {{ p.department }}</p>
+<p><b>Department:</b> {{ p.department_name || 'Not assigned' }}</p>
         <p><b>Completed on:</b> {{ p.finishDate | date:'mediumDate' }}</p>
         <div class="client-info">
           <p><b>Company:</b> {{ p.clientDetails.companyName || 'Not specified' }}</p>

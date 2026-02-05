@@ -80,7 +80,7 @@ export class EmployeeService {
         return employees.filter(emp => 
           emp.name.toLowerCase().includes(lowerQuery) ||
           emp.email.toLowerCase().includes(lowerQuery) ||
-          emp.department.toLowerCase().includes(lowerQuery) ||
+          (emp.department_name || '').toLowerCase().includes(lowerQuery) ||
           emp.position.toLowerCase().includes(lowerQuery)
         );
       })

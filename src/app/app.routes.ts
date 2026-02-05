@@ -94,6 +94,14 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard.component')
             .then(m => m.DashboardComponent)
       },
+        
+   {
+  path: 'departments',
+  loadComponent: () =>
+    import('./features/department/department-list.component')
+      .then(m => m.DepartmentListComponent)
+},
+
 
       // 🔹 Employees
       {

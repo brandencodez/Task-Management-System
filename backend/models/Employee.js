@@ -9,7 +9,7 @@ class Employee {
       name,
       email,
       phone,
-      department,
+      department_id,
       position,
       join_date,
       home_address,
@@ -18,9 +18,15 @@ class Employee {
     } = employeeData;
 
     // Validate required fields
-    if (!name || !email || !phone || !department || !position || !join_date) {
+    if (!name || !email || !phone || !position || !join_date) {
       throw new Error('Missing required fields');
     }
+    // Validate department_id is a valid number
+    const departmentId = Number(department_id);
+if (!departmentId) {
+  throw new Error('Valid department is required');
+}
+
 
     // Validate phone is 10 digits
     const phoneDigits = phone.replace(/\D/g, '');
@@ -50,17 +56,29 @@ class Employee {
     const defaultPassword = '123456';
     const password_hash = await bcrypt.hash(defaultPassword, 10);
 
+    // Validate department exists and is active
+    const [dept] = await db.execute(
+  'SELECT id FROM departments WHERE id = ? AND  status = "active"',
+  [department_id]
+);
+
+if (dept.length === 0) {
+  throw new Error('Invalid or inactive department');
+}
+
+
     const query = `
       INSERT INTO employees
-      (name, email, phone, department, position, join_date, home_address, status, issued_items, password_hash)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+(name, email, phone, department_id, position, join_date, home_address, status, issued_items, password_hash)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
     `;
 
     const [result] = await db.execute(query, [
       name,
       email,
       phone,
-      department,
+      department_id,
       position,
       join_date,
       home_address,
@@ -74,7 +92,7 @@ class Employee {
       name,
       email,
       phone,
-      department,
+      department_id,
       position,
       join_date,
       home_address,
@@ -85,15 +103,30 @@ class Employee {
   }
 
   static async findAll() {
-    const [rows] = await db.execute(
-      'SELECT id, name, email, phone, department, position, join_date, home_address, status, issued_items FROM employees ORDER BY id'
-    );
-    return rows;
-  }
+  const [rows] = await db.execute(`
+    SELECT 
+      e.id,
+      e.name,
+      e.email,
+      e.phone,
+      e.department_id,
+      d.name AS department_name,
+      e.position,
+      e.join_date,
+      e.home_address,
+      e.status,
+      e.issued_items
+    FROM employees e
+    LEFT JOIN departments d ON e.department_id = d.id
+    ORDER BY e.id
+  `);
+  return rows;
+}
+
 
   static async findById(id) {
     const [rows] = await db.execute(
-      'SELECT id, name, email, phone, department, position, join_date, home_address, status, issued_items FROM employees WHERE id = ?',
+      'SELECT id, name, email, phone, department_id, position, join_date, home_address, status, issued_items FROM employees WHERE id = ?',
       [id]
     );
     return rows[0];
@@ -104,7 +137,7 @@ class Employee {
       name,
       email,
       phone,
-      department,
+      department_id,
       position,
       join_date,
       home_address,
@@ -138,7 +171,7 @@ class Employee {
 
     const query = `
       UPDATE employees
-      SET name = ?, email = ?, phone = ?, department = ?, position = ?,
+      SET name = ?, email = ?, phone = ?, department_id = ?, position = ?,
           join_date = ?, home_address = ?, status = ?, issued_items = ?
       WHERE id = ?
     `;
@@ -147,7 +180,7 @@ class Employee {
       name,
       email,
       phone,
-      department,
+      department_id,
       position,
       join_date,
       home_address,
@@ -165,7 +198,7 @@ class Employee {
 
   static async findByName(name) {
     const [rows] = await db.execute(
-      'SELECT id, name, email, phone, department, position FROM employees WHERE name LIKE ?',
+      'SELECT id, name, email, phone, department_id, position FROM employees WHERE name LIKE ?',
       [`%${name}%`]
     );
     return rows;
