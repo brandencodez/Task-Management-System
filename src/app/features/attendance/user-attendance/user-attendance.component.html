@@ -1,0 +1,125 @@
+<div class="ua-container">
+  <div class="ua-header">
+    <div class="title-group">
+      <h1>My Attendance</h1>
+      <p class="sub">{{ currentUserName || 'Employee' }} • {{ currentMonth }}</p>
+    </div>
+    <div class="pill">{{ currentMonth }}</div>
+  </div>
+
+  <div class="ua-stats">
+    <div class="stat">
+      <span class="value">{{ presentCount }}</span>
+      <span class="label">Present</span>
+    </div>
+    <div class="stat">
+      <span class="value">{{ absentCount }}</span>
+      <span class="label">Absent</span>
+    </div>
+    <div class="stat">
+      <span class="value">{{ halfDayCount }}</span>
+      <span class="label">Half Days</span>
+    </div>
+    <div class="stat">
+      <span class="value">{{ leaveCount }}</span>
+      <span class="label">Leaves</span>
+    </div>
+  </div>
+
+  <div class="ua-card">
+    <div class="card-header">
+      <h3>Today</h3>
+      <span class="badge" [ngClass]="getStatusColor(todayRecord?.status || 'not-marked')">
+        {{ todayRecord?.status ? todayRecord.status.toUpperCase() : 'NOT MARKED' }}
+      </span>
+    </div>
+
+    <div class="card-body" *ngIf="!hasMarkedToday">
+      <p class="hint">Select status and check in if you are working today.</p>
+
+      <div class="status-group">
+        <button
+          type="button"
+          class="status-chip"
+          *ngFor="let option of statusOptions"
+          [class.active]="attendanceStatus === option.value"
+          (click)="attendanceStatus = option.value"
+        >
+          {{ option.icon }} {{ option.label }}
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Remarks (optional)</label>
+        <input type="text" [(ngModel)]="remarks" placeholder="Add a note..." />
+      </div>
+
+      <button class="primary-btn" (click)="markAttendance()">
+        {{ (attendanceStatus === 'present' || attendanceStatus === 'half-day') ? 'Check In' : 'Submit Status' }}
+      </button>
+    </div>
+
+    <div class="card-body" *ngIf="hasMarkedToday">
+      <div class="today-info">
+        <div>
+          <span class="info-label">Check-in</span>
+          <span class="info-value">
+            {{ todayRecord?.checkInTime ? (todayRecord.checkInTime | date:'shortTime') : '—' }}
+          </span>
+        </div>
+        <div>
+          <span class="info-label">Check-out</span>
+          <span class="info-value">
+            {{ todayRecord?.checkOutTime ? (todayRecord.checkOutTime | date:'shortTime') : '—' }}
+          </span>
+        </div>
+        <div>
+          <span class="info-label">Hours</span>
+          <span class="info-value">{{ todayRecord?.workHours || 0 }}h</span>
+        </div>
+      </div>
+
+      <p class="hint" *ngIf="(todayRecord?.status === 'present' || todayRecord?.status === 'half-day') && !hasCheckedOutToday">
+        You are checked in. Click below to check out when you finish.
+      </p>
+
+      <button
+        class="secondary-btn"
+        *ngIf="(todayRecord?.status === 'present' || todayRecord?.status === 'half-day') && !hasCheckedOutToday"
+        (click)="checkout()"
+      >
+        Check Out
+      </button>
+    </div>
+  </div>
+
+  <div class="ua-card">
+    <div class="card-header">
+      <h3>History</h3>
+    </div>
+
+    <div class="history" *ngIf="myAttendance.length">
+      <div class="history-row header">
+        <span>Date</span>
+        <span>Status</span>
+        <span>In</span>
+        <span>Out</span>
+        <span>Hours</span>
+      </div>
+
+      <div class="history-row" *ngFor="let record of myAttendance">
+        <span>{{ record.date | date:'dd MMM, yyyy' }}</span>
+        <span class="status-text" [ngClass]="getStatusColor(record.status)">
+          {{ record.status.toUpperCase() }}
+        </span>
+        <span>{{ record.checkInTime ? (record.checkInTime | date:'shortTime') : '—' }}</span>
+        <span>{{ record.checkOutTime ? (record.checkOutTime | date:'shortTime') : '—' }}</span>
+        <span>{{ record.workHours || 0 }}h</span>
+      </div>
+    </div>
+
+    <p class="empty" *ngIf="!myAttendance.length">
+      No attendance records yet.
+    </p>
+  </div>
+</div>

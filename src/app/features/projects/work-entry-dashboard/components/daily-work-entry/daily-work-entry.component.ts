@@ -6,10 +6,16 @@ import { HttpClientModule } from '@angular/common/http';
 import { ProjectService } from '../../../project.service';
 import { EmployeeService } from '../../../../employees/employee.service';
 import { UserService } from '../../../../../shared/services/user.service';
+import { WorkEntryService } from '../../../../../shared/services/work-entry.service';
+import { AttendanceService } from '../../../../../shared/services/attendance.service';
 import { Project } from '../../../../../shared/models/project.model';
+<<<<<<< HEAD
 import { Employee } from '../../../../employees/employee.model';
 import { WorkEntry } from '../../../../../shared/models/work-entry.model';
 import { WorkEntryService } from '../../../../../shared/services/work-entry.service';
+=======
+import { WorkEntry } from '../../../../../shared/models/work-entry.model';
+>>>>>>> adf6076 (update User Attendance)
 
 @Component({
   selector: 'app-daily-work-entry',
@@ -35,21 +41,63 @@ export class DailyWorkEntryComponent implements OnInit {
   hours: number | null = null;
   progress = 0;
   date = this.today();
+  workDetails: string = '';
 
+<<<<<<< HEAD
   entries: WorkEntry[] = [];
   private currentEmployeeId: string | null = null;
+=======
+  /* ===============================
+     EDIT MODE
+  ================================ */
+  isEditing = false;
+  editingId: string | null = null;
+
+  entries: WorkEntry[] = [];
+  currentEmployeeId: string = '';
+  currentEmployeeName: string = '';
+>>>>>>> adf6076 (update User Attendance)
 
   constructor(
     private projectService: ProjectService,
     private employeeService: EmployeeService,
     private userService: UserService,
+<<<<<<< HEAD
     private workEntryService: WorkEntryService
     
   ) {}
 
   ngOnInit(): void {
+=======
+    private workEntryService: WorkEntryService,
+    private attendanceService: AttendanceService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadCurrentUser();
+    this.loadEntries();
+>>>>>>> adf6076 (update User Attendance)
     this.loadProjectsForLoggedUser();
     this.loadEmployeeId();
+  }
+
+  /* ===============================
+     LOAD CURRENT USER
+  ================================ */
+  private loadCurrentUser(): void {
+    const currentUser = this.userService.getCurrentUser();
+    const employees = this.employeeService.getEmployees();
+    
+    if (currentUser && employees) {
+      const employee = employees.find((emp: any) =>
+        emp.name.toLowerCase() === currentUser.toLowerCase()
+      );
+      
+      if (employee) {
+        this.currentEmployeeId = employee.id;
+        this.currentEmployeeName = employee.name;
+      }
+    }
   }
 
   /* ===============================
@@ -131,9 +179,50 @@ const departmentId = employee.department_id;
      ADD ENTRY
   ================================ */
   addEntry(): void {
+<<<<<<< HEAD
   if (!this.project || !this.description || !this.hours || !this.currentEmployeeId) {
     alert('Please fill all required fields and ensure you are logged in.');
     return;
+=======
+    if (!this.project || !this.description || !this.hours) return;
+    if (!this.currentEmployeeId) {
+      alert('No user logged in. Please login first.');
+      return;
+    }
+
+    if (this.isEditing && this.editingId !== null) {
+      // Update existing entry
+      this.workEntryService.update(this.editingId, {
+        employeeId: this.currentEmployeeId,
+        employeeName: this.currentEmployeeName,
+        project: this.project,
+        description: this.description,
+        hours: this.hours,
+        progress: this.progress,
+        date: this.date,
+        workDetails: this.workDetails
+      });
+    } else {
+      // Add new entry
+      this.workEntryService.add({
+        employeeId: this.currentEmployeeId,
+        employeeName: this.currentEmployeeName,
+        project: this.project,
+        description: this.description,
+        hours: this.hours,
+        progress: this.progress,
+        date: this.date,
+        workDetails: this.workDetails
+      });
+    }
+
+    // Update attendance with work entry details
+    this.updateAttendanceFromWorkEntry();
+
+    this.loadEntries();
+    this.emitEntries();
+    this.resetForm();
+>>>>>>> adf6076 (update User Attendance)
   }
 
   const newEntry: WorkEntry & { employeeId: string } = {
@@ -146,10 +235,27 @@ const departmentId = employee.department_id;
     employeeId: this.currentEmployeeId // ✅ added
   };
 
+<<<<<<< HEAD
   this.workEntryService.createEntry(newEntry).subscribe({
     next: (createdEntry) => {
       this.entries.unshift(createdEntry);
       this.emitEntries();
+=======
+    this.project = entry.project;
+    this.description = entry.description;
+    this.hours = entry.hours;
+    this.progress = entry.progress;
+    this.date = entry.date;
+    this.workDetails = entry.workDetails || '';
+  }
+
+  deleteEntry(id: string): void {
+    this.workEntryService.delete(id);
+    this.loadEntries();
+    this.emitEntries();
+
+    if (this.editingId === id) {
+>>>>>>> adf6076 (update User Attendance)
       this.resetForm();
     },
     error: (err) => {
@@ -159,6 +265,7 @@ const departmentId = employee.department_id;
   });
 }
 
+<<<<<<< HEAD
   /* ===============================
      DELETE ENTRY
   ================================ */
@@ -179,6 +286,15 @@ const departmentId = employee.department_id;
   /* ===============================
      EMIT CHANGES
   ================================ */
+=======
+  private loadEntries(): void {
+    // Load entries for current employee
+    if (this.currentEmployeeId) {
+      this.entries = this.workEntryService.getByEmployeeId(this.currentEmployeeId);
+    }
+  }
+
+>>>>>>> adf6076 (update User Attendance)
   private emitEntries(): void {
     this.entriesChange.emit([...this.entries]);
   }
@@ -189,6 +305,30 @@ const departmentId = employee.department_id;
     this.hours = null;
     this.progress = 0;
     this.date = this.today();
+<<<<<<< HEAD
+=======
+    this.workDetails = '';
+    this.isEditing = false;
+    this.editingId = null;
+>>>>>>> adf6076 (update User Attendance)
+  }
+
+  /**
+   * Update attendance record from work entry
+   */
+  private updateAttendanceFromWorkEntry(): void {
+    if (!this.currentEmployeeId || !this.date) return;
+
+    // Mark or update attendance based on work entry
+    this.attendanceService.updateAttendanceWithWorkEntry(
+      this.currentEmployeeId,
+      this.date,
+      {
+        workDetails: this.workDetails,
+        project: this.project,
+        hours: this.hours
+      }
+    );
   }
 
   private today(): string {
