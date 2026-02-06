@@ -1,13 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-<<<<<<< HEAD
 
 import { DailyWorkEntryComponent } from './components/daily-work-entry/daily-work-entry.component';
-=======
-import {
-  DailyWorkEntryComponent
-} from './components/daily-work-entry/daily-work-entry.component';
->>>>>>> adf6076 (update User Attendance)
 import { WorkEntry } from '../../../shared/models/work-entry.model';
 
 @Component({
