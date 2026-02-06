@@ -3,14 +3,17 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttendanceService } from '../../../shared/services/attendance.service';
+import { EmployeeService } from '../../employees/employee.service';
+import { WorkEntryService } from '../../../shared/services/work-entry.service';
+import { Subscription } from 'rxjs';
 
 interface Employee {
   id: string;
   name: string;
   department: string;
   position: string;
-  joinDate: string;
-  avatarColor: string;
+  joinDate: Date;
+  avatarColor?: string;
 }
 
 interface AttendanceRecord {
@@ -32,8 +35,8 @@ interface AttendanceRecord {
   earlyDeparture?: boolean;
   workFromHome?: boolean;
   project?: string;
-  // Add these properties to match the service data
   location?: string;
+  workDetails?: string;
 }
 
 interface MonthlySummary {
@@ -106,8 +109,13 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
   
   private timer: any;
   private officeEndTimeMinutes = 18 * 60 + 30; // 6:30 PM in minutes
+  private subscriptions: Subscription[] = [];
 
-  constructor(private attendanceService: AttendanceService) {
+  constructor(
+    private attendanceService: AttendanceService,
+    private employeeService: EmployeeService,
+    private workEntryService: WorkEntryService
+  ) {
     const today = new Date();
     this.selectedDate = this.formatDate(today);
     this.selectedMonth = this.formatMonth(today);
@@ -119,6 +127,17 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     this.loadDailyData();
     this.loadMonthlyData();
     
+    // Subscribe to work entries and attendance updates
+    this.subscriptions.push(
+      this.workEntryService.workEntries$.subscribe(() => {
+        if (this.selectedView === 'daily') {
+          this.loadDailyData();
+        } else {
+          this.loadMonthlyData();
+        }
+      })
+    );
+    
     // Auto-check attendance status every minute
     this.timer = setInterval(() => {
       this.checkOfficeTimeAndUpdate();
@@ -129,6 +148,7 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     if (this.timer) {
       clearInterval(this.timer);
     }
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   // View Management
@@ -211,23 +231,28 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
       earlyLeavers: 0
     };
     
-    // Enhanced employee combination with detailed status
+    // Enhanced employee combination with work entry details
     this.attendanceRecords = this.allEmployees.map(employee => {
+      // Check for existing attendance record
       const existingRecord = markedRecords.find((record: any) => record.employeeId === employee.id);
       
+      // Check for work entries for this employee on this date
+      const workEntries = this.workEntryService.getByEmployeeAndDate(employee.id, todayStr);
+      const hasWorkEntries = workEntries.length > 0;
+      
       if (existingRecord) {
+        // Use existing attendance record
         const checkInTime = existingRecord.checkInTime ? new Date(existingRecord.checkInTime) : null;
         const checkOutTime = existingRecord.checkOutTime ? new Date(existingRecord.checkOutTime) : null;
         const isLate = this.isLateArrival(checkInTime);
         const isEarly = this.isEarlyDeparture(checkOutTime);
-        const workHours = this.calculateWorkHours(checkInTime, checkOutTime);
+        const workHours = existingRecord.workHours || this.calculateWorkHours(checkInTime, checkOutTime);
         const overtime = this.calculateOvertime(checkInTime, checkOutTime);
         
         // Update quick stats
         if (isLate) this.quickStats.lateComers++;
         if (isEarly) this.quickStats.earlyLeavers++;
         if (!isLate) this.quickStats.onTime++;
-        if (existingRecord.workFromHome) this.quickStats.workFromHome++;
         
         return {
           id: existingRecord.id || 'record-' + employee.id,
@@ -241,16 +266,57 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
           autoMarked: false,
           notMarked: false,
           employeeDepartment: employee.department,
-          checkInLocation: existingRecord.location || existingRecord.checkInLocation || 'Office',
+          checkInLocation: existingRecord.checkInLocation || 'Office',
           workHours: workHours,
           overtime: overtime || 0,
           lateArrival: isLate,
           earlyDeparture: isEarly,
           workFromHome: existingRecord.workFromHome || false,
-          project: existingRecord.project || 'General'
+          project: existingRecord.project || (workEntries[0]?.project || 'General'),
+          workDetails: existingRecord.workDetails || this.getWorkDetailsFromEntries(workEntries)
+        } as AttendanceRecord;
+      } else if (hasWorkEntries) {
+        // Mark as present based on work entries
+        const totalHours = workEntries.reduce((sum, entry) => sum + entry.hours, 0);
+        const firstEntry = workEntries[0];
+        const lastEntry = workEntries[workEntries.length - 1];
+        
+        this.quickStats.onTime++;
+        
+        // Create/Update attendance from work entries
+        this.attendanceService.updateAttendanceWithWorkEntry(
+          employee.id,
+          todayStr,
+          {
+            workDetails: this.getWorkDetailsFromEntries(workEntries),
+            project: firstEntry.project,
+            hours: totalHours
+          }
+        );
+        
+        return {
+          id: 'work-' + employee.id,
+          employeeId: employee.id,
+          employeeName: employee.name,
+          date: date,
+          status: 'present',
+          checkInTime: null,
+          checkOutTime: null,
+          remarks: 'Marked from work entries',
+          autoMarked: false,
+          notMarked: false,
+          employeeDepartment: employee.department,
+          checkInLocation: 'Work Entry',
+          workHours: totalHours,
+          overtime: totalHours > 8 ? totalHours - 8 : 0,
+          lateArrival: false,
+          earlyDeparture: false,
+          workFromHome: false,
+          project: firstEntry.project,
+          workDetails: this.getWorkDetailsFromEntries(workEntries)
         } as AttendanceRecord;
       } else {
-        // Check if it's past office time for today
+        // No attendance or work entries
         if (isToday) {
           const now = new Date();
           const currentTime = now.getHours() * 60 + now.getMinutes();
@@ -418,73 +484,15 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
   }
 
   private loadEmployees() {
-    // Load employees with enhanced data
-    this.allEmployees = [
-      { 
-        id: '1', 
-        name: 'Rahul Kumar', 
-        department: 'Development',
-        position: 'Senior Developer',
-        joinDate: '2023-01-15',
-        avatarColor: '#4f46e5'
-      },
-      { 
-        id: '2', 
-        name: 'Priya Sharma', 
-        department: 'HR',
-        position: 'HR Manager',
-        joinDate: '2022-08-10',
-        avatarColor: '#10b981'
-      },
-      { 
-        id: '3', 
-        name: 'Amit Patel', 
-        department: 'Design',
-        position: 'UI/UX Designer',
-        joinDate: '2023-03-22',
-        avatarColor: '#f59e0b'
-      },
-      { 
-        id: '4', 
-        name: 'Sneha Reddy', 
-        department: 'QA',
-        position: 'QA Lead',
-        joinDate: '2022-11-30',
-        avatarColor: '#ef4444'
-      },
-      { 
-        id: '5', 
-        name: 'Rohan Mehta', 
-        department: 'Marketing',
-        position: 'Marketing Head',
-        joinDate: '2023-05-18',
-        avatarColor: '#3b82f6'
-      },
-      { 
-        id: '6', 
-        name: 'Anjali Singh', 
-        department: 'Development',
-        position: 'Frontend Developer',
-        joinDate: '2024-01-08',
-        avatarColor: '#8b5cf6'
-      },
-      { 
-        id: '7', 
-        name: 'Vikram Singh', 
-        department: 'Development',
-        position: 'Backend Developer',
-        joinDate: '2023-07-15',
-        avatarColor: '#ec4899'
-      },
-      { 
-        id: '8', 
-        name: 'Neha Gupta', 
-        department: 'Marketing',
-        position: 'Content Writer',
-        joinDate: '2024-02-01',
-        avatarColor: '#14b8a6'
-      }
-    ];
+    // Load real employees from the EmployeeService
+    this.allEmployees = this.employeeService.getEmployees().map(emp => ({
+      id: emp.id,
+      name: emp.name,
+      department: emp.department,
+      position: emp.position,
+      joinDate: new Date(emp.joinDate),
+      avatarColor: this.generateAvatarColor(emp.id)
+    }));
   }
 
   // Filtering & Sorting
@@ -569,7 +577,7 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
 
   getEmployeeColor(employeeId: string): string {
     const employee = this.allEmployees.find(e => e.id === employeeId);
-    return employee ? employee.avatarColor : '#4f46e5';
+    return employee?.avatarColor || '#4f46e5';
   }
 
   getStatusClass(status: string): string {
@@ -932,6 +940,39 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     return `${year}-${month}`;
+  }
+
+  /**
+   * Parse time string (HH:mm) to Date object
+   */
+  private parseTimeToDate(date: Date, timeStr: string): Date | null {
+    if (!timeStr) return null;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const result = new Date(date);
+    result.setHours(hours, minutes, 0);
+    return result;
+  }
+
+  /**
+   * Get work details string from work entries
+   */
+  private getWorkDetailsFromEntries(workEntries: any[]): string {
+    if (!workEntries || workEntries.length === 0) return '';
+    return workEntries
+      .map(entry => `${entry.project}: ${entry.description}`)
+      .join('; ');
+  }
+
+  /**
+   * Generate a consistent avatar color for an employee
+   */
+  private generateAvatarColor(employeeId: string): string {
+    const colors = [
+      '#4f46e5', '#10b981', '#f59e0b', '#ef4444',
+      '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'
+    ];
+    const index = Math.abs(employeeId.charCodeAt(0)) % colors.length;
+    return colors[index];
   }
 
   private generateMonths() {

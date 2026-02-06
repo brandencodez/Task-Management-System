@@ -55,10 +55,19 @@
       </textarea>
     </div>
 
+    <!-- Work Details -->
+    <div class="form-group full-width">
+      <label>Work Details (Optional)</label>
+      <textarea
+        placeholder="Additional details about the work..."
+        [(ngModel)]="workDetails">
+      </textarea>
+    </div>
+
     <!-- Submit -->
     <div class="form-group full-width">
       <button class="add-btn" (click)="addEntry()">
-        ➕ Add Work Entry
+        {{ isEditing ? '✏️ Update Entry' : '➕ Add Work Entry' }}
       </button>
     </div>
 
@@ -89,7 +98,9 @@
         </span>
 
         <div class="actions">
-          <!-- ✅ ONLY DELETE -->
+          <button class="edit" (click)="editEntry(entry)">
+            Edit
+          </button>
           <button class="delete" (click)="deleteEntry(entry.id)">
             Delete
           </button>

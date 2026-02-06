@@ -281,6 +281,18 @@
                   <span class="time-label">Work:</span>
                   <span class="time-value">{{ record.workHours || 0 }}h</span>
                 </div>
+                @if (record.project && record.project !== 'General') {
+                  <div class="time-row">
+                    <span class="time-label">Project:</span>
+                    <span class="time-value project-name">{{ record.project }}</span>
+                  </div>
+                }
+                @if (record.workDetails) {
+                  <div class="work-details">
+                    <span class="details-label">📝 Details:</span>
+                    <p class="details-text">{{ record.workDetails }}</p>
+                  </div>
+                }
               </div>
               
               <div class="card-footer-compact">

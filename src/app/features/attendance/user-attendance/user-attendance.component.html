@@ -1,128 +1,125 @@
-<div class="user-attendance-container">
-  <!-- Header -->
-  <div class="attendance-header">
-    <h1>My Attendance</h1>
-    <div class="current-month">{{ currentMonth }}</div>
+<div class="ua-container">
+  <div class="ua-header">
+    <div class="title-group">
+      <h1>My Attendance</h1>
+      <p class="sub">{{ currentUserName || 'Employee' }} • {{ currentMonth }}</p>
+    </div>
+    <div class="pill">{{ currentMonth }}</div>
   </div>
 
-  <!-- Quick Stats -->
-  <div class="quick-stats">
-    <div class="stat-card">
-      <div class="stat-value">{{ presentCount }}</div>
-      <div class="stat-label">Present</div>
+  <div class="ua-stats">
+    <div class="stat">
+      <span class="value">{{ presentCount }}</span>
+      <span class="label">Present</span>
     </div>
-    <div class="stat-card">
-      <div class="stat-value">{{ absentCount }}</div>
-      <div class="stat-label">Absent</div>
+    <div class="stat">
+      <span class="value">{{ absentCount }}</span>
+      <span class="label">Absent</span>
     </div>
-    <div class="stat-card">
-      <div class="stat-value">{{ halfDayCount }}</div>
-      <div class="stat-label">Half Days</div>
+    <div class="stat">
+      <span class="value">{{ halfDayCount }}</span>
+      <span class="label">Half Days</span>
     </div>
-    <div class="stat-card">
-      <div class="stat-value">{{ leaveCount }}</div>
-      <div class="stat-label">Leaves</div>
+    <div class="stat">
+      <span class="value">{{ leaveCount }}</span>
+      <span class="label">Leaves</span>
     </div>
   </div>
 
-  <!-- Mark Attendance Card -->
-  <div class="mark-attendance-card" *ngIf="!hasMarkedToday">
-    <h3>Mark Today's Attendance</h3>
-    <p class="instruction">Select your status for today and add remarks if needed.</p>
-    
-    <div class="status-options">
-      <div 
-        *ngFor="let option of statusOptions" 
-        class="status-option"
-        [class.selected]="attendanceStatus === option.value"
-        (click)="attendanceStatus = option.value"
-      >
-        <span class="status-icon">{{ option.icon }}</span>
-        <span class="status-label">{{ option.label }}</span>
+  <div class="ua-card">
+    <div class="card-header">
+      <h3>Today</h3>
+      <span class="badge" [ngClass]="getStatusColor(todayRecord?.status || 'not-marked')">
+        {{ todayRecord?.status ? todayRecord.status.toUpperCase() : 'NOT MARKED' }}
+      </span>
+    </div>
+
+    <div class="card-body" *ngIf="!hasMarkedToday">
+      <p class="hint">Select status and check in if you are working today.</p>
+
+      <div class="status-group">
+        <button
+          type="button"
+          class="status-chip"
+          *ngFor="let option of statusOptions"
+          [class.active]="attendanceStatus === option.value"
+          (click)="attendanceStatus = option.value"
+        >
+          {{ option.icon }} {{ option.label }}
+        </button>
       </div>
-    </div>
 
-    <div class="remarks-section">
-      <label for="remarks">Remarks (Optional)</label>
-      <textarea 
-        id="remarks" 
-        [(ngModel)]="remarks" 
-        placeholder="Add any remarks or reason..."
-        rows="2"
-      ></textarea>
-    </div>
-
-    <button 
-      class="mark-attendance-btn" 
-      (click)="markAttendance()"
-      [disabled]="!attendanceStatus"
-    >
-      Mark Attendance as {{ attendanceStatus ? attendanceStatus.toUpperCase() : '' }}
-    </button>
-  </div>
-
-  <!-- Already Marked Message -->
-  <div class="already-marked-card" *ngIf="hasMarkedToday">
-    <div class="already-marked-header">
-      <span class="check-icon">✅</span>
-      <div>
-        <h3>Attendance Marked</h3>
-        <p class="marked-time" *ngIf="todayRecord?.checkInTime">
-          Check-in: {{ todayRecord.checkInTime | date:'short' }}
-        </p>
+      <div class="field">
+        <label>Remarks (optional)</label>
+        <input type="text" [(ngModel)]="remarks" placeholder="Add a note..." />
       </div>
+
+      <button class="primary-btn" (click)="markAttendance()">
+        {{ (attendanceStatus === 'present' || attendanceStatus === 'half-day') ? 'Check In' : 'Submit Status' }}
+      </button>
     </div>
-    
-    <div class="checkout-section" *ngIf="todayRecord?.status === 'present'">
-      <p *ngIf="!hasCheckedOutToday" class="checkout-info">
-        ⏱️ Click below to mark your checkout time
+
+    <div class="card-body" *ngIf="hasMarkedToday">
+      <div class="today-info">
+        <div>
+          <span class="info-label">Check-in</span>
+          <span class="info-value">
+            {{ todayRecord?.checkInTime ? (todayRecord.checkInTime | date:'shortTime') : '—' }}
+          </span>
+        </div>
+        <div>
+          <span class="info-label">Check-out</span>
+          <span class="info-value">
+            {{ todayRecord?.checkOutTime ? (todayRecord.checkOutTime | date:'shortTime') : '—' }}
+          </span>
+        </div>
+        <div>
+          <span class="info-label">Hours</span>
+          <span class="info-value">{{ todayRecord?.workHours || 0 }}h</span>
+        </div>
+      </div>
+
+      <p class="hint" *ngIf="(todayRecord?.status === 'present' || todayRecord?.status === 'half-day') && !hasCheckedOutToday">
+        You are checked in. Click below to check out when you finish.
       </p>
-      <p *ngIf="hasCheckedOutToday" class="checkout-info success">
-        ✓ Checkout: {{ todayRecord.checkOutTime | date:'short' }} | Work Hours: {{ todayRecord.workHours }}h
-      </p>
-      
-      <button 
-        *ngIf="!hasCheckedOutToday"
-        class="checkout-btn" 
+
+      <button
+        class="secondary-btn"
+        *ngIf="(todayRecord?.status === 'present' || todayRecord?.status === 'half-day') && !hasCheckedOutToday"
         (click)="checkout()"
       >
-        🚪 Checkout Now
+        Check Out
       </button>
     </div>
   </div>
 
-  <!-- Attendance History -->
-  <div class="attendance-history">
-    <h3>Attendance History - {{ currentMonth }}</h3>
-    
-    <div class="history-table">
-      <div class="table-header">
-        <div class="header-cell">Date</div>
-        <div class="header-cell">Status</div>
-        <div class="header-cell">Check-in Time</div>
-        <div class="header-cell">Remarks</div>
+  <div class="ua-card">
+    <div class="card-header">
+      <h3>History</h3>
+    </div>
+
+    <div class="history" *ngIf="myAttendance.length">
+      <div class="history-row header">
+        <span>Date</span>
+        <span>Status</span>
+        <span>In</span>
+        <span>Out</span>
+        <span>Hours</span>
       </div>
-      
-      <div *ngFor="let record of myAttendance" class="table-row">
-        <div class="table-cell date-cell">
-          {{ record.date | date:'dd MMM, yyyy' }}
-        </div>
-        <div class="table-cell">
-          <span class="status-badge" [ngClass]="getStatusColor(record.status)">
-            {{ getStatusIcon(record.status) }} {{ record.status.toUpperCase() }}
-          </span>
-        </div>
-        <div class="table-cell">
-          {{ record.checkInTime ? (record.checkInTime | date:'shortTime') : 'N/A' }}
-        </div>
-        <div class="table-cell remarks-cell">
-          {{ record.remarks || 'No remarks' }}
-        </div>
+
+      <div class="history-row" *ngFor="let record of myAttendance">
+        <span>{{ record.date | date:'dd MMM, yyyy' }}</span>
+        <span class="status-text" [ngClass]="getStatusColor(record.status)">
+          {{ record.status.toUpperCase() }}
+        </span>
+        <span>{{ record.checkInTime ? (record.checkInTime | date:'shortTime') : '—' }}</span>
+        <span>{{ record.checkOutTime ? (record.checkOutTime | date:'shortTime') : '—' }}</span>
+        <span>{{ record.workHours || 0 }}h</span>
       </div>
     </div>
 
-    <div *ngIf="myAttendance.length === 0" class="no-records">
-      <p>No attendance records found for this month.</p>
-    </div>
+    <p class="empty" *ngIf="!myAttendance.length">
+      No attendance records yet.
+    </p>
   </div>
 </div>

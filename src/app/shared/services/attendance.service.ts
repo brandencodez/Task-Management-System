@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 
-export type AttendanceStatus = 'present' | 'absent' | 'half-day' | 'leave';
+export type AttendanceStatus = 'present' | 'absent' | 'half-day' | 'leave' | 'not-marked';
 
 export interface AttendanceRecord {
   id: string;
@@ -12,94 +13,78 @@ export interface AttendanceRecord {
   checkOutTime: Date | null;
   remarks: string;
   workHours?: number;
+  workEntries?: any[];
+  project?: string;
+  inTime?: string;
+  outTime?: string;
+  workDetails?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class AttendanceService {
+  private storageKey = 'attendance_records';
   private attendanceRecords: AttendanceRecord[] = [];
+  private attendanceSubject = new BehaviorSubject<AttendanceRecord[]>([]);
+  
+  public attendance$ = this.attendanceSubject.asObservable();
   
   constructor() {
-    // Initialize with sample data for current user
-    this.initializeSampleData();
+    // Load from storage - no dummy data initialization
+    this.loadFromStorage();
   }
   
-  private initializeSampleData(): void {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const todayCheckIn = new Date(today);
-    todayCheckIn.setHours(9, 15, 0);
-    const todayCheckOut = new Date(today);
-    todayCheckOut.setHours(17, 45, 0);
-    
-    const yesterdayCheckIn = new Date(yesterday);
-    yesterdayCheckIn.setHours(9, 20, 0);
-    const yesterdayCheckOut = new Date(yesterday);
-    yesterdayCheckOut.setHours(18, 30, 0);
-    
-    this.attendanceRecords = [
-      {
-        id: '1',
-        employeeId: '1',
-        employeeName: 'Rahul Kumar',
-        date: today,
-        status: 'present',
-        checkInTime: todayCheckIn,
-        checkOutTime: todayCheckOut,
-        remarks: 'On time',
-        workHours: 8.5
-      },
-      {
-        id: '2',
-        employeeId: '2',
-        employeeName: 'Priya Sharma',
-        date: today,
-        status: 'present',
-        checkInTime: new Date(today.setHours(9, 30)),
-        checkOutTime: null,
-        remarks: ''
-      },
-      {
-        id: '3',
-        employeeId: '1',
-        employeeName: 'Rahul Kumar',
-        date: yesterday,
-        status: 'present',
-        checkInTime: yesterdayCheckIn,
-        checkOutTime: yesterdayCheckOut,
-        remarks: '',
-        workHours: 9
-      }
-    ];
+  private loadFromStorage(): void {
+    const storedData = localStorage.getItem(this.storageKey);
+    if (storedData) {
+      this.attendanceRecords = JSON.parse(storedData).map((record: any) => ({
+        ...record,
+        date: new Date(record.date),
+        checkInTime: record.checkInTime ? new Date(record.checkInTime) : null,
+        checkOutTime: record.checkOutTime ? new Date(record.checkOutTime) : null
+      }));
+    }
+    this.attendanceSubject.next([...this.attendanceRecords]);
+  }
+
+  private saveToStorage(): void {
+    localStorage.setItem(this.storageKey, JSON.stringify(this.attendanceRecords));
+    this.attendanceSubject.next([...this.attendanceRecords]);
   }
   
-  // Get today's attendance for admin view
+  /**
+   * Get attendance records for a specific date
+   */
   getAttendanceByDate(date: Date): AttendanceRecord[] {
     const dateStr = this.formatDate(date);
-    
-    // Get unique employees for the date
-    const records = this.attendanceRecords.filter(record => 
+    return this.attendanceRecords.filter(record => 
       this.formatDate(record.date) === dateStr
     );
-    
-    // Group by employee to ensure unique
-    const employeeMap = new Map<string, AttendanceRecord>();
-    records.forEach(record => {
-      employeeMap.set(record.employeeId, record);
-    });
-    
-    return Array.from(employeeMap.values());
+  }
+
+  /**
+   * Get attendance records by employee and date
+   */
+  getAttendanceByEmployeeAndDate(employeeId: string, date: Date): AttendanceRecord | null {
+    const dateStr = this.formatDate(date);
+    return this.attendanceRecords.find(record =>
+      record.employeeId === employeeId && 
+      this.formatDate(record.date) === dateStr
+    ) || null;
   }
   
-  // Mark attendance - prevent duplicates
+  /**
+   * Mark or update attendance record
+   */
   markAttendance(
     employeeId: string,
     employeeName: string,
     status: AttendanceStatus,
-    remarks: string = ''
+    remarks: string = '',
+    inTime?: string,
+    outTime?: string,
+    workDetails?: string
   ): AttendanceRecord | null {
     const today = new Date();
     const todayStr = this.formatDate(today);
@@ -110,95 +95,105 @@ export class AttendanceService {
       this.formatDate(record.date) === todayStr
     );
     
-    if (existingIndex !== -1) {
-      // Update existing record
-      this.attendanceRecords[existingIndex].status = status;
-      this.attendanceRecords[existingIndex].remarks = remarks;
-      this.attendanceRecords[existingIndex].checkInTime = status === 'present' ? new Date() : null;
-      this.attendanceRecords[existingIndex].checkOutTime = null;
-      return this.attendanceRecords[existingIndex];
-    }
-    
-    // Create new record
-    const newRecord: AttendanceRecord = {
-      id: this.generateId(),
+    const record: AttendanceRecord = {
+      id: existingIndex !== -1 ? this.attendanceRecords[existingIndex].id : this.generateId(),
       employeeId,
       employeeName,
       date: today,
       status,
-      checkInTime: status === 'present' ? new Date() : null,
-      checkOutTime: null,
-      remarks
+      checkInTime: inTime ? this.parseTimeToDate(today, inTime) : null,
+      checkOutTime: outTime ? this.parseTimeToDate(today, outTime) : null,
+      remarks,
+      inTime,
+      outTime,
+      workDetails,
+      workHours: inTime && outTime ? this.calculateWorkHoursFromTime(inTime, outTime) : undefined
     };
-    
-    this.attendanceRecords.push(newRecord);
-    return newRecord;
-  }
-  
-  // Checkout - end work day
-  checkout(employeeId: string): AttendanceRecord | null {
-    const today = new Date();
-    const todayStr = this.formatDate(today);
-    
-    const record = this.attendanceRecords.find(r =>
-      r.employeeId === employeeId && 
-      this.formatDate(r.date) === todayStr
-    );
-    
-    if (record) {
-      record.checkOutTime = new Date();
-      if (record.checkInTime) {
-        record.workHours = this.calculateWorkHours(record.checkInTime, record.checkOutTime);
-      }
-      return record;
+
+    if (existingIndex !== -1) {
+      this.attendanceRecords[existingIndex] = record;
+    } else {
+      this.attendanceRecords.push(record);
     }
     
-    return null;
+    this.saveToStorage();
+    return record;
   }
   
-  // Calculate work hours between check-in and check-out
-  private calculateWorkHours(checkIn: Date, checkOut: Date): number {
-    const diffMs = checkOut.getTime() - checkIn.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-    return Math.round(diffHours * 10) / 10; // Round to 1 decimal
-  }
-  
-  // Auto-mark absent after office hours
-  autoMarkAbsent(employeeId: string, employeeName: string = ''): void {
-    const today = new Date();
-    const todayStr = this.formatDate(today);
-    const officeEndTime = 18; // 6 PM
+  /**
+   * Update attendance with work entry details
+   */
+  updateAttendanceWithWorkEntry(
+    employeeId: string,
+    date: string,
+    workEntry: any
+  ): AttendanceRecord | null {
+    const dateObj = new Date(date);
+    const dateStr = this.formatDate(dateObj);
     
-    const record = this.attendanceRecords.find(r =>
-      r.employeeId === employeeId && 
-      this.formatDate(r.date) === todayStr
+    const existingIndex = this.attendanceRecords.findIndex(record =>
+      record.employeeId === employeeId && 
+      this.formatDate(record.date) === dateStr
     );
-    
-    // If no record exists and it's past office hours, mark as absent
-    if (!record && today.getHours() >= officeEndTime) {
-      const newRecord: AttendanceRecord = {
-        id: this.generateId(),
-        employeeId,
-        employeeName,
-        date: today,
-        status: 'absent',
-        checkInTime: null,
-        checkOutTime: null,
-        remarks: 'Auto-marked absent',
-        workHours: 0
-      };
-      this.attendanceRecords.push(newRecord);
+
+    const existing = existingIndex !== -1 ? this.attendanceRecords[existingIndex] : null;
+
+    const record: AttendanceRecord = {
+      id: existing ? existing.id : this.generateId(),
+      employeeId,
+      employeeName: existing?.employeeName || '',
+      date: dateObj,
+      status: existing?.status || 'present',
+      checkInTime: existing?.checkInTime || null,
+      checkOutTime: existing?.checkOutTime || null,
+      remarks: existing?.remarks || workEntry.workDetails || '',
+      inTime: existing?.inTime,
+      outTime: existing?.outTime,
+      workDetails: workEntry.workDetails,
+      project: workEntry.project,
+      workHours: workEntry.hours || existing?.workHours || 0
+    };
+
+    if (existingIndex !== -1) {
+      this.attendanceRecords[existingIndex] = record;
+    } else {
+      this.attendanceRecords.push(record);
     }
+    
+    this.saveToStorage();
+    return record;
   }
   
-  // Get user's attendance
+  /**
+   * Get user's attendance history
+   */
   getMyAttendance(employeeId: string): AttendanceRecord[] {
     return this.attendanceRecords
       .filter(record => record.employeeId === employeeId)
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }
+
+  /**
+   * Get attendance by date range for employee
+   */
+  getAttendanceByEmployeeAndDateRange(
+    employeeId: string,
+    startDate: Date,
+    endDate: Date
+  ): AttendanceRecord[] {
+    const start = this.formatDate(startDate);
+    const end = this.formatDate(endDate);
+    
+    return this.attendanceRecords.filter(record =>
+      record.employeeId === employeeId &&
+      this.formatDate(record.date) >= start &&
+      this.formatDate(record.date) <= end
+    );
+  }
   
-  // Check if user has marked attendance today
+  /**
+   * Check if user has marked attendance today
+   */
   hasMarkedAttendanceToday(employeeId: string): boolean {
     const today = new Date();
     const todayStr = this.formatDate(today);
@@ -209,9 +204,57 @@ export class AttendanceService {
     );
   }
   
-  // Get all attendance (for admin)
+  /**
+   * Get all attendance (for admin)
+   */
   getAllAttendance(): AttendanceRecord[] {
     return [...this.attendanceRecords];
+  }
+
+  /**
+   * Get monthly summary for employee
+   */
+  getMonthlySummary(employeeId: string, month: Date): any {
+    const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
+    const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+    
+    const records = this.getAttendanceByEmployeeAndDateRange(employeeId, startDate, endDate);
+    
+    return {
+      present: records.filter(r => r.status === 'present').length,
+      absent: records.filter(r => r.status === 'absent').length,
+      halfDay: records.filter(r => r.status === 'half-day').length,
+      leave: records.filter(r => r.status === 'leave').length,
+      notMarked: records.filter(r => r.status === 'not-marked').length,
+      totalHours: records.reduce((sum, r) => sum + (r.workHours || 0), 0)
+    };
+  }
+
+  /**
+   * Parse time string (HH:mm) to Date object
+   */
+  private parseTimeToDate(date: Date, timeStr: string): Date | null {
+    if (!timeStr) return null;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const result = new Date(date);
+    result.setHours(hours, minutes, 0);
+    return result;
+  }
+
+  /**
+   * Calculate work hours between two time strings (HH:mm format)
+   */
+  private calculateWorkHoursFromTime(inTime: string, outTime: string): number {
+    if (!inTime || !outTime) return 0;
+    
+    const [inHours, inMinutes] = inTime.split(':').map(Number);
+    const [outHours, outMinutes] = outTime.split(':').map(Number);
+    
+    const inTotalMinutes = inHours * 60 + inMinutes;
+    const outTotalMinutes = outHours * 60 + outMinutes;
+    
+    const diffMinutes = outTotalMinutes - inTotalMinutes;
+    return Math.round((diffMinutes / 60) * 10) / 10; // Round to 1 decimal
   }
   
   private formatDate(date: Date): string {
@@ -219,6 +262,6 @@ export class AttendanceService {
   }
   
   private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
+    return 'att_' + Math.random().toString(36).substr(2, 9);
   }
 }
