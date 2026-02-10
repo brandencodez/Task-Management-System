@@ -1,0 +1,24 @@
+/* Darker text for line chart */
+.line text,
+.point text {
+  fill: #212121 !important;
+  font-weight: 500;
+}
+
+/* Axis labels */
+.axis text {
+  fill: #212121 !important;
+  font-size: 12px;
+}
+
+/* Grid lines - darker */
+.grid-line {
+  stroke: #e0e0e0 !important;
+}
+
+/* Chart container */
+#projects-completed-per-month {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

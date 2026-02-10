@@ -1,0 +1,18 @@
+/* Darker text and better contrast */
+svg text {
+  fill: #212121 !important; 
+  font-weight: 500;
+}
+
+/* Legend text */
+.legend-item text {
+  fill: #212121 !important;
+  font-size: 12px;
+}
+
+/* Chart container */
+#project-status-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
