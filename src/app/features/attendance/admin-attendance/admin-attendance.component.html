@@ -1,4 +1,6 @@
 <!-- admin-attendance.component.html -->
+<app-navbar [role]="'admin'"></app-navbar>
+
 <div class="admin-attendance-container">
   <!-- Enhanced Header -->
   <div class="admin-header">
@@ -18,45 +20,15 @@
           <span>🔔</span> Send Reminder
         </button>
         
-        <!-- Upload Button - Always visible in header -->
-        <button 
-          class="header-btn upload-btn" 
-          (click)="triggerFileUpload()"
-          title="Upload Attendance Excel/CSV"
-        >
-          <span>📤</span> Upload
-        </button>
-        <input 
-          type="file" 
-          #fileInput 
-          accept=".xlsx,.xls,.csv" 
-          (change)="onFileSelected($event)" 
-          style="display: none;"
-        />
-        
-        <!-- Download Button (Right) with Dropdown - Always visible in header -->
+        <!-- Download Button with Dropdown - View only -->
         <div class="download-dropdown">
           <button 
             class="header-btn download-btn" 
-            (click)="toggleDownloadMenu()"
             title="Download Attendance in different formats"
+            (click)="exportToPDF()"
           >
-            <span>📥</span> Download
-            <span class="dropdown-arrow">▼</span>
+            <span>📥</span> Download Report (PDF)
           </button>
-          
-          <!-- Dropdown Menu -->
-          <div class="download-menu" *ngIf="showDownloadMenu">
-            <button class="menu-option" (click)="exportToExcel(); toggleDownloadMenu()">
-              <span>📊</span> Export as Excel
-            </button>
-            <button class="menu-option" (click)="exportToCSV(); toggleDownloadMenu()">
-              <span>📋</span> Export as CSV
-            </button>
-            <button class="menu-option" (click)="exportToPDF(); toggleDownloadMenu()">
-              <span>📄</span> Export as Report (PDF)
-            </button>
-          </div>
         </div>
         
         <!-- Settings Dropdown -->
@@ -79,7 +51,6 @@
               </label>
               <span>Notifications</span>
             </div>
-            <button class="menu-item" (click)="exportToExcel()">📊 Export to Excel</button>
           </div>
         </div>
       </div>
@@ -207,7 +178,7 @@
             <span class="search-icon">🔍</span>
             <input 
               type="text" 
-              placeholder="Search employees by name, department, or remarks..." 
+              placeholder="Search employees by name, department" 
               [(ngModel)]="searchQuery"
               (input)="onSearch()"
               class="search-input"
@@ -242,12 +213,6 @@
               (click)="filterByStatus('not-marked')"
             >
               <span class="filter-icon">⏳</span> Pending
-            </button>
-          </div>
-          
-          <div class="quick-actions">
-            <button class="action-btn secondary" (click)="markAllPresent()">
-              <span>✅</span> Mark All Present
             </button>
           </div>
         </div>
@@ -292,7 +257,7 @@
                   <span class="time-label">In:</span>
                   <span class="time-value">
                     @if (record.checkInTime) {
-                      {{ record.checkInTime | date:'shortTime' }}
+                      {{ formatTime(record.checkInTime) | date:'shortTime' }}
                     } @else {
                       --
                     }
@@ -302,7 +267,7 @@
                   <span class="time-label">Out:</span>
                   <span class="time-value">
                     @if (record.checkOutTime) {
-                      {{ record.checkOutTime | date:'shortTime' }}
+                      {{ formatTime(record.checkOutTime) | date:'shortTime' }}
                     } @else {
                       --
                     }
@@ -327,12 +292,7 @@
               </div>
               
               <div class="card-footer-compact">
-                @if (record.status === 'not-marked') {
-                  <button class="card-action-btn-sm" (click)="markAsPresent(record)" title="Mark Present">✅</button>
-                  <button class="card-action-btn-sm" (click)="markAsAbsent(record)" title="Mark Absent">❌</button>
-                } @else {
-                  <button class="card-action-btn-sm" title="View Details">👁️</button>
-                }
+                <button class="card-action-btn-sm" title="View Details">👁️</button>
               </div>
             </div>
           } @empty {

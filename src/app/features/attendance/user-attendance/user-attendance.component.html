@@ -43,16 +43,13 @@
           class="status-chip"
           *ngFor="let option of statusOptions"
           [class.active]="attendanceStatus === option.value"
-          (click)="attendanceStatus = option.value"
+          (click)="setAttendanceStatus(option.value)"
         >
           {{ option.icon }} {{ option.label }}
         </button>
       </div>
 
-      <div class="field">
-        <label>Remarks (optional)</label>
-        <input type="text" [(ngModel)]="remarks" placeholder="Add a note..." />
-      </div>
+
 
       <button class="primary-btn" (click)="markAttendance()">
         {{ (attendanceStatus === 'present' || attendanceStatus === 'half-day') ? 'Check In' : 'Submit Status' }}
@@ -64,13 +61,13 @@
         <div>
           <span class="info-label">Check-in</span>
           <span class="info-value">
-            {{ todayRecord?.checkInTime ? (todayRecord.checkInTime | date:'shortTime') : '—' }}
+            {{ formatTime(todayRecord?.checkInTime) }}
           </span>
         </div>
         <div>
           <span class="info-label">Check-out</span>
           <span class="info-value">
-            {{ todayRecord?.checkOutTime ? (todayRecord.checkOutTime | date:'shortTime') : '—' }}
+            {{ formatTime(todayRecord?.checkOutTime) }}
           </span>
         </div>
         <div>
@@ -86,7 +83,7 @@
       <button
         class="secondary-btn"
         *ngIf="(todayRecord?.status === 'present' || todayRecord?.status === 'half-day') && !hasCheckedOutToday"
-        (click)="checkout()"
+        (click)="checkOut()"
       >
         Check Out
       </button>
@@ -112,8 +109,8 @@
         <span class="status-text" [ngClass]="getStatusColor(record.status)">
           {{ record.status.toUpperCase() }}
         </span>
-        <span>{{ record.checkInTime ? (record.checkInTime | date:'shortTime') : '—' }}</span>
-        <span>{{ record.checkOutTime ? (record.checkOutTime | date:'shortTime') : '—' }}</span>
+        <span>{{ formatTime(record.checkInTime) }}</span>
+        <span>{{ formatTime(record.checkOutTime) }}</span>
         <span>{{ record.workHours || 0 }}h</span>
       </div>
     </div>

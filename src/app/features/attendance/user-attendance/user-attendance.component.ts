@@ -1,10 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AttendanceService, AttendanceStatus } from '../../../shared/services/attendance.service';
+import { HttpClient } from '@angular/common/http';
+import { AttendanceService } from '../../../shared/services/attendance.service';
 import { UserService } from '../../../shared/services/user.service';
-import { EmployeeService } from '../../employees/employee.service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-user-attendance',
@@ -13,196 +12,229 @@ import { Subscription } from 'rxjs';
   templateUrl: './user-attendance.component.html',
   styleUrls: ['./user-attendance.component.css']
 })
-export class UserAttendanceComponent implements OnInit, OnDestroy {
-  currentMonth: string = '';
-  myAttendance: any[] = [];
-  hasMarkedToday: boolean = false;
-  hasCheckedOutToday: boolean = false;
-  attendanceStatus: AttendanceStatus = 'present';
-  remarks: string = '';
+export class UserAttendanceComponent implements OnInit {
+
   todayRecord: any = null;
-  isCheckedInToday: boolean = false;
   
-  // Current user info (synchronized with employee data)
-  currentUserId: string = '';
-  currentUserName: string = '';
+  // Check-in/out status
+  hasMarkedToday = false;
+  hasCheckedOutToday = false;
 
-  private subscriptions: Subscription[] = [];
+  // User info
+  currentUserName = '';
+  currentMonth = '';
 
+  // Attendance counts
+  presentCount = 0;
+  absentCount = 0;
+  halfDayCount = 0;
+  leaveCount = 0;
+
+  // Form data
+  attendanceStatus: 'present' | 'absent' | 'half-day' | 'leave' = 'present';
+
+  // Status options for the UI
   statusOptions = [
-    { value: 'present' as AttendanceStatus, label: 'Present', icon: '✅' },
-    { value: 'absent' as AttendanceStatus, label: 'Absent', icon: '❌' },
-    { value: 'half-day' as AttendanceStatus, label: 'Half Day', icon: '⏰' },
-    { value: 'leave' as AttendanceStatus, label: 'Leave', icon: '🏖️' }
+    { value: 'present' as const, label: 'Present', icon: '✅' },
+    { value: 'half-day' as const, label: 'Half Day', icon: '⏰' },
+    { value: 'absent' as const, label: 'Absent', icon: '❌' },
+    { value: 'leave' as const, label: 'On Leave', icon: '🏖️' }
   ];
 
+  // Attendance history
+  myAttendance: any[] = [];
+
   constructor(
+    private http: HttpClient,
     private attendanceService: AttendanceService,
     private userService: UserService,
-    private employeeService: EmployeeService
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.setCurrentMonth();
-    this.loadCurrentUser();
-    this.loadMyAttendance();
-    this.checkTodayAttendance();
-
-    this.subscriptions.push(
-      this.attendanceService.attendance$.subscribe(() => {
-        this.loadMyAttendance();
-        this.checkTodayAttendance();
-      })
-    );
+    this.initializeUserData();
+    this.loadTodayStatus();
+    this.loadMonthlyStats();
+    this.loadAttendanceHistory();
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
-
-  setCurrentMonth(): void {
+  private initializeUserData() {
+    const userName = this.userService.getCurrentUser();
+    if (userName) {
+      this.currentUserName = userName;
+    }
+    
+    // Set current month
     const now = new Date();
     this.currentMonth = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    this.cdr.detectChanges();
   }
 
-  private loadCurrentUser(): void {
-    const currentUser = this.userService.getCurrentUser();
-    const employees = this.employeeService.getEmployees();
-
-    if (currentUser && employees.length) {
-      const employee = employees.find((emp: any) =>
-        emp.name.toLowerCase() === currentUser.toLowerCase()
-      );
-
-      if (employee) {
-        this.currentUserId = employee.id;
-        this.currentUserName = employee.name;
-        return;
-      }
-    }
-
-    // Fallback to first employee if no user is logged in
-    if (employees.length) {
-      this.currentUserId = employees[0].id;
-      this.currentUserName = employees[0].name;
-    }
+  private getUserIdentifier(): string | null {
+    // Try to get employee ID first, fallback to name
+    return this.userService.getCurrentUserId() || this.userService.getCurrentUser();
   }
 
-  loadMyAttendance(): void {
-    if (!this.currentUserId) return;
-    this.myAttendance = this.attendanceService.getMyAttendance(this.currentUserId);
+  private loadTodayStatus() {
+    const userId = this.getUserIdentifier();
+    if (!userId) return;
+
+    this.attendanceService.getTodayAttendance(userId)
+      .subscribe({
+        next: (record) => {
+          console.log('Today\'s attendance record:', record); // Debug log
+          this.todayRecord = record;
+          this.hasMarkedToday = !!record;
+          this.hasCheckedOutToday = !!record?.out_time || !!record?.checkOutTime;
+          
+          if (record?.status) {
+            this.attendanceStatus = record.status;
+          }
+          
+          // Manually trigger change detection
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error loading today status:', err);
+        }
+      });
   }
 
-  checkTodayAttendance(): void {
-    if (!this.currentUserId) {
-      this.todayRecord = null;
-      this.hasMarkedToday = false;
-      this.hasCheckedOutToday = false;
-      this.isCheckedInToday = false;
+  private loadMonthlyStats() {
+    const userId = this.getUserIdentifier();
+    if (!userId) return;
+
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    this.attendanceService.getMonthlyAnalytics(currentMonth)
+      .subscribe({
+        next: (data) => {
+          // Try to match by ID first, then by name
+          const userIdNum = parseInt(userId);
+          const myData = data.find((d: any) => 
+            d.employeeId === userIdNum || 
+            d.employeeId === userId ||
+            d.employeeName === this.currentUserName
+          );
+          
+          if (myData) {
+            this.presentCount = myData.totalPresent || 0;
+            this.absentCount = myData.totalAbsent || 0;
+            this.halfDayCount = myData.totalHalfDays || 0;
+            this.leaveCount = myData.totalLeaves || 0;
+          }
+          
+          // Manually trigger change detection
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error loading monthly stats:', err);
+        }
+      });
+  }
+
+  private loadAttendanceHistory() {
+    const userId = this.getUserIdentifier();
+    if (!userId) return;
+
+    this.attendanceService.getMyAttendance(userId)
+      .subscribe({
+        next: (records) => {
+          console.log('Attendance history records:', records); // Debug log
+          this.myAttendance = records
+            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 10);
+          
+          // Manually trigger change detection
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error loading history:', err);
+        }
+      });
+  }
+
+  // Set attendance status (needed for template)
+  setAttendanceStatus(status: 'present' | 'absent' | 'half-day' | 'leave') {
+    this.attendanceStatus = status;
+    this.cdr.detectChanges();
+  }
+
+  // Mark attendance
+  markAttendance() {
+    const userId = this.getUserIdentifier();
+    if (!userId) {
+      alert('User not logged in');
       return;
     }
-    this.todayRecord = this.attendanceService.getAttendanceByEmployeeAndDate(
-      this.currentUserId,
-      new Date()
-    );
-    
-    if (this.todayRecord) {
-      this.hasMarkedToday = true;
-      this.hasCheckedOutToday = !!this.todayRecord.checkOutTime;
-      this.isCheckedInToday = !!this.todayRecord.checkInTime;
-    } else {
-      this.hasMarkedToday = false;
-      this.hasCheckedOutToday = false;
-      this.isCheckedInToday = false;
-    }
+
+    const attendanceData = {
+      employeeId: userId,
+      status: this.attendanceStatus
+    };
+
+    this.http.post(`http://localhost:5000/api/attendance/check-in`, attendanceData)
+      .subscribe({
+        next: () => {
+          alert('Attendance marked successfully!');
+          // Reload all data
+          this.loadTodayStatus();
+          this.loadMonthlyStats();
+          this.loadAttendanceHistory();
+          
+          // Force change detection after all updates
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Error checking in:', err);
+          alert(err.error?.details || 'Failed to mark attendance. Please try again.');
+        }
+      });
   }
 
-  markAttendance(): void {
-    if (!this.attendanceStatus || !this.currentUserId) return;
+  // Check out
+  checkOut() {
+    const userId = this.getUserIdentifier();
+    if (!userId) return;
 
-    const shouldCheckIn = this.attendanceStatus === 'present' || this.attendanceStatus === 'half-day';
-    const now = new Date();
-    const inTime = shouldCheckIn ? this.formatTime(now) : undefined;
-
-    this.attendanceService.markAttendance(
-      this.currentUserId,
-      this.currentUserName,
-      this.attendanceStatus,
-      this.remarks,
-      inTime
-    );
-
-    this.hasMarkedToday = true;
-    this.remarks = '';
-    this.loadMyAttendance();
-    this.checkTodayAttendance();
+    this.attendanceService.checkOut(userId).subscribe({
+      next: () => {
+        alert('Checked out successfully!');
+        this.loadTodayStatus();
+        
+        // Force change detection
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error checking out:', err);
+        alert('Failed to check out. Please try again.');
+      }
+    });
   }
 
-  checkout(): void {
-    if (!this.todayRecord) return;
-
-    const now = new Date();
-    const outTime = this.formatTime(now);
-    const inTime = this.todayRecord.inTime || (this.todayRecord.checkInTime ? this.formatTime(new Date(this.todayRecord.checkInTime)) : undefined);
-
-    this.attendanceService.markAttendance(
-      this.currentUserId,
-      this.currentUserName,
-      this.todayRecord.status,
-      this.todayRecord.remarks,
-      inTime,
-      outTime,
-      this.todayRecord.workDetails
-    );
-    
-    this.hasCheckedOutToday = true;
-    this.loadMyAttendance();
-    this.checkTodayAttendance();
-  }
-
-  get presentCount(): number {
-    return this.countByStatus('present');
-  }
-
-  get absentCount(): number {
-    return this.countByStatus('absent');
-  }
-
-  get halfDayCount(): number {
-    return this.countByStatus('half-day');
-  }
-
-  get leaveCount(): number {
-    return this.countByStatus('leave');
-  }
-
-  private countByStatus(status: AttendanceStatus): number {
-    return this.myAttendance.filter(record => record.status === status).length;
-  }
-
+  // Helper method for status color classes
   getStatusColor(status: string): string {
-    switch (status) {
-      case 'present': return 'status-present';
-      case 'absent': return 'status-absent';
-      case 'half-day': return 'status-halfday';
-      case 'leave': return 'status-leave';
-      default: return '';
-    }
+    const colorMap: { [key: string]: string } = {
+      'present': 'status-present',
+      'absent': 'status-absent',
+      'half-day': 'status-halfday',
+      'leave': 'status-leave',
+      'not-marked': 'status-pending'
+    };
+    return colorMap[status] || 'status-pending';
   }
 
-  getStatusIcon(status: string): string {
-    switch (status) {
-      case 'present': return '✅';
-      case 'absent': return '❌';
-      case 'half-day': return '⏰';
-      case 'leave': return '🏖️';
-      default: return '❓';
-    }
-  }
-
-  private formatTime(date: Date): string {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
+  // Format time string from "HH:mm:ss" to "h:mm AM/PM"
+  formatTime(timeString: string | null): string {
+    if (!timeString) return '—';
+    
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const minute = parseInt(minutes);
+    
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    
+    return `${displayHour}:${minutes} ${period}`;
   }
 }

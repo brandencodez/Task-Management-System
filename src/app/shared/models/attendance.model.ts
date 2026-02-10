@@ -7,7 +7,6 @@ export interface Attendance {
   checkInTime?: Date;
   checkOutTime?: Date;
   hoursWorked?: number;
-  remarks?: string;
 }
 
 export interface AttendanceSummary {
