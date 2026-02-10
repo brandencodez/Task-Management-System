@@ -1,30 +1,36 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-<<<<<<< HEAD
-
 import { DailyWorkEntryComponent } from './components/daily-work-entry/daily-work-entry.component';
-=======
-import {
-  DailyWorkEntryComponent
-} from './components/daily-work-entry/daily-work-entry.component';
->>>>>>> adf6076 (update User Attendance)
 import { WorkEntry } from '../../../shared/models/work-entry.model';
+import { ProjectService } from '../../projects/project.service';
+import { EmployeeService } from '../../employees/employee.service';
+import { UserService } from '../../../shared/services/user.service';
 
 @Component({
   selector: 'app-work-entry-dashboard',
   standalone: true,
   imports: [
     CommonModule,
-    DailyWorkEntryComponent // ✅ standalone component
+    DailyWorkEntryComponent
   ],
   templateUrl: './work-entry-dashboard.component.html',
   styleUrls: ['./work-entry-dashboard.component.css']
 })
-export class WorkEntryDashboardComponent {
+export class WorkEntryDashboardComponent implements OnInit {
 
   totalEntries = 0;
   todayEntries = 0;
   weekEntries = 0;
+
+  constructor(
+    private projectService: ProjectService,
+    private employeeService: EmployeeService,
+    private userService: UserService
+  ) {}
+
+  ngOnInit(): void {
+
+  }
 
   onEntriesChange(entries: WorkEntry[]): void {
     this.totalEntries = entries.length;
