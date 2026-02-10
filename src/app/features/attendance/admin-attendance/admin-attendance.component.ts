@@ -1,3 +1,4 @@
+/*
 // admin-attendance.component.ts
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -1143,7 +1144,7 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
 
   /**
    * Parse time string (HH:mm) to Date object
-   */
+   
   private parseTimeToDate(date: Date, timeStr: string): Date | null {
     if (!timeStr) return null;
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -1154,7 +1155,7 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
 
   /**
    * Get work details string from work entries
-   */
+   
   private getWorkDetailsFromEntries(workEntries: any[]): string {
     if (!workEntries || workEntries.length === 0) return '';
     return workEntries
@@ -1164,7 +1165,7 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
 
   /**
    * Generate a consistent avatar color for an employee
-   */
+  
   private generateAvatarColor(employeeId: string): string {
     const colors = [
       '#4f46e5', '#10b981', '#f59e0b', '#ef4444',
@@ -1234,3 +1235,4 @@ export class AdminAttendanceComponent implements OnInit, OnDestroy {
     return [...new Set(this.allEmployees.map(emp => emp.department))];
   }
 }
+*/

@@ -1,7 +1,7 @@
-// backend/routes/work-entries.js
 const express = require('express');
 const router = express.Router();
 const WorkEntry = require('../models/WorkEntry');
+const db = require('../config/database');
 
 // Helper: extract employeeId from query or body
 const getEmployeeId = (req) => {
@@ -94,6 +94,51 @@ router.put('/:id', async (req, res) => {
   } catch (err) {
     console.error('PUT work entry error:', err);
     res.status(400).json({ message: 'Failed to update work entry' });
+  }
+});
+
+router.get('/summary', async (req, res) => {
+  try {
+    // Use MySQL's CURDATE() for reliable date comparison
+    const [activeEmployees] = await db.execute(
+      'SELECT id, name FROM employees WHERE status = ?',
+      ['active']
+    );
+
+    // Get work entries for TODAY only using MySQL's CURDATE()
+    const [todayEntries] = await db.execute(
+      'SELECT employee_id FROM work_entries WHERE DATE(date) = CURDATE()'
+    );
+
+    console.log('✅ Active employees:', activeEmployees.length);
+    console.log('✅ Today entries:', todayEntries.length);
+
+    const submittedEmployeeIds = todayEntries.map(entry => entry.employee_id);
+    const submittedEmployees = activeEmployees.filter(emp => 
+      submittedEmployeeIds.includes(emp.id)
+    );
+    const pendingEmployees = activeEmployees.filter(emp => 
+      !submittedEmployeeIds.includes(emp.id)
+    );
+
+    const totalActive = activeEmployees.length;
+    const submittedToday = submittedEmployees.length;
+    const notSubmittedToday = pendingEmployees.length;
+    const submittedPercentage = totalActive > 0 
+      ? Math.round((submittedToday / totalActive) * 100)
+      : 0;
+
+    res.json({
+      totalActiveEmployees: totalActive,
+      submittedToday,
+      notSubmittedToday,
+      submittedPercentage,
+      employeesWithEntries: submittedEmployees.map(emp => emp.name),
+      employeesWithoutEntries: pendingEmployees.map(emp => emp.name)
+    });
+  } catch (error) {
+    console.error('❌ Work summary error:', error);
+    res.status(500).json({ error: 'Failed to load work summary' });
   }
 });
 
