@@ -10,12 +10,21 @@ import { EmployeeService } from '../employees/employee.service';
 import { Router } from '@angular/router';
 import { UserService } from '../../shared/services/user.service';
 import { ProjectMemoService } from './project-memo.service';
-
+import { ProjectStatusChartComponent } from './charts/project-status-chart.component';
+import { ProjectsByDepartmentComponent } from './charts/projects-by-department.component';
+import { ProjectsCompletedPerMonthComponent } from './charts/projects-completed-per-month.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    HttpClientModule,
+    ProjectStatusChartComponent,
+    ProjectsByDepartmentComponent,
+    ProjectsCompletedPerMonthComponent
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
@@ -33,6 +42,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   overdue: Project[] = [];
 
   // ====================
+  // D3 CHARTS DATA
+  // ====================
+  projectStatusData = { onTrack: 0, completed: 0, warning: 0, overdue: 0 };
+  departmentData: { department: string; count: number }[] = [];
+  monthlyData: { month: string; count: number }[] = [];
+
+  // ====================
   // MOM (Memo of Moment) SYSTEM
   // ====================
   selectedProjectForMom: any = null;
@@ -47,7 +63,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private projectMemoService: ProjectMemoService,
     private userService: UserService,
     private router: Router,
-    private cdr: ChangeDetectorRef // ✅ Only change: added ChangeDetectorRef
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -70,12 +86,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.categorizeProjects();
           this.isLoading = false;
           console.log('✅ Dashboard: Projects loaded:', this.allProjects.length, 'projects');
-          this.cdr.detectChanges(); //  Force change detection
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Failed to load projects in dashboard:', err);
           this.isLoading = false;
-          this.cdr.detectChanges(); // Force change detection
+          this.cdr.detectChanges();
         }
       });
   }
@@ -90,6 +106,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.warning = [];
     this.overdue = [];
 
+    // Reset chart data
+    this.projectStatusData = { onTrack: 0, completed: 0, warning: 0, overdue: 0 };
+    this.departmentData = [];
+    this.monthlyData = [];
+
     this.allProjects.forEach(p => {
       const start = new Date(p.startDate);
       const end = new Date(p.finishDate);
@@ -100,6 +121,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // First, check the status field
       if (p.status === 'COMPLETED') {
         this.completed.push(p);
+        this.projectStatusData.completed++;
         return;
       }
 
@@ -107,6 +129,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (today > end) {
         this.overdue.push(p);
         this.ongoing.push(p); // Add to ongoing as well
+        this.projectStatusData.overdue++;
         return;
       }
 
@@ -114,12 +137,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (diffDays <= 3 && diffDays > 0) {
         this.warning.push(p);
         this.ongoing.push(p);
+        this.projectStatusData.warning++;
         return;
       }
 
       // Check if ongoing (started but not finished)
       if (today >= start && today <= end) {
         this.ongoing.push(p);
+        this.projectStatusData.onTrack++;
         return;
       }
 
@@ -129,10 +154,59 @@ export class DashboardComponent implements OnInit, OnDestroy {
         return;
       }
     });
+
+    // Count by department
+    const departmentCounts: Record<string, number> = {};
+    this.allProjects.forEach(p => {
+      const dept = p.department_name || p.department_id || 'Other';
+      departmentCounts[dept] = (departmentCounts[dept] || 0) + 1;
+    });
+
+    this.departmentData = Object.entries(departmentCounts).map(([dept, count]) => ({
+      department: dept,
+      count
+    }));
+
+    // Monthly completion data (for last 3 months)
+    const now = new Date();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Get last 3 months
+    const currentMonth = now.getMonth();
+    const last3Months = [
+      months[(currentMonth - 2 + 12) % 12],
+      months[(currentMonth - 1 + 12) % 12],
+      months[currentMonth]
+    ];
+
+    this.monthlyData = last3Months.map(month => {
+      const count = this.allProjects.filter(p => 
+        p.status === 'COMPLETED' && 
+        p.finishDate && 
+        new Date(p.finishDate).getMonth() === months.indexOf(month) &&
+        new Date(p.finishDate).getFullYear() === now.getFullYear()
+      ).length;
+      return { month, count };
+    });
   }
 
   get totalTasks() {
     return this.allProjects.length;
+  }
+
+  // Computed properties for chart data binding
+  get formattedDepartmentData() {
+    return this.departmentData.map(d => ({ 
+      name: d.department, 
+      count: d.count 
+    }));
+  }
+
+  get formattedMonthlyData() {
+    return this.monthlyData.map(m => ({ 
+      month: m.month, 
+      count: m.count 
+    }));
   }
 
   filtered(list: Project[]) {
@@ -194,11 +268,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
             position: emp.position,
             email: emp.email
           }));
-          this.cdr.detectChanges(); // Force change detection
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Failed to load employees:', err);
-          this.cdr.detectChanges(); //  Force change detection
+          this.cdr.detectChanges();
         }
       });
   }
@@ -335,13 +409,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.projectMoms.set(projectId, memos);
           this.loadingMoms = false;
           console.log('✅ Memos loaded for project', projectId, ':', memos.length, 'memos');
-          this.cdr.detectChanges(); // Force change detection
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Failed to load memos:', err);
           this.loadingMoms = false;
           this.projectMoms.set(projectId, []);
-          this.cdr.detectChanges(); // Force change detection
+          this.cdr.detectChanges();
         }
       });
   }
