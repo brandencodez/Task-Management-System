@@ -101,7 +101,6 @@
         (click)="onViewChange('daily')"
       >
         <span class="btn-icon">📅</span> Daily Attendance
-        <span class="view-badge" *ngIf="selectedView === 'daily'">Active</span>
       </button>
       <button 
         class="toggle-btn" 
@@ -109,7 +108,6 @@
         (click)="onViewChange('monthly')"
       >
         <span class="btn-icon">📈</span> Monthly Analytics
-        <span class="view-badge" *ngIf="selectedView === 'monthly'">Active</span>
       </button>
     </div>
   </div>
@@ -146,29 +144,35 @@
         </div>
 
         <!-- Quick Stats -->
-        <div class="quick-stats">
-          <div class="quick-stat">
-            <div class="stat-icon">⏰</div>
-            <div class="stat-content">
-              <h3>{{ quickStats.onTime }}</h3>
-              <p>On Time Arrivals</p>
-            </div>
-          </div>
-          <div class="quick-stat">
-            <div class="stat-icon">🚨</div>
-            <div class="stat-content">
-              <h3>{{ quickStats.lateComers }}</h3>
-              <p>Late Arrivals</p>
-            </div>
-          </div>
-          <div class="quick-stat">
-            <div class="stat-icon">🚪</div>
-            <div class="stat-content">
-              <h3>{{ quickStats.earlyLeavers }}</h3>
-              <p>Early Departures</p>
-            </div>
-          </div>
-        </div>
+      <div class="quick-stats">
+
+  <div class="quick-stat">
+    <div class="stat-icon">⏰</div>
+    <div class="stat-content">
+      <h3>{{ quickStats.onTime }}</h3>
+      <p>On Time Arrivals</p>
+    </div>
+  </div>
+
+  <div class="quick-stat">
+    <div class="stat-icon">🚨</div>
+    <div class="stat-content">
+      <h3>{{ quickStats.lateComers }}</h3>
+      <p>Late Arrivals</p>
+    </div>
+  </div>
+
+  <div class="quick-stat">
+    <div class="stat-icon">🚪</div>
+    <div class="stat-content">
+      <h3>{{ quickStats.earlyLeavers }}</h3>
+      <p>Early Departures</p>
+    </div>
+  </div>
+
+</div>
+
+
       </div>
 
       <!-- Search & Filter Section -->
@@ -237,7 +241,7 @@
         </div>
 
         <div class="enhanced-employee-grid">
-          @for (record of attendanceRecords; track record.employeeId) {
+          @for (record of filteredRecords; track record.employeeId) {
             <div class="enhanced-employee-card-compact" [ngClass]="getStatusClass(record.status)">
               <div class="card-header-compact">
                 <div class="employee-avatar-compact" [style.background]="getEmployeeColor(record.employeeId)">
@@ -253,7 +257,7 @@
               </div>
               
               <div class="card-body-compact">
-                <div class="time-row">
+                <div class="time-row"> 
                   <span class="time-label">In:</span>
                   <span class="time-value">
                     @if (record.checkInTime) {

@@ -20,6 +20,7 @@ export class AdminAttendanceComponent implements OnInit {
   selectedMonth = this.formatMonth(new Date());
 
   attendanceRecords: any[] = [];
+  filteredRecords: any[] = []; 
   attendanceSummary: any[] = [];
   allEmployees: any[] = [];
 
@@ -98,14 +99,15 @@ export class AdminAttendanceComponent implements OnInit {
   }
 
   private loadDailyData() {
-    this.attendanceService.getAttendanceByDate(this.selectedDate)
-      .subscribe(data => {
-        this.attendanceRecords = data;
-        this.calculateOverview();
-        this.calculateQuickStats();
-        this.cdr.detectChanges();
-      });
-  }
+  this.attendanceService.getAttendanceByDate(this.selectedDate)
+    .subscribe(data => {
+      this.attendanceRecords = data;
+      this.filteredRecords = [...data];   // 👈 key fix
+      this.calculateOverview();
+      this.calculateQuickStats();
+    });
+}
+
 
   private loadMonthlyData() {
     this.attendanceService.getMonthlyAnalytics(this.selectedMonth)
@@ -139,33 +141,87 @@ export class AdminAttendanceComponent implements OnInit {
   }
 
   private calculateQuickStats() {
-    this.quickStats = {
-      onTime: this.attendanceRecords.filter(r => r.isOnTime).length,
-      lateComers: this.attendanceRecords.filter(r => r.isLate).length,
-      earlyLeavers: this.attendanceRecords.filter(r => r.isEarlyLeaver).length
-    };
-    this.cdr.detectChanges();
-  }
+  this.quickStats = {
+    onTime: this.attendanceRecords.filter(r => this.isOnTime(r)).length,
+    lateComers: this.attendanceRecords.filter(r => this.isLate(r)).length,
+    earlyLeavers: this.attendanceRecords.filter(r => this.isEarlyLeaver(r)).length
+  };
+
+  this.cdr.detectChanges();
+}
 
   // Search & Filter
-  onSearch() {
-    // Filter logic can be implemented here
-    console.log('Searching:', this.searchQuery);
-    this.cdr.detectChanges();
-  }
+ onSearch() {
+  const q = this.searchQuery.toLowerCase().trim();
+
+  this.filteredRecords = this.attendanceRecords.filter(r =>
+    r.employeeName?.toLowerCase().includes(q) ||
+    r.employeeDepartment?.toLowerCase().includes(q)
+  );
+}
+
 
   filterByStatus(status: string) {
-    this.statusFilter = status;
-    // Apply filter logic
-    console.log('Filter by status:', status);
-    this.cdr.detectChanges();
+  this.statusFilter = status;
+
+  if (status === 'all') {
+    this.filteredRecords = [...this.attendanceRecords];
+  } else {
+    this.filteredRecords = this.attendanceRecords.filter(
+      r => r.status === status
+    );
+  }
+}
+
+
+ onSortChange() {
+  const records = [...this.filteredRecords];
+
+  switch (this.sortBy) {
+    case 'name':
+      records.sort((a, b) => a.employeeName.localeCompare(b.employeeName));
+      break;
+
+    case 'department':
+      records.sort((a, b) => a.employeeDepartment.localeCompare(b.employeeDepartment));
+      break;
+
+    case 'status':
+      records.sort((a, b) => a.status.localeCompare(b.status));
+      break;
+
+    case 'checkIn':
+      records.sort((a, b) => 
+        (a.checkInTime || '').localeCompare(b.checkInTime || '')
+      );
+      break;
   }
 
-  onSortChange() {
-    // Sort logic
-    console.log('Sorting by:', this.sortBy);
-    this.cdr.detectChanges();
-  }
+  this.filteredRecords = records;
+}
+
+private isOnTime(record: any): boolean {
+  if (!record.checkInTime) return false; 
+
+  const inTime = new Date(`1970-01-01T${record.checkInTime}`);
+  const limit = new Date(`1970-01-01T09:30:00`);
+
+  return inTime <= limit;
+}
+
+private isLate(record: any): boolean {
+  if (!record.checkInTime) return false; 
+
+  const inTime = new Date(`1970-01-01T${record.checkInTime}`);
+  const limit = new Date(`1970-01-01T09:30:00`);
+
+  return inTime > limit;
+}
+
+private isEarlyLeaver(record: any): boolean {
+  return record.workHours < 8; 
+}
+
 
   // Settings
   toggleAutoMark() {
@@ -266,9 +322,12 @@ export class AdminAttendanceComponent implements OnInit {
     return date.toISOString().split('T')[0];
   }
 
-  formatMonth(date: Date): string {
-    return date.toISOString().slice(0, 7);
-  }
+ formatMonth(date: Date): string {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
 
   private generateMonthsList() {
     const currentDate = new Date();
@@ -279,6 +338,7 @@ export class AdminAttendanceComponent implements OnInit {
       const monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       this.months.push(monthDate);
     }
+    console.log('Generated months:', this.months.map(m => this.formatMonth(m)));
   }
 
  getEmployeeName(empId: any) {
