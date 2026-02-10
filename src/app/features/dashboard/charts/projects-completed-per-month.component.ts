@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, Input, ElementRef, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, Input, ElementRef, ViewChild, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import * as d3 from 'd3';
 
 @Component({
@@ -6,22 +6,37 @@ import * as d3 from 'd3';
   template: `<div #chartContainer></div>`,
   styles: [`
     .chart-container {
-    height: 880px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   `]
 })
-export class ProjectsCompletedPerMonthComponent implements AfterViewInit {
+export class ProjectsCompletedPerMonthComponent implements AfterViewInit, OnChanges {
   @Input() months: { month: string; count: number }[] = [];
 
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
+  
+  private chartDrawn = false;
+
+  constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.drawChart();
+      this.chartDrawn = true;
     }, 10);
+  }
+
+  // Redraw when inputs change
+  ngOnChanges(changes: SimpleChanges): void {
+    if (this.chartDrawn && this.chartContainer && changes['months']) {
+      console.log('📊 Monthly Chart - Data changed:', this.months);
+      setTimeout(() => {
+        this.drawChart();
+      }, 0);
+    }
   }
 
   private drawChart(): void {
@@ -91,5 +106,8 @@ export class ProjectsCompletedPerMonthComponent implements AfterViewInit {
 
     svg.append('g')
       .call(d3.axisLeft(yScale));
+    
+    // Trigger change detection
+    this.cdr.markForCheck();
   }
 }

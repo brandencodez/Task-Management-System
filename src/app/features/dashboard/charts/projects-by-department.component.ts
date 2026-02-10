@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, Input, ElementRef, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, Input, ElementRef, ViewChild, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import * as d3 from 'd3';
 
 @Component({
@@ -6,22 +6,37 @@ import * as d3 from 'd3';
   template: `<div #chartContainer></div>`,
   styles: [`
     .chart-container {
-    height: 280px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   `]
 })
-export class ProjectsByDepartmentComponent implements AfterViewInit {
+export class ProjectsByDepartmentComponent implements AfterViewInit, OnChanges {
   @Input() departments: { name: string; count: number }[] = [];
 
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
+  
+  private chartDrawn = false;
+
+  constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.drawChart();
+      this.chartDrawn = true;
     }, 10);
+  }
+
+  // Redraw when inputs change
+  ngOnChanges(changes: SimpleChanges): void {
+    if (this.chartDrawn && this.chartContainer && changes['departments']) {
+      console.log('📊 Departments Chart - Data changed:', this.departments);
+      setTimeout(() => {
+        this.drawChart();
+      }, 0);
+    }
   }
 
   private drawChart(): void {
@@ -93,5 +108,8 @@ export class ProjectsByDepartmentComponent implements AfterViewInit {
       .text(d => d.count)
       .style('font-size', '12px')
       .style('fill', '#000000');
+    
+    // Trigger change detection
+    this.cdr.markForCheck();
   }
 }

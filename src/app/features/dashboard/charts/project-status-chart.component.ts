@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, Input, ElementRef, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, Input, ElementRef, ViewChild, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import * as d3 from 'd3';
 
 @Component({
@@ -14,18 +14,39 @@ import * as d3 from 'd3';
     }
   `]
 })
-export class ProjectStatusChartComponent implements AfterViewInit {
+export class ProjectStatusChartComponent implements AfterViewInit, OnChanges {
   @Input() onTrack = 0;
   @Input() completed = 0;
   @Input() warning = 0;
   @Input() overdue = 0;
 
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
+  
+  private chartDrawn = false;
+
+  constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.drawChart();
+      this.chartDrawn = true;
     }, 10);
+  }
+
+  // THIS IS THE KEY - Redraw when inputs change
+  ngOnChanges(changes: SimpleChanges): void {
+    // Only redraw if chart has been initialized and data actually changed
+    if (this.chartDrawn && this.chartContainer) {
+      console.log('📊 Project Status Chart - Data changed:', {
+        onTrack: this.onTrack,
+        completed: this.completed,
+        warning: this.warning,
+        overdue: this.overdue
+      });
+      setTimeout(() => {
+        this.drawChart();
+      }, 0);
+    }
   }
 
   private drawChart(): void {
@@ -116,5 +137,8 @@ export class ProjectStatusChartComponent implements AfterViewInit {
       .style('font-size', '11px')
       .style('fill', '#000000')
       .style('font-weight', '500');
+    
+    // Trigger change detection
+    this.cdr.markForCheck();
   }
 }

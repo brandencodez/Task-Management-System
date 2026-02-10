@@ -11,7 +11,7 @@
   <!-- STATS -->
   <div class="stats">
     <div class="stat blue">Total Projects <span>{{ totalTasks }}</span></div>
-    <div class="stat green">On Track <span>{{ ongoing.length - warning.length - overdue.length }}</span></div>
+    <div class="stat green">On Track <span>{{ projectStatusData.onTrack }}</span></div>
     <div class="stat yellow">Warning <span>{{ warning.length }}</span></div>
     <div class="stat red">Overdue <span>{{ overdue.length }}</span></div>
     <div class="stat teal">Completed <span>{{ completed.length }}</span></div>
