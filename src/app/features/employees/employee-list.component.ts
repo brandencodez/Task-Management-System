@@ -96,34 +96,32 @@ export class EmployeeListComponent implements OnInit {
     }
   }
 
-  // Helper to ensure proper date format for HTML date input
-  private ensureValidDate(dateString: string): string {
-    if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      return dateString;
-    }
+  // Format date for HTML5 date input (yyyy-MM-dd)
+  private formatDateForInput(dateString: string): string {
+    if (!dateString) return '';
     
-    // If it's a valid date but in different format, convert it
-    if (dateString) {
-      const date = new Date(dateString);
-      if (!isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0];
-      }
-    }
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
     
-    // If invalid or empty, return today's date
-    return new Date().toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
   }
 
-  // Format YYYY-MM-DD to DD-MM-YY for display
+  // Format YYYY-MM-DD to DD-MM-YYYY for display
   formatDateForDisplay(dateString: string): string {
     if (!dateString) return '';
-    const parts = dateString.split('-');
-    if (parts.length === 3) {
-      const [year, month, day] = parts;
-      const shortYear = year.slice(-2); 
-      return `${day}-${month}-${shortYear}`;
-    }
-    return dateString;
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear(); // Use full year 
+    
+    return `${day}-${month}-${year}`;
   }
 
   addEmployee(): void {
@@ -143,11 +141,11 @@ export class EmployeeListComponent implements OnInit {
     }
   }
 
-  // FIXED: Ensure proper date format when editing
+  //  proper date format when editing
   editEmployee(employee: Employee): void {
     // Create a proper deep copy using JSON.parse(JSON.stringify())
     const employeeCopy = JSON.parse(JSON.stringify(employee));
-    employeeCopy.join_date = this.ensureValidDate(employeeCopy.join_date);
+    employeeCopy.join_date = this.formatDateForInput(employeeCopy.join_date);
     
     this.editingEmployee = employeeCopy;
     this.newEmployee = employeeCopy;
@@ -234,6 +232,13 @@ export class EmployeeListComponent implements OnInit {
   }
 
   resetForm(): void {
+    // Generate date in local YYYY-MM-DD format
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayLocal = `${year}-${month}-${day}`;
+
     this.newEmployee = {
       id: 0,
       name: '',
@@ -241,7 +246,7 @@ export class EmployeeListComponent implements OnInit {
       phone: '',
       department_id: 0,
       position: '',
-      join_date: new Date().toISOString().split('T')[0], 
+      join_date: todayLocal, 
       home_address: '',
       status: 'active',
       issued_items: ''

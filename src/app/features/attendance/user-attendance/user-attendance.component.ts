@@ -238,3 +238,4 @@ export class UserAttendanceComponent implements OnInit {
     return `${displayHour}:${minutes} ${period}`;
   }
 }
+  

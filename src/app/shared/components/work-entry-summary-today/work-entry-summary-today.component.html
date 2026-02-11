@@ -1,0 +1,89 @@
+<div class="work-entry-summary-today">
+  <!-- Main Summary Card -->
+  <div class="summary-card">
+    <div class="card-header">
+      <h3>📊 Today's Work Entry Summary</h3>
+      <button class="refresh-btn" (click)="refreshStats()" title="Refresh">
+        🔄
+      </button>
+    </div>
+
+    <!-- Status Message -->
+    <div [class]="'status-message ' + (stats.submittedPercentage === 100 ? 'success' : stats.submittedPercentage === 0 ? 'alert' : 'warning')">
+      {{ getStatusMessage() }}
+    </div>
+
+    <!-- Progress Stats -->
+    <div class="stats-container">
+      <div class="stat-item submitted">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.submittedToday }}</div>
+          <div class="stat-label">Submitted Today</div>
+        </div>
+      </div>
+
+      <div class="stat-divider"></div>
+
+      <div class="stat-item pending">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.notSubmittedToday }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+
+      <div class="stat-divider"></div>
+
+      <div class="stat-item total">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.totalActiveEmployees }}</div>
+          <div class="stat-label">Total Active</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Lists -->
+    <!-- Submitted Employees -->
+    <div class="employee-section">
+      <h4>✅ Submitted Today ({{ stats.employeesWithEntries.length }})</h4>
+      <br>
+      <div *ngIf="stats.employeesWithEntries.length === 0" class="empty-state">
+        <p>No work entries submitted yet</p>
+      </div>
+
+      <div 
+        *ngFor="let employee of stats.employeesWithEntries"
+        class="employee-item submitted-item"
+      >
+        <span class="employee-icon">✅</span>
+        <span class="employee-name">{{ employee }}</span>
+      </div>
+    </div>
+    <br>
+
+    <!-- Pending Employees -->
+    <div class="employee-section">
+      <h4>⏳ Pending ({{ stats.employeesWithoutEntries.length }})</h4>
+      <br>
+      <div *ngIf="stats.employeesWithoutEntries.length === 0" class="empty-state">
+        <p>All employees have submitted!</p>
+      </div>
+
+      <div 
+        *ngFor="let employee of stats.employeesWithoutEntries"
+        class="employee-item pending-item"
+      >
+        <span class="employee-icon">⏳</span>
+        <span class="employee-name">{{ employee }}</span>
+      </div>
+      <br>
+    </div>
+  </div>
+
+  <!-- Last Updated -->
+  <div class="footer-note">
+    Refreshes automatically every 5 minutes • Last checked: {{ 'now' }}
+  </div>
+</div>

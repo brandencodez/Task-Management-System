@@ -2,6 +2,7 @@ const express = require('express');
 const Project = require('../models/Project');
 const ClientCompany = require('../models/ClientCompany');
 const ClientContact = require('../models/ClientContact');
+const db = require('../config/database');
 
 const router = express.Router();
 
@@ -144,33 +145,138 @@ router.post('/', async (req, res) => {
  */
 router.put('/:id', async (req, res) => {
   try {
-    const { clientDetails, ...projectData } = req.body;
+    const { id } = req.params;
+    const { 
+      name, 
+      projectType, 
+      department_id, 
+      projectBrief, 
+      startDate, 
+      finishDate, 
+      status, 
+      clientDetails 
+    } = req.body;
 
-    await Project.update(req.params.id, {
-      ...projectData,
-      client_company_id: clientDetails?.id || null,
-    });
+    // Validate required fields
+    if (!name || !projectType || !department_id || !startDate || !finishDate || !status || !clientDetails) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-    res.json({ message: 'Project updated successfully' });
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // 1. Update client company
+      const [projectRows] = await connection.execute(
+        'SELECT client_company_id FROM projects WHERE id = ?',
+        [id]
+      );
+
+      if (projectRows.length === 0) {
+        await connection.rollback();
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const companyId = projectRows[0].client_company_id;
+
+      if (companyId) {
+        await connection.execute(
+          'UPDATE client_companies SET company_name = ?, address = ? WHERE id = ?',
+          [clientDetails.companyName, clientDetails.address, companyId]
+        );
+      }
+
+      // 2. Update client contacts
+      if (clientDetails.contacts && clientDetails.contacts.length > 0) {
+        // Delete existing contacts - FIXED COLUMN NAME
+        await connection.execute(
+          'DELETE FROM client_contacts WHERE company_id = ?',
+          [companyId]
+        );
+
+        // Insert new contacts
+        for (const contact of clientDetails.contacts) {
+          await connection.execute(
+            'INSERT INTO client_contacts (company_id, contact_name, designation, contact_for, email, phone) VALUES (?, ?, ?, ?, ?, ?)',
+            [companyId, contact.name, contact.designation, contact['contact for'], contact.email, contact.phone]
+          );
+        }
+      }
+
+      // 3. Update project
+      await connection.execute(
+        `UPDATE projects 
+         SET project_name = ?, project_type = ?, department_id = ?, 
+             project_brief = ?, start_date = ?, finish_date = ?, status = ?
+         WHERE id = ?`,
+        [name, projectType, department_id, projectBrief, startDate, finishDate, status, id]
+      );
+
+      await connection.commit();
+      res.json({ message: 'Project updated successfully' });
+
+    } catch (error) {
+      console.error('Update transaction error:', error);
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+
   } catch (error) {
     console.error('Update project error:', error);
     res.status(500).json({ error: error.message });
   }
 });
-
 /**
  * DELETE project
  */
 router.delete('/:id', async (req, res) => {
   try {
-    await Project.delete(req.params.id);
-    res.json({ message: 'Project deleted successfully' });
+    const { id } = req.params;
+    
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Get company ID first
+      const [projectRows] = await connection.execute(
+        'SELECT client_company_id FROM projects WHERE id = ?',
+        [id]
+      );
+
+      if (projectRows.length === 0) {
+        await connection.rollback();
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const companyId = projectRows[0].client_company_id;
+
+      // Delete project first (foreign key constraint)
+      await connection.execute('DELETE FROM projects WHERE id = ?', [id]);
+
+      // Delete contacts - FIXED COLUMN NAME
+      await connection.execute('DELETE FROM client_contacts WHERE company_id = ?', [companyId]);
+
+      // Delete company
+      await connection.execute('DELETE FROM client_companies WHERE id = ?', [companyId]);
+
+      await connection.commit();
+      res.json({ message: 'Project deleted successfully' });
+
+    } catch (error) {
+      console.error('Delete transaction error:', error);
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+
   } catch (error) {
     console.error('Delete project error:', error);
     res.status(500).json({ error: error.message });
   }
 });
-
 /**
  * GET projects by department
  */

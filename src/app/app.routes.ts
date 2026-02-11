@@ -3,8 +3,8 @@ import { HomeComponent } from './features/home/home';
 import { SimpleLayoutComponent } from './shared/layouts/simple-layout/simple-layout';
 import { UserLayoutComponent } from './shared/layouts/user-layout/user-layout';
 import { AdminLayoutComponent } from './shared/layouts/admin-layout/admin-layout';
-import { UserAttendanceComponent } from './features/attendance/user-attendance/user-attendance.component';
-import { AdminAttendanceComponent } from './features/attendance/admin-attendance/admin-attendance.component';
+//import { UserAttendanceComponent } from './features/attendance/user-attendance/user-attendance.component';    ----- temporary
+//import { AdminAttendanceComponent } from './features/attendance/admin-attendance/admin-attendance.component';  ----- temporary
 
 export const routes: Routes = [
 
@@ -69,14 +69,16 @@ export const routes: Routes = [
             './features/projects/work-entry-dashboard/work-entry-dashboard.component'
           ).then(m => m.WorkEntryDashboardComponent)
       },
-      // ✅ USER ATTENDANCE
+
+      /* ✅ USER ATTENDANCE
       {
         path: 'attendance',
         component: UserAttendanceComponent,
         title: 'My Attendance'
-      }
-    ]
+      }*/
+    ] 
   },
+
   {
   path: 'authpage',
   component: SimpleLayoutComponent,
@@ -134,11 +136,29 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/reminders/reminder-list/reminder-list.component')
             .then(m => m.ReminderListComponent)
+      },
+
+      // 📊 WORK ENTRY SUMMARY 
+      {
+        path: 'work-summary',
+        loadComponent: () =>
+          import('./shared/components/work-entry-summary-today/work-entry-summary-today.component')
+            .then(m => m.WorkEntrySummaryTodayComponent)
       }
     ]
   },
 
+ //  WORK ENTRY SUMMARY
+  {
+        path: 'work-entry-summary',
+        loadComponent: () =>
+          import('./features/projects/work-entry-summary-page/work-entry-summary-page.component')
+            .then(m => m.WorkEntrySummaryPageComponent)
+      },
+
+ 
   // ===== ATTENDANCE ROUTES =====
+/*
   {
     path: 'my-attendance',
     component: UserAttendanceComponent,
@@ -149,6 +169,8 @@ export const routes: Routes = [
     component: AdminAttendanceComponent,
     title: 'Attendance Management'
   },
+  */
+
   
   // ================= FALLBACK =================
   {

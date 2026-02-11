@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -10,18 +10,28 @@ import { EmployeeService } from '../employees/employee.service';
 import { Router } from '@angular/router';
 import { UserService } from '../../shared/services/user.service';
 import { ProjectMemoService } from './project-memo.service';
-
+import { ProjectStatusChartComponent } from './charts/project-status-chart.component';
+import { ProjectsByDepartmentComponent } from './charts/projects-by-department.component';
+import { ProjectsCompletedPerMonthComponent } from './charts/projects-completed-per-month.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    HttpClientModule,
+    ProjectStatusChartComponent,
+    ProjectsByDepartmentComponent,
+    ProjectsCompletedPerMonthComponent
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
   isLoading = false;
+  chartsReady = false;
 
   searchTerm = '';
 
@@ -31,6 +41,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   completed: Project[] = [];
   warning: Project[] = [];
   overdue: Project[] = [];
+
+  // ====================
+  // D3 CHARTS DATA
+  // ====================
+  projectStatusData = { onTrack: 0, completed: 0, warning: 0, overdue: 0 };
+  departmentData: { department: string; count: number }[] = [];
+  monthlyData: { month: string; count: number }[] = [];
 
   // ====================
   // MOM (Memo of Moment) SYSTEM
@@ -47,17 +64,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private projectMemoService: ProjectMemoService,
     private userService: UserService,
     private router: Router,
-    private cdr: ChangeDetectorRef // ✅ Only change: added ChangeDetectorRef
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    // Initialize with empty data to prevent "No data" flash
+    this.initializeChartData();
     this.loadProjects();
     this.loadEmployeesFromService();
+  }
+
+  ngAfterViewInit() {
+    // Mark charts as ready after view initialization
+    this.chartsReady = true;
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // Initialize chart data with empty values
+  initializeChartData() {
+    this.projectStatusData = { onTrack: 0, completed: 0, warning: 0, overdue: 0 };
+    this.departmentData = [];
+    this.monthlyData = [];
   }
 
   loadProjects() {
@@ -66,22 +98,37 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (projects) => {
+          console.log('✅ Dashboard: Projects received:', projects.length, 'projects');
+          
+          // Set projects immediately
           this.allProjects = projects;
+          
+          // Categorize and update chart data synchronously
           this.categorizeProjects();
+          
+          // Mark as loaded
           this.isLoading = false;
-          console.log('✅ Dashboard: Projects loaded:', this.allProjects.length, 'projects');
-          this.cdr.detectChanges(); //  Force change detection
+          
+          // Force immediate change detection
+          this.cdr.detectChanges();
+          
+          console.log('📊 Chart data ready:', {
+            status: this.projectStatusData,
+            departments: this.departmentData.length,
+            monthly: this.monthlyData.length
+          });
         },
         error: (err) => {
           console.error('Failed to load projects in dashboard:', err);
           this.isLoading = false;
-          this.cdr.detectChanges(); // Force change detection
+          this.cdr.detectChanges();
         }
       });
   }
 
   categorizeProjects() {
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
 
     // Reset arrays
     this.upcoming = [];
@@ -90,9 +137,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.warning = [];
     this.overdue = [];
 
+    // Initialize status data
+    let onTrack = 0;
+    let completedCount = 0;
+    let warningCount = 0;
+    let overdueCount = 0;
+
     this.allProjects.forEach(p => {
       const start = new Date(p.startDate);
       const end = new Date(p.finishDate);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      
       const diffDays = Math.ceil(
         (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -100,6 +156,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // First, check the status field
       if (p.status === 'COMPLETED') {
         this.completed.push(p);
+        completedCount++;
         return;
       }
 
@@ -107,6 +164,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (today > end) {
         this.overdue.push(p);
         this.ongoing.push(p); // Add to ongoing as well
+        overdueCount++;
         return;
       }
 
@@ -114,12 +172,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (diffDays <= 3 && diffDays > 0) {
         this.warning.push(p);
         this.ongoing.push(p);
+        warningCount++;
         return;
       }
 
       // Check if ongoing (started but not finished)
       if (today >= start && today <= end) {
         this.ongoing.push(p);
+        onTrack++;
         return;
       }
 
@@ -129,10 +189,85 @@ export class DashboardComponent implements OnInit, OnDestroy {
         return;
       }
     });
+
+    // Update project status data (create new object for change detection)
+    this.projectStatusData = {
+      onTrack: onTrack,
+      completed: completedCount,
+      warning: warningCount,
+      overdue: overdueCount
+    };
+
+    // Count by department
+    const departmentCounts: Record<string, number> = {};
+    this.allProjects.forEach(p => {
+      const dept = p.department_name || p.department_id?.toString() || 'Other';
+      departmentCounts[dept] = (departmentCounts[dept] || 0) + 1;
+    });
+
+    // Create new array for department data
+    this.departmentData = Object.entries(departmentCounts)
+      .map(([dept, count]) => ({
+        department: dept,
+        count
+      }))
+      .sort((a, b) => b.count - a.count); // Sort by count descending
+
+    // Monthly completion data (for last 3 months)
+    const now = new Date();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Get last 3 months
+    const currentMonth = now.getMonth();
+    const last3Months = [
+      { name: months[(currentMonth - 2 + 12) % 12], index: (currentMonth - 2 + 12) % 12 },
+      { name: months[(currentMonth - 1 + 12) % 12], index: (currentMonth - 1 + 12) % 12 },
+      { name: months[currentMonth], index: currentMonth }
+    ];
+
+    // Create new array for monthly data
+    this.monthlyData = last3Months.map(month => {
+      const count = this.allProjects.filter(p => {
+        if (p.status !== 'COMPLETED' || !p.finishDate) return false;
+        
+        const finishDate = new Date(p.finishDate);
+        return finishDate.getMonth() === month.index && 
+               finishDate.getFullYear() === now.getFullYear();
+      }).length;
+      
+      return { month: month.name, count };
+    });
+
+    console.log('📊 Data categorized:', {
+      total: this.allProjects.length,
+      upcoming: this.upcoming.length,
+      ongoing: this.ongoing.length,
+      completed: this.completed.length,
+      warning: this.warning.length,
+      overdue: this.overdue.length,
+      statusData: this.projectStatusData,
+      departments: this.departmentData,
+      monthly: this.monthlyData
+    });
   }
 
   get totalTasks() {
     return this.allProjects.length;
+  }
+
+  // Computed properties for chart data binding
+  get formattedDepartmentData() {
+    return this.departmentData.map(d => ({ 
+      name: d.department, 
+      count: d.count 
+    }));
+  }
+
+  get formattedMonthlyData() {
+    return this.monthlyData.map(m => ({ 
+      month: m.month, 
+      count: m.count 
+    }));
   }
 
   filtered(list: Project[]) {
@@ -140,10 +275,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const term = this.searchTerm.toLowerCase().trim();
     
-   return list.filter(p =>
-  p.department_name?.toLowerCase().includes(term)
-);
-
+    return list.filter(p =>
+      p.department_name?.toLowerCase().includes(term)
+    );
   }
 
   // Helper to check if a project is overdue
@@ -194,11 +328,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
             position: emp.position,
             email: emp.email
           }));
-          this.cdr.detectChanges(); // Force change detection
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Failed to load employees:', err);
-          this.cdr.detectChanges(); //  Force change detection
+          this.cdr.detectChanges();
         }
       });
   }
@@ -231,13 +365,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   getMessagesWithEmployee(employeeId?: string) {
-  if (!employeeId || !this.selectedEmployee) return [];
-  
-  // localStorage chat simulation:
-  const messages = JSON.parse(localStorage.getItem('admin_chat_messages') || '[]');
-  return messages.filter((msg: any) => msg.employeeId === employeeId)
-    .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-}
+    if (!employeeId || !this.selectedEmployee) return [];
+    
+    // localStorage chat simulation:
+    const messages = JSON.parse(localStorage.getItem('admin_chat_messages') || '[]');
+    return messages.filter((msg: any) => msg.employeeId === employeeId)
+      .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }
 
   getLastMessage(employeeId: string): string {
     return 'No messages yet';
@@ -335,13 +469,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.projectMoms.set(projectId, memos);
           this.loadingMoms = false;
           console.log('✅ Memos loaded for project', projectId, ':', memos.length, 'memos');
-          this.cdr.detectChanges(); // Force change detection
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Failed to load memos:', err);
           this.loadingMoms = false;
           this.projectMoms.set(projectId, []);
-          this.cdr.detectChanges(); // Force change detection
+          this.cdr.detectChanges();
         }
       });
   }
@@ -434,9 +568,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         });
     }
   }
-    logout(): void {
-      this.userService.logout();
-      this.router.navigate(['/authpage']);
-    }
 
+  logout(): void {
+    this.userService.logout();
+    this.router.navigate(['/authpage']);
+  }
 }

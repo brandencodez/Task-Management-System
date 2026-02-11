@@ -44,7 +44,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   isEditing = false;
   isSaving = false;
   statuses: ProjectStatus[] = ['UPCOMING', 'ONGOING', 'COMPLETED'];
-departments: { id: number; name: string }[] = [];
+  departments: { id: number; name: string }[] = [];
 
   projectTypesByDepartment: { [key: string]: string[] } = {
     Development: [
@@ -103,14 +103,13 @@ departments: { id: number; name: string }[] = [];
     private projectService: ProjectService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-     private departmentService: DepartmentService
+    private departmentService: DepartmentService
   ) {}
 
   ngOnInit() {
     // Load projects immediately on component initialization
     this.loadProjects();
     this.loadDepartments();
-
 
     // Also reload when navigating back to this route
     this.router.events
@@ -132,14 +131,14 @@ departments: { id: number; name: string }[] = [];
   }
 
   loadDepartments() {
-  this.departmentService.getActiveDepartments().subscribe({
-    next: (data) => {
-      this.departments = data;
-      this.cdr.detectChanges();
-    },
-    error: err => console.error('Failed to load departments', err)
-  });
-}
+    this.departmentService.getActiveDepartments().subscribe({
+      next: (data) => {
+        this.departments = data;
+        this.cdr.detectChanges();
+      },
+      error: err => console.error('Failed to load departments', err)
+    });
+  }
 
   loadProjects() {
     this.isLoading = true;
@@ -161,7 +160,7 @@ departments: { id: number; name: string }[] = [];
           this.isLoading = false;
           this.projects = []; // Ensure projects is always an array
           alert('Failed to load projects. Please refresh the page.');
-          this.cdr.detectChanges(); 
+          this.cdr.detectChanges();
         }
       });
   }
@@ -196,9 +195,42 @@ departments: { id: number; name: string }[] = [];
         ...project.clientDetails,
         contacts: project.clientDetails.contacts.map((contact) => ({ ...contact })),
       },
+      // Format dates for HTML5 date inputs (yyyy-MM-dd)
+      startDate: this.formatDateForInput(project.startDate),
+      finishDate: this.formatDateForInput(project.finishDate),
     };
     this.isEditing = true;
     this.showForm = true;
+  }
+
+  // Format date for HTML5 date input (yyyy-MM-dd)
+  private formatDateForInput(dateString: string): string {
+    if (!dateString) return '';
+    
+    // Extract just the date part from ISO string or any date format
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    // Get local date components
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  }
+
+  // Format date for display (DD-MM-YYYY)
+  formatDateForDisplay(dateString: string): string {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}-${month}-${year}`;
   }
 
   // phone validation method
@@ -234,7 +266,6 @@ departments: { id: number; name: string }[] = [];
       return;
     }
 
-  
     const hasValidContact = this.currentProject.clientDetails.contacts.some((contact) =>
       contact.name.trim(),
     );
@@ -258,8 +289,9 @@ departments: { id: number; name: string }[] = [];
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            console.log('✅ Project updated successfully');
+            console.log('Project updated successfully');
             this.isSaving = false;
+            alert('Project updated successfully!');
             this.cancelForm();
             this.loadProjects(); // Reload to show updated data
             setTimeout(() => {
@@ -273,14 +305,16 @@ departments: { id: number; name: string }[] = [];
           },
         });
     } else {
+
       // Add new project
       this.projectService
         .addProject(this.currentProject)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            console.log('✅ Project added successfully');
+            console.log('Project added successfully');
             this.isSaving = false;
+            alert('Project added successfully!');
             this.cancelForm();
             this.loadProjects(); // Reload to show new project
             setTimeout(() => {
@@ -308,7 +342,8 @@ departments: { id: number; name: string }[] = [];
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            console.log('✅ Project deleted successfully');
+            console.log('Project deleted successfully');
+            alert('Project deleted successfully!');
             this.loadProjects(); // Reload to reflect deletion
           },
           error: (err) => {
