@@ -77,30 +77,34 @@ class Attendance {
     return rows;
   }
 
-  static async getMonthlyAnalytics(month) {
-    const [rows] = await pool.query(
-      `SELECT 
-         a.employee_id,
-         e.name as employeeName,
-         d.name as employeeDepartment,
-         SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as totalPresent,
-         SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as totalAbsent,
-         SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END) as totalHalfDays,
-         SUM(CASE WHEN a.status = 'leave' THEN 1 ELSE 0 END) as totalLeaves,
-         COUNT(*) as workingDays,
-         ROUND(AVG(CASE WHEN a.work_hours IS NOT NULL THEN a.work_hours ELSE 0 END), 1) as averageWorkHours,
-         ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as attendancePercentage
-       FROM attendance a
-       JOIN employees e ON e.id = a.employee_id
-       LEFT JOIN departments d ON e.department_id = d.id
-       WHERE DATE_FORMAT(a.attendance_date, '%Y-%m') = ?
-       GROUP BY a.employee_id, e.name, d.name
-       ORDER BY e.name`,
-      [month]
-    );
-    
-    // Transform to match frontend expectations
-    return rows.map(row => ({
+static async getMonthlyAnalytics(month) {
+  
+  const [summaryRows] = await pool.query(
+    `SELECT 
+       a.employee_id,
+       e.name as employeeName,
+       d.name as employeeDepartment,
+       SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as totalPresent,
+       SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as totalAbsent,
+       SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END) as totalHalfDays,
+       SUM(CASE WHEN a.status = 'leave' THEN 1 ELSE 0 END) as totalLeaves,
+       COUNT(*) as workingDays,
+       ROUND(AVG(CASE WHEN a.work_hours IS NOT NULL THEN a.work_hours ELSE 0 END), 1) as averageWorkHours,
+       ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as attendancePercentage
+     FROM attendance a
+     JOIN employees e ON e.id = a.employee_id
+     LEFT JOIN departments d ON e.department_id = d.id
+     WHERE DATE_FORMAT(a.attendance_date, '%Y-%m') = ?
+     GROUP BY a.employee_id, e.name, d.name
+     ORDER BY e.name`,
+    [month]
+  );
+  
+  // Get all employee IDs from the summary
+  const employeeIds = summaryRows.map(row => row.employee_id);
+  
+  if (employeeIds.length === 0) {
+    return summaryRows.map(row => ({
       employeeId: row.employee_id,
       employeeName: row.employeeName,
       employeeDepartment: row.employeeDepartment || 'N/A',
@@ -117,6 +121,56 @@ class Attendance {
       monthlyData: []
     }));
   }
+  
+  // Now get detailed daily attendance data for all employees in this month
+  const placeholders = employeeIds.map(() => '?').join(',');
+ const [dailyRows] = await pool.query(
+  `SELECT 
+     a.employee_id,
+     a.attendance_date as date,
+     a.status,
+     a.work_hours as workHours,
+     a.in_time as checkInTime
+   FROM attendance a
+   WHERE DATE_FORMAT(a.attendance_date, '%Y-%m') = ?
+     AND a.employee_id IN (${placeholders})
+   ORDER BY a.attendance_date`,
+  [month, ...employeeIds]
+);
+  
+  // Group daily data by employee_id
+  const dailyDataByEmployee = {};
+  dailyRows.forEach(row => {
+    if (!dailyDataByEmployee[row.employee_id]) {
+      dailyDataByEmployee[row.employee_id] = [];
+    }
+    dailyDataByEmployee[row.employee_id].push({
+      date: row.date.toISOString(), // Convert to ISO string for frontend
+      status: row.status,
+      workHours: row.workHours || 0,
+      overtime: row.overtime || 0,
+      checkInTime: row.checkInTime
+    });
+  });
+  
+  // Transform summary data and add monthlyData
+  return summaryRows.map(row => ({
+    employeeId: row.employee_id,
+    employeeName: row.employeeName,
+    employeeDepartment: row.employeeDepartment || 'N/A',
+    totalPresent: row.totalPresent,
+    totalAbsent: row.totalAbsent,
+    totalHalfDays: row.totalHalfDays,
+    totalLeaves: row.totalLeaves,
+    workingDays: row.workingDays,
+    averageWorkHours: row.averageWorkHours,
+    attendancePercentage: row.attendancePercentage,
+    totalOvertime: 0, 
+    lateArrivals: 0,  
+    trend: 0,         
+    monthlyData: dailyDataByEmployee[row.employee_id] || []
+  }));
+}
 }
 
 module.exports = Attendance;
