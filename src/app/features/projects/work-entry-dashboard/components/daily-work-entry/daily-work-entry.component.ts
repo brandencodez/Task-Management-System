@@ -156,6 +156,25 @@ export class DailyWorkEntryComponent implements OnInit {
   }
 
   private today(): string {
-    return new Date().toISOString().split('T')[0];
+    const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${day}-${month}-${year}`; 
+    
+  }
+
+  // fix date format
+  formatDateForDisplay(dateString: string): string {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}-${month}-${year}`;
   }
 }

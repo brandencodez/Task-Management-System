@@ -39,7 +39,7 @@ export class WorkEntryDashboardComponent implements OnInit {
   }
 
   private countToday(entries: WorkEntry[]): number {
-    const today = this.getToday();
+    const today = this.getToday(); //Now exists and returns YYYY-MM-DD
     return entries.filter(e => e.date === today).length;
   }
 
@@ -49,12 +49,18 @@ export class WorkEntryDashboardComponent implements OnInit {
     start.setDate(today.getDate() - 6);
 
     return entries.filter(e => {
-      const d = new Date(e.date);
-      return d >= start && d <= today;
+      // Parse YYYY-MM-DD as local date 
+      const [year, month, day] = e.date.split('-').map(Number);
+      const entryDate = new Date(year, month - 1, day); 
+      return entryDate >= start && entryDate <= today;
     }).length;
   }
 
   private getToday(): string {
-    return new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`; // e.g. "2026-02-12"
   }
 }

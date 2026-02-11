@@ -43,7 +43,7 @@
                 <p><strong>Address:</strong> {{ project.clientDetails.address }}</p>
               }
             </div>
-            <p><strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}</p>
+            <p><strong>Duration:</strong> {{ formatDateForDisplay(project.startDate) }} to {{ formatDateForDisplay(project.finishDate) }}</p>
             <p><strong>Brief:</strong> {{ project.projectBrief || 'No brief provided' }}</p>
           </div>
         </div>
