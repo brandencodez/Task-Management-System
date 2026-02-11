@@ -18,7 +18,6 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
     totalActiveEmployees: 0,
     submittedToday: 0,
     notSubmittedToday: 0,
-    submittedPercentage: 0,
     employeesWithEntries: [],
     employeesWithoutEntries: []
   };
@@ -67,7 +66,6 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
           totalActiveEmployees: 0,
           submittedToday: 0,
           notSubmittedToday: 0,
-          submittedPercentage: 0,
           employeesWithEntries: [],
           employeesWithoutEntries: []
         };
@@ -83,13 +81,6 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
 
   switchTab(tab: 'submitted' | 'notSubmitted'): void {
     this.selectedTab = tab;
-  }
-
-  getProgressColor(): string {
-    if (this.stats.submittedPercentage >= 80) return '#28a745';
-    if (this.stats.submittedPercentage >= 60) return '#ffc107';
-    if (this.stats.submittedPercentage >= 40) return '#fd7e14';
-    return '#dc3545';
   }
 
   getStatusMessage(): string {

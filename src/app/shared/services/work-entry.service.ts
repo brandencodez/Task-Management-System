@@ -7,7 +7,6 @@ export interface WorkEntryStatsToday {
   totalActiveEmployees: number;
   submittedToday: number;
   notSubmittedToday: number;
-  submittedPercentage: number;
   employeesWithEntries: string[];
   employeesWithoutEntries: string[];
 }

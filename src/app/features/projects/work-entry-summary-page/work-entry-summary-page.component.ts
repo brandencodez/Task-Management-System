@@ -16,7 +16,6 @@ export class WorkEntrySummaryPageComponent implements OnInit, OnDestroy {
     totalActiveEmployees: 0,
     submittedToday: 0,
     notSubmittedToday: 0,
-    submittedPercentage: 0,
     employeesWithEntries: [],
     employeesWithoutEntries: []
   };
@@ -72,7 +71,6 @@ export class WorkEntrySummaryPageComponent implements OnInit, OnDestroy {
           totalActiveEmployees: 0,
           submittedToday: 0,
           notSubmittedToday: 0,
-          submittedPercentage: 0,
           employeesWithEntries: [],
           employeesWithoutEntries: []
         };
@@ -89,14 +87,7 @@ export class WorkEntrySummaryPageComponent implements OnInit, OnDestroy {
   switchTab(tab: 'submitted' | 'pending'): void {
     this.activeTab = tab;
   }
-
-  getProgressColor(): string {
-    if (this.stats.submittedPercentage >= 80) return '#28a745';
-    if (this.stats.submittedPercentage >= 60) return '#ffc107';
-    if (this.stats.submittedPercentage >= 40) return '#fd7e14';
-    return '#dc3545';
-  }
-
+  
   getStatusMessage(): string {
     if (this.stats.notSubmittedToday === 0) {
       return '✅ All employees have submitted work entries!';

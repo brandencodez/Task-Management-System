@@ -13,14 +13,6 @@
         <p>Loading work entry summary...</p>
       </div>
     }
-
-    <!-- Status Message -->
-    @if (!isLoading) {
-      <div class="status-message" [class]="stats.submittedPercentage >= 80 ? 'success' : 
-                                            stats.submittedPercentage >= 60 ? 'warning' : 'alert'">
-        {{ getStatusMessage() }}
-      </div>
-
       <!-- Statistics Row -->
       <div class="stats-row">
         <div class="stat-box submitted">
@@ -88,8 +80,6 @@
           }
         </div>
       </div>
-    }
-
     <!-- Footer Info -->
     <div class="footer-info">
       <p class="refresh-note">🔄 Refreshes automatically every 5 minutes • Last checked: {{ today }}</p>

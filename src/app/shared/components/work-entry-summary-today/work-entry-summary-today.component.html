@@ -8,23 +8,6 @@
       <h2>📊 Today's Work Entry Summary</h2>
     </div>
 
-    <!-- ===== Status Banner ===== -->
-    <div
-      class="status-banner"
-      [ngClass]="{
-        'success': stats.submittedPercentage === 100,
-        'alert': stats.submittedPercentage === 0,
-        'warning': stats.submittedPercentage > 0 && stats.submittedPercentage < 100
-      }"
-    >
-      <span class="status-text">
-        {{ getStatusMessage() }}
-      </span>
-      <span class="status-percentage">
-        {{ stats.submittedPercentage }}%
-      </span>
-    </div>
-
     <!-- ===== Statistics Cards ===== -->
     <div class="stats-grid">
 
