@@ -70,12 +70,12 @@ export const routes: Routes = [
           ).then(m => m.WorkEntryDashboardComponent)
       },
 
-      /* ✅ USER ATTENDANCE
+      //  ✅ USER ATTENDANCE
       {
         path: 'attendance',
         component: UserAttendanceComponent,
         title: 'My Attendance'
-      }*/
+      }
     ] 
   },
 
