@@ -3,8 +3,8 @@ import { HomeComponent } from './features/home/home';
 import { SimpleLayoutComponent } from './shared/layouts/simple-layout/simple-layout';
 import { UserLayoutComponent } from './shared/layouts/user-layout/user-layout';
 import { AdminLayoutComponent } from './shared/layouts/admin-layout/admin-layout';
-//import { UserAttendanceComponent } from './features/attendance/user-attendance/user-attendance.component';    ----- temporary
-//import { AdminAttendanceComponent } from './features/attendance/admin-attendance/admin-attendance.component';  ----- temporary
+import { UserAttendanceComponent } from './features/attendance/user-attendance/user-attendance.component';
+import { AdminAttendanceComponent } from './features/attendance/admin-attendance/admin-attendance.component';
 
 export const routes: Routes = [
 
@@ -148,17 +148,9 @@ export const routes: Routes = [
     ]
   },
 
- //  WORK ENTRY SUMMARY
-  {
-        path: 'work-entry-summary',
-        loadComponent: () =>
-          import('./features/projects/work-entry-summary-page/work-entry-summary-page.component')
-            .then(m => m.WorkEntrySummaryPageComponent)
-      },
-
  
   // ===== ATTENDANCE ROUTES =====
-/*
+
   {
     path: 'my-attendance',
     component: UserAttendanceComponent,
@@ -169,7 +161,7 @@ export const routes: Routes = [
     component: AdminAttendanceComponent,
     title: 'Attendance Management'
   },
-  */
+  
 
   
   // ================= FALLBACK =================
