@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, interval } from 'rxjs';
-import { takeUntil, startWith, delay } from 'rxjs/operators';
+import { takeUntil, startWith } from 'rxjs/operators';
 import { WorkEntryService, WorkEntryStatsToday } from '../../services/work-entry.service';
-import { EmployeeService } from '../../../features/employees/employee.service'; // ✅ Keep this
+import { EmployeeService } from '../../../features/employees/employee.service';
 
 @Component({
   selector: 'app-work-entry-summary-today',
@@ -27,7 +27,9 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
   selectedTab: 'submitted' | 'notSubmitted' = 'submitted';
 
   private destroy$ = new Subject<void>();
-  private today = this.getToday();
+
+  // ✅ FIXED: removed private
+  today = this.getToday();
 
   constructor(
     private employeeService: EmployeeService,
@@ -36,7 +38,6 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Refresh every 5 minutes to keep data current
     interval(5 * 60 * 1000)
       .pipe(
         startWith(0),
@@ -48,23 +49,20 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Load work entry statistics for today
-   */
   private loadWorkEntryStats(): void {
-    this.workEntryService.getWorkSummary().pipe(
-    ).subscribe({
+    this.workEntryService.getWorkSummary().subscribe({
       next: (stats) => {
         this.stats = {
           ...stats,
           employeesWithEntries: [...stats.employeesWithEntries].sort(),
           employeesWithoutEntries: [...stats.employeesWithoutEntries].sort()
         };
-        
+
         this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Failed to load work summary:', error);
+
         this.stats = {
           totalActiveEmployees: 0,
           submittedToday: 0,
@@ -73,39 +71,27 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
           employeesWithEntries: [],
           employeesWithoutEntries: []
         };
-        
+
         this.cdr.detectChanges();
       }
     });
   }
 
-  /**
-   * Toggle details list visibility
-   */
   toggleDetailsList(): void {
     this.showDetailsList = !this.showDetailsList;
   }
 
-  /**
-   * Switch between submitted and not submitted tabs
-   */
   switchTab(tab: 'submitted' | 'notSubmitted'): void {
     this.selectedTab = tab;
   }
 
-  /**
-   * Get progress bar color based on percentage
-   */
   getProgressColor(): string {
-    if (this.stats.submittedPercentage >= 80) return '#28a745'; 
-    if (this.stats.submittedPercentage >= 60) return '#ffc107'; 
-    if (this.stats.submittedPercentage >= 40) return '#fd7e14'; 
-    return '#dc3545'; // Red
+    if (this.stats.submittedPercentage >= 80) return '#28a745';
+    if (this.stats.submittedPercentage >= 60) return '#ffc107';
+    if (this.stats.submittedPercentage >= 40) return '#fd7e14';
+    return '#dc3545';
   }
 
-  /**
-   * Get status message
-   */
   getStatusMessage(): string {
     const { submittedToday, notSubmittedToday, totalActiveEmployees } = this.stats;
 
@@ -118,16 +104,10 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Get today's date in YYYY-MM-DD format
-   */
   private getToday(): string {
     return new Date().toISOString().split('T')[0];
   }
 
-  /**
-   * Refresh statistics manually
-   */
   refreshStats(): void {
     this.loadWorkEntryStats();
   }
