@@ -106,6 +106,19 @@ export class AdminAttendanceComponent implements OnInit {
     });
   }
 
+  showSettings = false;
+
+toggleSettings(event: MouseEvent) {
+  event.stopPropagation();
+  this.showSettings = !this.showSettings;
+}
+
+closeSettings() {
+  this.showSettings = false;
+}
+
+
+
   private loadDailyData() {
     this.attendanceService.getAttendanceByDate(this.selectedDate)
       .subscribe(data => {

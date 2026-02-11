@@ -31,28 +31,39 @@
           </button>
         </div>
         
-        <!-- Settings Dropdown -->
-        <div class="settings-dropdown">
-          <button class="settings-btn" title="Settings">
-            ⚙️
-          </button>
-          <div class="settings-menu">
-            <div class="setting-item">
-              <label class="switch">
-                <input type="checkbox" [(ngModel)]="autoMarkEnabled" (change)="toggleAutoMark()">
-                <span class="slider"></span>
-              </label>
-              <span>Auto-mark absent</span>
-            </div>
-            <div class="setting-item">
-              <label class="switch">
-                <input type="checkbox" [(ngModel)]="notificationsEnabled" (change)="toggleNotifications()">
-                <span class="slider"></span>
-              </label>
-              <span>Notifications</span>
-            </div>
-          </div>
-        </div>
+      <!-- Settings Dropdown -->
+<div class="settings-dropdown">
+  <button
+    class="settings-btn"
+    title="Settings"
+    (click)="toggleSettings($event)"
+  >
+    ⚙️
+  </button>
+
+  <div class="settings-menu" *ngIf="showSettings">
+    <div class="setting-item">
+      <label class="switch">
+        <input type="checkbox"
+               [(ngModel)]="autoMarkEnabled"
+               (change)="toggleAutoMark()">
+        <span class="slider"></span>
+      </label>
+      <span>Auto-mark absent</span>
+    </div>
+
+    <div class="setting-item">
+      <label class="switch">
+        <input type="checkbox"
+               [(ngModel)]="notificationsEnabled"
+               (change)="toggleNotifications()">
+        <span class="slider"></span>
+      </label>
+      <span>Notifications</span>
+    </div>
+  </div>
+</div>
+
       </div>
     </div>
     
