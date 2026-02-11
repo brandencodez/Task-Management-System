@@ -3,12 +3,17 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { WorkEntry } from '../models/work-entry.model';
 
+export interface EmployeeWithDepartment {
+  name: string;
+  department: string;
+}
+
 export interface WorkEntryStatsToday {
   totalActiveEmployees: number;
   submittedToday: number;
   notSubmittedToday: number;
-  employeesWithEntries: string[];
-  employeesWithoutEntries: string[];
+  employeesWithEntries: EmployeeWithDepartment[];
+  employeesWithoutEntries: EmployeeWithDepartment[];
 }
 
 @Injectable({ providedIn: 'root' })

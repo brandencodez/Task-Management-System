@@ -73,7 +73,10 @@
           class="employee-card submitted-card"
         >
           <span class="employee-name">
-            {{ employee }}
+            {{ employee.name }}
+          </span>
+          <span class="department-badge">
+            {{ employee.department }}
           </span>
         </div>
       </div>
@@ -96,7 +99,10 @@
           class="employee-card pending-card"
         >
           <span class="employee-name">
-            {{ employee }}
+            {{ employee.name }}
+          </span>
+          <span class="department-badge">
+            {{ employee.department }}
           </span>
         </div>
       </div>

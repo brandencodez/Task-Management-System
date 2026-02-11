@@ -92,10 +92,28 @@
   margin-bottom: 8px;
   font-weight: 500;
   transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .employee-card:hover {
   transform: translateX(4px);
+}
+
+.employee-name {
+  flex: 1;
+}
+
+.department-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  margin-left: 10px;
 }
 
 /* Submitted employees */
@@ -105,11 +123,21 @@
   color: #155724;
 }
 
+.employee-card.submitted-card .department-badge {
+  background: #28a745;
+  color: white;
+}
+
 /* Pending employees */
 .employee-card.pending-card {
   background: #fff8e1;
   border-left: 4px solid #ffc107;
   color: #856404;
+}
+
+.employee-card.pending-card .department-badge {
+  background: #ffc107;
+  color: #333;
 }
 
 .empty-state {
@@ -133,6 +161,6 @@
   }
 
   .employees-wrapper {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 }

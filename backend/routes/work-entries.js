@@ -99,11 +99,16 @@ router.put('/:id', async (req, res) => {
 
 router.get('/summary', async (req, res) => {
   try {
-    // Use MySQL's CURDATE() for reliable date comparison
-    const [activeEmployees] = await db.execute(
-      'SELECT id, name FROM employees WHERE status = ?',
-      ['active']
-    );
+    // Fetch active employees with their department information
+    const [activeEmployees] = await db.execute(`
+      SELECT 
+        e.id, 
+        e.name,
+        COALESCE(d.name, 'No Department') as department
+      FROM employees e
+      LEFT JOIN departments d ON e.department_id = d.id
+      WHERE e.status = ?
+    `, ['active']);
 
     // Get work entries for TODAY only using MySQL's CURDATE()
     const [todayEntries] = await db.execute(
@@ -114,27 +119,31 @@ router.get('/summary', async (req, res) => {
     console.log('✅ Today entries:', todayEntries.length);
 
     const submittedEmployeeIds = todayEntries.map(entry => entry.employee_id);
-    const submittedEmployees = activeEmployees.filter(emp => 
-      submittedEmployeeIds.includes(emp.id)
-    );
-    const pendingEmployees = activeEmployees.filter(emp => 
-      !submittedEmployeeIds.includes(emp.id)
-    );
+    
+    const submittedEmployees = activeEmployees
+      .filter(emp => submittedEmployeeIds.includes(emp.id))
+      .map(emp => ({
+        name: emp.name,
+        department: emp.department
+      }));
+    
+    const pendingEmployees = activeEmployees
+      .filter(emp => !submittedEmployeeIds.includes(emp.id))
+      .map(emp => ({
+        name: emp.name,
+        department: emp.department
+      }));
 
     const totalActive = activeEmployees.length;
     const submittedToday = submittedEmployees.length;
     const notSubmittedToday = pendingEmployees.length;
-    const submittedPercentage = totalActive > 0 
-      ? Math.round((submittedToday / totalActive) * 100)
-      : 0;
 
     res.json({
       totalActiveEmployees: totalActive,
       submittedToday,
       notSubmittedToday,
-      submittedPercentage,
-      employeesWithEntries: submittedEmployees.map(emp => emp.name),
-      employeesWithoutEntries: pendingEmployees.map(emp => emp.name)
+      employeesWithEntries: submittedEmployees,
+      employeesWithoutEntries: pendingEmployees
     });
   } catch (error) {
     console.error('❌ Work summary error:', error);
