@@ -23,11 +23,11 @@
         <div class="form-group">
           <label class="form-label">Project Type</label>
           <input
-  [(ngModel)]="currentProject.projectType"
-  name="projectType"
-  class="form-control"
-  placeholder="Enter project type"
-/>
+            [(ngModel)]="currentProject.projectType"
+            name="projectType"
+            class="form-control"
+            placeholder="Enter project type"
+          />
         </div>
 
         <div class="form-group">
@@ -137,18 +137,18 @@
                 </div>
 
                 <!-- Phone -->
-              <div class="form-group contact-phone">
-              <input 
-              [(ngModel)]="currentProject.clientDetails.contacts[$index].phone" 
-              [name]="'contactPhone' + $index" 
-              class="form-control"
-              placeholder="Phone *"
-              required
-              maxlength="10"
-              pattern="[0-9]{10}"
-              oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"
-                />
-            </div>
+                <div class="form-group contact-phone">
+                  <input 
+                    [(ngModel)]="currentProject.clientDetails.contacts[$index].phone" 
+                    [name]="'contactPhone' + $index" 
+                    class="form-control"
+                    placeholder="Phone *"
+                    required
+                    maxlength="10"
+                    pattern="[0-9]{10}"
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"
+                  />
+                </div>
                 
                 <!-- Remove Button -->
                 @if (currentProject.clientDetails.contacts.length > 1) {
@@ -264,9 +264,9 @@
                 </div>
                 <p><strong>Department:</strong> {{ project.department_name || 'Not specified' }}</p>
                 <p>
-                  <strong>Duration:</strong> {{ project.startDate }} to {{ project.finishDate }}
+                  <strong>Duration:</strong> {{ formatDateForDisplay(project.startDate) }} to {{ formatDateForDisplay(project.finishDate) }}
                 </p>
-                <p>{{ project.projectBrief || 'No brief provided' }}</p>
+                <p><strong>Brief: </strong>{{ project.projectBrief || 'No brief provided' }}</p>
               </div>
 
               <div class="project-actions">

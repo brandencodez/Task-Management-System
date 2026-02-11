@@ -237,6 +237,12 @@
   font-weight: 500;
 }
 
+.project-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
 /* Status Badges */
 .badge {
   padding: 0.25rem 0.75rem;
