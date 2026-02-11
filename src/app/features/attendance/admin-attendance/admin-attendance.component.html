@@ -1,4 +1,6 @@
 <!-- admin-attendance.component.html -->
+<app-navbar [role]="'admin'"></app-navbar>
+
 <div class="admin-attendance-container">
   <!-- Enhanced Header -->
   <div class="admin-header">
@@ -6,7 +8,7 @@
       <div class="header-left">
         <div class="header-icon">📊</div>
         <div class="header-text">
-          <h1>Attendance Management System</h1>
+          <h1>Attendance Management </h1>
           <div class="header-subtitle">
             Real-time monitoring & analytics dashboard
           </div>
@@ -18,70 +20,50 @@
           <span>🔔</span> Send Reminder
         </button>
         
-        <!-- Upload Button - Always visible in header -->
-        <button 
-          class="header-btn upload-btn" 
-          (click)="triggerFileUpload()"
-          title="Upload Attendance Excel/CSV"
-        >
-          <span>📤</span> Upload
-        </button>
-        <input 
-          type="file" 
-          #fileInput 
-          accept=".xlsx,.xls,.csv" 
-          (change)="onFileSelected($event)" 
-          style="display: none;"
-        />
-        
-        <!-- Download Button (Right) with Dropdown - Always visible in header -->
+        <!-- Download Button with Dropdown - View only -->
         <div class="download-dropdown">
           <button 
             class="header-btn download-btn" 
-            (click)="toggleDownloadMenu()"
             title="Download Attendance in different formats"
+            (click)="exportToPDF()"
           >
-            <span>📥</span> Download
-            <span class="dropdown-arrow">▼</span>
+            <span>📥</span> Download Report (PDF)
           </button>
-          
-          <!-- Dropdown Menu -->
-          <div class="download-menu" *ngIf="showDownloadMenu">
-            <button class="menu-option" (click)="exportToExcel(); toggleDownloadMenu()">
-              <span>📊</span> Export as Excel
-            </button>
-            <button class="menu-option" (click)="exportToCSV(); toggleDownloadMenu()">
-              <span>📋</span> Export as CSV
-            </button>
-            <button class="menu-option" (click)="exportToPDF(); toggleDownloadMenu()">
-              <span>📄</span> Export as Report (PDF)
-            </button>
-          </div>
         </div>
         
-        <!-- Settings Dropdown -->
-        <div class="settings-dropdown">
-          <button class="settings-btn" title="Settings">
-            ⚙️
-          </button>
-          <div class="settings-menu">
-            <div class="setting-item">
-              <label class="switch">
-                <input type="checkbox" [(ngModel)]="autoMarkEnabled" (change)="toggleAutoMark()">
-                <span class="slider"></span>
-              </label>
-              <span>Auto-mark absent</span>
-            </div>
-            <div class="setting-item">
-              <label class="switch">
-                <input type="checkbox" [(ngModel)]="notificationsEnabled" (change)="toggleNotifications()">
-                <span class="slider"></span>
-              </label>
-              <span>Notifications</span>
-            </div>
-            <button class="menu-item" (click)="exportToExcel()">📊 Export to Excel</button>
-          </div>
-        </div>
+      <!-- Settings Dropdown -->
+<div class="settings-dropdown">
+  <button
+    class="settings-btn"
+    title="Settings"
+    (click)="toggleSettings($event)"
+  >
+    ⚙️
+  </button>
+
+  <div class="settings-menu" *ngIf="showSettings">
+    <div class="setting-item">
+      <label class="switch">
+        <input type="checkbox"
+               [(ngModel)]="autoMarkEnabled"
+               (change)="toggleAutoMark()">
+        <span class="slider"></span>
+      </label>
+      <span>Auto-mark absent</span>
+    </div>
+
+    <div class="setting-item">
+      <label class="switch">
+        <input type="checkbox"
+               [(ngModel)]="notificationsEnabled"
+               (change)="toggleNotifications()">
+        <span class="slider"></span>
+      </label>
+      <span>Notifications</span>
+    </div>
+  </div>
+</div>
+
       </div>
     </div>
     
@@ -130,7 +112,6 @@
         (click)="onViewChange('daily')"
       >
         <span class="btn-icon">📅</span> Daily Attendance
-        <span class="view-badge" *ngIf="selectedView === 'daily'">Active</span>
       </button>
       <button 
         class="toggle-btn" 
@@ -138,7 +119,6 @@
         (click)="onViewChange('monthly')"
       >
         <span class="btn-icon">📈</span> Monthly Analytics
-        <span class="view-badge" *ngIf="selectedView === 'monthly'">Active</span>
       </button>
     </div>
   </div>
@@ -175,29 +155,35 @@
         </div>
 
         <!-- Quick Stats -->
-        <div class="quick-stats">
-          <div class="quick-stat">
-            <div class="stat-icon">⏰</div>
-            <div class="stat-content">
-              <h3>{{ quickStats.onTime }}</h3>
-              <p>On Time Arrivals</p>
-            </div>
-          </div>
-          <div class="quick-stat">
-            <div class="stat-icon">🚨</div>
-            <div class="stat-content">
-              <h3>{{ quickStats.lateComers }}</h3>
-              <p>Late Arrivals</p>
-            </div>
-          </div>
-          <div class="quick-stat">
-            <div class="stat-icon">🚪</div>
-            <div class="stat-content">
-              <h3>{{ quickStats.earlyLeavers }}</h3>
-              <p>Early Departures</p>
-            </div>
-          </div>
-        </div>
+      <div class="quick-stats">
+
+  <div class="quick-stat">
+    <div class="stat-icon">⏰</div>
+    <div class="stat-content">
+      <h3>{{ quickStats.onTime }}</h3>
+      <p>On Time Arrivals</p>
+    </div>
+  </div>
+
+  <div class="quick-stat">
+    <div class="stat-icon">🚨</div>
+    <div class="stat-content">
+      <h3>{{ quickStats.lateComers }}</h3>
+      <p>Late Arrivals</p>
+    </div>
+  </div>
+
+  <div class="quick-stat">
+    <div class="stat-icon">🚪</div>
+    <div class="stat-content">
+      <h3>{{ quickStats.earlyLeavers }}</h3>
+      <p>Early Departures</p>
+    </div>
+  </div>
+
+</div>
+
+
       </div>
 
       <!-- Search & Filter Section -->
@@ -207,7 +193,7 @@
             <span class="search-icon">🔍</span>
             <input 
               type="text" 
-              placeholder="Search employees by name, department, or remarks..." 
+              placeholder="Search employees by name, department" 
               [(ngModel)]="searchQuery"
               (input)="onSearch()"
               class="search-input"
@@ -244,12 +230,6 @@
               <span class="filter-icon">⏳</span> Pending
             </button>
           </div>
-          
-          <div class="quick-actions">
-            <button class="action-btn secondary" (click)="markAllPresent()">
-              <span>✅</span> Mark All Present
-            </button>
-          </div>
         </div>
       </div>
 
@@ -258,10 +238,6 @@
         <div class="grid-header">
           <h3>Employee Attendance Details</h3>
           <div class="grid-actions">
-            <div class="view-toggle-small">
-              <button class="view-btn active">Cards</button>
-              <button class="view-btn">List</button>
-            </div>
             <select class="sort-select" [(ngModel)]="sortBy" (change)="onSortChange()">
               <option value="name">Sort by Name</option>
               <option value="status">Sort by Status</option>
@@ -272,7 +248,7 @@
         </div>
 
         <div class="enhanced-employee-grid">
-          @for (record of attendanceRecords; track record.employeeId) {
+          @for (record of filteredRecords; track record.employeeId) {
             <div class="enhanced-employee-card-compact" [ngClass]="getStatusClass(record.status)">
               <div class="card-header-compact">
                 <div class="employee-avatar-compact" [style.background]="getEmployeeColor(record.employeeId)">
@@ -288,11 +264,11 @@
               </div>
               
               <div class="card-body-compact">
-                <div class="time-row">
+                <div class="time-row"> 
                   <span class="time-label">In:</span>
                   <span class="time-value">
                     @if (record.checkInTime) {
-                      {{ record.checkInTime | date:'shortTime' }}
+                      {{ formatTime(record.checkInTime) | date:'shortTime' }}
                     } @else {
                       --
                     }
@@ -302,7 +278,7 @@
                   <span class="time-label">Out:</span>
                   <span class="time-value">
                     @if (record.checkOutTime) {
-                      {{ record.checkOutTime | date:'shortTime' }}
+                      {{ formatTime(record.checkOutTime) | date:'shortTime' }}
                     } @else {
                       --
                     }
@@ -327,12 +303,7 @@
               </div>
               
               <div class="card-footer-compact">
-                @if (record.status === 'not-marked') {
-                  <button class="card-action-btn-sm" (click)="markAsPresent(record)" title="Mark Present">✅</button>
-                  <button class="card-action-btn-sm" (click)="markAsAbsent(record)" title="Mark Absent">❌</button>
-                } @else {
-                  <button class="card-action-btn-sm" title="View Details">👁️</button>
-                }
+                <button class="card-action-btn-sm" title="View Details">👁️</button>
               </div>
             </div>
           } @empty {
@@ -542,7 +513,7 @@
                                   @case ('absent') { ❌ }
                                   @case ('half-day') { ⏰ }
                                   @case ('leave') { 🏖️ }
-                                  @case ('not-marked') { ❓ }
+                                  @case ('not-marked') { ⏳ }
                                   @case ('future') { 📅 }
                                 }
                               </div>

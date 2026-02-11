@@ -12,6 +12,7 @@ const AdminRoutes = require('./routes/admin')
 const reminderRoutes = require('./routes/reminder');
 const workEntriesRouter = require('./routes/work-entries');
 const DepartmentRoutes = require('./routes/department');
+const attendanceRoutes = require('./routes/attendance');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -33,6 +34,7 @@ app.use('/api/reminders', reminderRoutes);
 app.use('/api/work-entries', workEntriesRouter);
 app.use('/api/admins', AdminRoutes);
 app.use('/api/departments', DepartmentRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

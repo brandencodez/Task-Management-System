@@ -19,6 +19,7 @@ interface SetPasswordResponse {
 export class UserService {
   private apiUrl = 'http://localhost:5000/api';
   private USER_KEY = 'current_user_name';
+  private USER_ID_KEY = 'current_user_id'; // NEW: Store employee ID
 
   constructor(private http: HttpClient) {}
 
@@ -37,8 +38,12 @@ export class UserService {
       { headers: this.getHeaders() }
     ).pipe(
       map(response => {
-        if (response.success) {
+        if (response.success && response.employee) {
           this.setCurrentUser(name);
+          // Store employee ID if available
+          if (response.employee.id) {
+            this.setCurrentUserId(response.employee.id);
+          }
           return true;
         }
         return false;
@@ -56,7 +61,6 @@ export class UserService {
     return this.http.post<SetPasswordResponse>(
       `${this.apiUrl}/auth/set-password`,
       credentials,
-      
       { headers: this.getHeaders() }
     ).pipe(
       map(response => response.success),
@@ -67,25 +71,34 @@ export class UserService {
     );
   }
 
-  // Local storage methods (for session management only)
+  // Local storage methods
   setCurrentUser(name: string): void {
     localStorage.setItem(this.USER_KEY, name);
+  }
+
+  setCurrentUserId(id: number): void {
+    localStorage.setItem(this.USER_ID_KEY, id.toString());
   }
 
   getCurrentUser(): string | null {
     return localStorage.getItem(this.USER_KEY);
   }
 
-  clearCurrentUser(): void {
-    localStorage.removeItem(this.USER_KEY);
+  getCurrentUserId(): string | null {
+    return localStorage.getItem(this.USER_ID_KEY);
   }
 
-  // Check if user is logged in (session only)
+  clearCurrentUser(): void {
+    localStorage.removeItem(this.USER_KEY);
+    localStorage.removeItem(this.USER_ID_KEY);
+  }
+
+  // Check if user is logged in
   isLoggedIn(): boolean {
     return !!this.getCurrentUser();
   }
-  logout(): void {
-  this.clearCurrentUser();
-}
-}
 
+  logout(): void {
+    this.clearCurrentUser();
+  }
+}
