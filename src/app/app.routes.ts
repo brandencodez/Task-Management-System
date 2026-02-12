@@ -53,9 +53,17 @@ export const routes: Routes = [
     component: UserLayoutComponent,
     children: [
 
-      // 🔹 Default → My Projects
+      // 🔹 Default → Employee Dashboard
       {
         path: '',
+        loadComponent: () =>
+          import('./features/user-dashboard/user-dashboard.component')
+            .then(m => m.UserDashboardComponent)
+      },
+
+      // 🔹 My Projects
+      {
+        path: 'my-projects',
         loadComponent: () =>
           import('./features/projects/user-projects/user-projects.component')
             .then(m => m.UserProjectsComponent)

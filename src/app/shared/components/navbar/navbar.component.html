@@ -40,6 +40,16 @@
             routerLink="/user-dashboard"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }"
+            aria-label="Employee dashboard"
+          >
+            Dashboard
+          </a>
+        </li>
+
+        <li>
+          <a
+            routerLink="/user-dashboard/my-projects"
+            routerLinkActive="active"
             aria-label="My projects"
             (click)="closeMenu()"
           >
