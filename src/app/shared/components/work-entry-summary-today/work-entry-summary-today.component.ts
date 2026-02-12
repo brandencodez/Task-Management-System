@@ -4,6 +4,8 @@ import { Subject, interval } from 'rxjs';
 import { takeUntil, startWith } from 'rxjs/operators';
 import { WorkEntryService, WorkEntryStatsToday } from '../../services/work-entry.service';
 import { EmployeeService } from '../../../features/employees/employee.service';
+import { WorkEntry } from '../../models/work-entry.model';
+import { Employee } from '../../../features/employees/employee.model';
 
 @Component({
   selector: 'app-work-entry-summary-today',
@@ -22,89 +24,125 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
     employeesWithoutEntries: []
   };
 
-  showDetailsList = false;
-  selectedTab: 'submitted' | 'notSubmitted' = 'submitted';
+  workEntriesMap: { [name: string]: WorkEntry[] } = {};
+  showModal = false;
+  selectedEmployeeName: string | null = null;
+  selectedWorkEntries: WorkEntry[] = [];
 
   private destroy$ = new Subject<void>();
-
-  // ✅ FIXED: removed private
-  today = this.getToday();
+  today: string; // Declare first
 
   constructor(
     private employeeService: EmployeeService,
     private workEntryService: WorkEntryService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    
+    this.today = this.getToday();
+  }
 
   ngOnInit(): void {
     interval(5 * 60 * 1000)
-      .pipe(
-        startWith(0),
-        takeUntil(this.destroy$)
-      )
+      .pipe(startWith(0), takeUntil(this.destroy$))
       .subscribe(() => {
         this.today = this.getToday();
         this.loadWorkEntryStats();
       });
   }
 
-  private loadWorkEntryStats(): void {
-    this.workEntryService.getWorkSummary().subscribe({
-      next: (stats) => {
-        this.stats = {
-          ...stats,
-          employeesWithEntries: [...stats.employeesWithEntries].sort(),
-          employeesWithoutEntries: [...stats.employeesWithoutEntries].sort()
-        };
+  private async loadWorkEntryStats(): Promise<void> {
+    try {
+      const statsResponse = await this.workEntryService.getWorkSummary().toPromise();
+      
+      // Handle possible undefined by providing fallbacks
+      const stats: WorkEntryStatsToday = {
+        totalActiveEmployees: statsResponse?.totalActiveEmployees ?? 0,
+        submittedToday: statsResponse?.submittedToday ?? 0,
+        notSubmittedToday: statsResponse?.notSubmittedToday ?? 0,
+        employeesWithEntries: statsResponse?.employeesWithEntries ?? [],
+        employeesWithoutEntries: statsResponse?.employeesWithoutEntries ?? []
+      };
 
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Failed to load work summary:', error);
+      const employeesWithEntries = [...stats.employeesWithEntries];
+      const workEntriesMap: { [name: string]: WorkEntry[] } = {};
 
-        this.stats = {
-          totalActiveEmployees: 0,
-          submittedToday: 0,
-          notSubmittedToday: 0,
-          employeesWithEntries: [],
-          employeesWithoutEntries: []
-        };
-
-        this.cdr.detectChanges();
+      for (const emp of employeesWithEntries) {
+        const employeeId = await this.getEmployeeIdByName(emp.name);
+        if (employeeId) {
+          const entries = await this.workEntryService.getEntries(employeeId).toPromise();
+          workEntriesMap[emp.name] = entries || []; // Handle possible undefined
+        }
       }
-    });
-  }
 
-  toggleDetailsList(): void {
-    this.showDetailsList = !this.showDetailsList;
-  }
+      this.stats = {
+        ...stats,
+        employeesWithEntries: employeesWithEntries.sort((a, b) => a.name.localeCompare(b.name)),
+        employeesWithoutEntries: [...stats.employeesWithoutEntries].sort((a, b) => a.name.localeCompare(b.name))
+      };
+      this.workEntriesMap = workEntriesMap;
 
-  switchTab(tab: 'submitted' | 'notSubmitted'): void {
-    this.selectedTab = tab;
-  }
-
-  getStatusMessage(): string {
-    const { submittedToday, notSubmittedToday, totalActiveEmployees } = this.stats;
-
-    if (submittedToday === totalActiveEmployees) {
-      return '✅ All employees have submitted work entries!';
-    } else if (submittedToday === 0) {
-      return '⚠️ No work entries submitted yet today';
-    } else {
-      return `${notSubmittedToday} employee${notSubmittedToday > 1 ? 's' : ''} pending`;
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Failed to load work summary:', error);
+      this.resetStats();
     }
   }
 
-  private getToday(): string {
-    return new Date().toISOString().split('T')[0];
+  private getEmployeeIdByName(name: string): Promise<string | null> {
+    return new Promise((resolve) => {
+      this.employeeService.getEmployees().subscribe({
+        next: (employees: Employee[]) => {
+          const emp = employees.find(e => e.name === name);
+          resolve(emp ? String(emp.id) : null);
+        },
+        error: () => resolve(null)
+      });
+    });
   }
 
-  refreshStats(): void {
-    this.loadWorkEntryStats();
+  openWorkEntriesModal(employeeName: string): void {
+    this.selectedEmployeeName = employeeName;
+    this.selectedWorkEntries = this.workEntriesMap[employeeName] || [];
+    this.showModal = true;
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.selectedEmployeeName = null;
+    this.selectedWorkEntries = [];
+  }
+
+  // Define helper method
+  getAttachmentUrl(filename: string): string {
+    return this.workEntryService.getAttachmentUrl(filename);
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('en-GB'); // DD/MM/YYYY
+  }
+
+  private resetStats(): void {
+    this.stats = {
+      totalActiveEmployees: 0,
+      submittedToday: 0,
+      notSubmittedToday: 0,
+      employeesWithEntries: [],
+      employeesWithoutEntries: []
+    };
+    this.workEntriesMap = {};
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // Define getToday as a method
+  private getToday(): string {
+    return new Date().toISOString().split('T')[0];
   }
 }

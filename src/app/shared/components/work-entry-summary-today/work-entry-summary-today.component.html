@@ -70,7 +70,8 @@
 
         <div
           *ngFor="let employee of stats.employeesWithEntries"
-          class="employee-card submitted-card"
+          class="employee-card submitted-card clickable"
+          (click)="openWorkEntriesModal(employee.name)"
         >
           <span class="employee-name">
             {{ employee.name }}
@@ -114,6 +115,42 @@
   <!-- ================= FOOTER ================= -->
   <div class="footer-note">
      Refreshes automatically every 5 minutes • Last checked: {{ today }}
+  </div>
+
+  <!-- ===== MODAL ===== -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Work Entries: {{ selectedEmployeeName }}</h3>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="selectedWorkEntries.length === 0" class="empty-modal">
+          No work entries found.
+        </div>
+        
+        <div *ngFor="let entry of selectedWorkEntries" class="work-entry-item">
+          <div class="entry-header">
+            <strong>{{ entry.project }}</strong>
+            <span class="entry-date">{{ formatDate(entry.date) }}</span>
+          </div>
+          <p class="entry-desc">{{ entry.description }}</p>
+          
+          <!-- ATTACHMENT DISPLAY -->
+          <div *ngIf="entry.attachment_filename" class="attachment-preview">
+            <a 
+              [href]="getAttachmentUrl(entry.attachment_filename)" 
+              target="_blank"
+              rel="noopener noreferrer"
+              class="attachment-link"
+            >
+              📎 View Attachment
+            </a>
+            <span class="mime-type">{{ entry.attachment_mime_type?.toUpperCase() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
