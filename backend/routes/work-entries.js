@@ -3,12 +3,17 @@ const router = express.Router();
 const WorkEntry = require('../models/WorkEntry');
 const db = require('../config/database');
 
-// Helper: extract employeeId from query or body
+/**
+ * Helper function to extract employeeId from query or body
+ */
 const getEmployeeId = (req) => {
   return req.query.employeeId || req.body.employeeId;
 };
 
-// GET /api/work-entries?employeeId=123
+/**
+ * GET /api/work-entries?employeeId=123
+ * Fetch all work entries for a specific employee
+ */
 router.get('/', async (req, res) => {
   const employeeId = getEmployeeId(req);
   if (!employeeId) {
@@ -24,10 +29,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/work-entries { project, description, ..., employeeId }
+/**
+ * POST /api/work-entries
+ */
 router.post('/', async (req, res) => {
-  const { project, description, hours, progress, date, employeeId } = req.body;
+  const { project, description, hours, date, employeeId } = req.body;
 
+  // Validate required fields 
   if (!project || !description || !hours || !date || !employeeId) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
@@ -37,7 +45,6 @@ router.post('/', async (req, res) => {
       project,
       description,
       hours,
-      progress,
       date,
       employeeId
     });
@@ -48,7 +55,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE /api/work-entries/:id?employeeId=123
+/**
+ * DELETE /api/work-entries/:id?employeeId=123
+
+ */
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const employeeId = getEmployeeId(req);
@@ -69,10 +79,13 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/work-entries/:id { ..., employeeId }
+/**
+ * PUT /api/work-entries/:id
+ * Update an existing work entry
+ */
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { project, description, hours, progress, date, employeeId } = req.body;
+  const { project, description, hours, date, employeeId } = req.body;
 
   if (!employeeId) {
     return res.status(400).json({ message: 'employeeId is required' });
@@ -83,7 +96,6 @@ router.put('/:id', async (req, res) => {
       project,
       description,
       hours,
-      progress,
       date
     });
 
@@ -97,6 +109,10 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/work-entries/summary
+ * Get daily work entry statistics
+ */
 router.get('/summary', async (req, res) => {
   try {
     // Fetch active employees with their department information
@@ -118,8 +134,10 @@ router.get('/summary', async (req, res) => {
     console.log('✅ Active employees:', activeEmployees.length);
     console.log('✅ Today entries:', todayEntries.length);
 
+    // Get employee IDs who submitted entries today
     const submittedEmployeeIds = todayEntries.map(entry => entry.employee_id);
     
+    // Filter employees who submitted today
     const submittedEmployees = activeEmployees
       .filter(emp => submittedEmployeeIds.includes(emp.id))
       .map(emp => ({
@@ -127,6 +145,7 @@ router.get('/summary', async (req, res) => {
         department: emp.department
       }));
     
+    // Filter employees who haven't submitted today
     const pendingEmployees = activeEmployees
       .filter(emp => !submittedEmployeeIds.includes(emp.id))
       .map(emp => ({
