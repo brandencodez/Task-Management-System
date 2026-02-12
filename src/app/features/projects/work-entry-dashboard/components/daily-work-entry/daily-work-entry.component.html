@@ -46,30 +46,71 @@
       </textarea>
     </div>
 
-    <!-- Attachment Upload -->
+    <!-- Attachments Upload -->
     <div class="form-group full-width">
-      <label>Attachment <span class="required">*</span></label>
-      <div class="file-upload-container">
-        <input 
-          type="file" 
-          id="attachmentInput"
-          #attachmentInput
-          (change)="onFileSelected($event)"
-          accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-          class="file-input"
-        />
-        <label for="attachmentInput" class="file-label">
-          <span *ngIf="!selectedFileName">📎 Choose file (Max 200 MB)</span>
-          <span *ngIf="selectedFileName" class="file-selected">✅ {{ selectedFileName }}</span>
-        </label>
+      <label>Attachments (Max 5 files) *</label>
+      
+      <!-- File Upload Area -->
+      <div class="file-upload-area">
+        <div class="file-drop-zone" 
+             (dragover)="onDragOver($event)" 
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event)"
+             [class.drag-over]="isDragging">
+          <input 
+            type="file" 
+            id="attachmentInput"
+            #attachmentInput
+            multiple
+            (change)="onFilesSelected($event)"
+            accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.mp4,.mp3,.wav,.zip,.rar,.7z"
+            class="file-input"
+          />
+          <label for="attachmentInput" class="file-label">
+            <div class="upload-icon">📎</div>
+            <div class="upload-text">
+              <div *ngIf="!isDragging">
+                Click to select files or drag & drop here
+              </div>
+              <div *ngIf="isDragging">
+                Drop files here...
+              </div>
+              <small class="file-hint">Images, PDF, DOC/X, XLS/X, CSV, PPT/X, TXT, MP4, MP3, ZIP (Max file size 100 MB)</small>
+            </div>
+          </label>
+        </div>
       </div>
-      <small class="file-hint">Required: Images, PDF, DOC/X, XLS/X, TXT | Max 200 MB</small>
+
+      <!-- Selected Files Preview -->
+      <div class="selected-files" *ngIf="selectedFiles.length">
+        <div class="selected-file-item" *ngFor="let file of selectedFiles; let i = index">
+          <div class="file-info">
+            <span class="file-icon">
+              {{ getFileIcon(file.type) }}
+            </span>
+            <div class="file-details">
+              <div class="file-name">{{ file.name }}</div>
+              <div class="file-meta">
+                {{ workEntryService.formatFileSize(file.size) }} • 
+                {{ file.type.split('/')[1] | uppercase }}
+              </div>
+            </div>
+          </div>
+          <button 
+            class="remove-file-btn" 
+            (click)="removeFile(i)"
+            title="Remove"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
     </div>
- 
+
     <!-- Submit -->
     <div class="form-group full-width">
-      <button class="add-btn" (click)="addEntry()">
-        ➕ Add Work Entry
+      <button class="add-btn" (click)="submitEntry()" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Submitting...' : '➕ Submit Work Entry' }}
       </button>
     </div>
 
@@ -86,24 +127,42 @@
       </div>
 
       <p class="entry-desc">{{ entry.description }}</p>
-      
-      <!-- Attachment Display -->
-      <div *ngIf="entry.attachment_filename" class="attachment-section">
-        <a 
-          [href]="getAttachmentUrl(entry.attachment_filename)" 
-          target="_blank"
-          rel="noopener noreferrer"
-          class="attachment-link"
-          title="Open attachment"
-        >
-          📎 {{ getAttachmentName(entry.attachment_filename) }}
-        </a>
-        <span class="mime-type">{{ entry.attachment_mime_type?.toUpperCase() }}</span>
+
+      <!-- Attachments -->
+      <div *ngIf="entry.attachments?.length" class="entry-attachments">
+        <div class="attachments-label">
+          📎 {{ entry.attachments?.length || 0 }} attachment{{ (entry.attachments?.length || 0) > 1 ? 's' : '' }}
+        </div>
+        <div class="entry-attachments-list">
+          <div class="entry-attachment-item" *ngFor="let att of entry.attachments">
+            <span class="entry-att-icon">{{ getFileIcon(att.mime_type) }}</span>
+            <div class="entry-att-info">
+              <div class="entry-att-name">{{ att.original_name }}</div>
+              <div class="entry-att-meta">
+                {{ workEntryService.formatFileSize(att.file_size) }} • 
+                {{ att.mime_type.split('/')[1] | uppercase }}
+              </div>
+            </div>
+            <a 
+              [href]="getAttachmentUrl(att.filename)" 
+              target="_blank"
+              rel="noopener noreferrer"
+              class="entry-att-view"
+              title="View/Open"
+            >
+              View
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!entry.attachments?.length" class="no-attachments-note">
+        No attachments
       </div>
 
       <div class="actions">
         <button class="delete" (click)="deleteEntry(entry.id)">
-          Delete
+          Delete Entry
         </button>
       </div>
 
@@ -112,6 +171,7 @@
 
   <!-- EMPTY STATE -->
   <p class="empty-text" *ngIf="!entries.length">
-    No work entries yet. Start by adding one above 👆
+    No work entries yet. Start by creating one above 👆
   </p>
+
 </div>

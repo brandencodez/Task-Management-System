@@ -30,14 +30,13 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
   selectedWorkEntries: WorkEntry[] = [];
 
   private destroy$ = new Subject<void>();
-  today: string; // Declare first
+  today: string;
 
   constructor(
     private employeeService: EmployeeService,
-    private workEntryService: WorkEntryService,
+    public workEntryService: WorkEntryService, // 👈 PUBLIC
     private cdr: ChangeDetectorRef
   ) {
-    
     this.today = this.getToday();
   }
 
@@ -54,7 +53,6 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
     try {
       const statsResponse = await this.workEntryService.getWorkSummary().toPromise();
       
-      // Handle possible undefined by providing fallbacks
       const stats: WorkEntryStatsToday = {
         totalActiveEmployees: statsResponse?.totalActiveEmployees ?? 0,
         submittedToday: statsResponse?.submittedToday ?? 0,
@@ -70,7 +68,10 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
         const employeeId = await this.getEmployeeIdByName(emp.name);
         if (employeeId) {
           const entries = await this.workEntryService.getEntries(employeeId).toPromise();
-          workEntriesMap[emp.name] = entries || []; // Handle possible undefined
+          workEntriesMap[emp.name] = (entries || []).map(entry => ({
+            ...entry,
+            attachments: entry.attachments || []
+          }));
         }
       }
 
@@ -112,16 +113,30 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
     this.selectedWorkEntries = [];
   }
 
-  // Define helper method
   getAttachmentUrl(filename: string): string {
     return this.workEntryService.getAttachmentUrl(filename);
+  }
+
+  getFileIcon(mimeType: string): string {
+    if (mimeType.startsWith('image/')) return '🖼️';
+    if (mimeType === 'application/pdf') return '📄';
+    if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+    if (mimeType.includes('excel') || mimeType.includes('sheet')) return '📊';
+    if (mimeType.includes('csv')) return '📈';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📽️';
+    if (mimeType.startsWith('video/')) return '🎬';
+    if (mimeType.startsWith('audio/')) return '🎵';
+    if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('7z')) return '📦';
+    if (mimeType === 'text/plain') return '📄';
+    if (mimeType.includes('json')) return '📋';
+    return '📎';
   }
 
   formatDate(dateString: string): string {
     if (!dateString) return '';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
-    return date.toLocaleDateString('en-GB'); // DD/MM/YYYY
+    return date.toLocaleDateString('en-GB');
   }
 
   private resetStats(): void {
@@ -141,7 +156,6 @@ export class WorkEntrySummaryTodayComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Define getToday as a method
   private getToday(): string {
     return new Date().toISOString().split('T')[0];
   }

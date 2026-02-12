@@ -32,8 +32,19 @@ app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 // SERVE UPLOADS STATICALLY 
 const uploadsDir = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(uploadsDir, {
-  setHeaders: (res) => {
-    res.set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+  setHeaders: (res, filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    const mediaExts = ['.mp4', '.mp3', '.wav', '.ogg', '.webm', '.avi'];
+    const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+
+    if (mediaExts.includes(ext)) {
+      res.set('Content-Security-Policy', "default-src 'none'; media-src 'self'; frame-ancestors 'none'");
+    } else if (imageExts.includes(ext)) {
+      res.set('Content-Security-Policy', "default-src 'none'; img-src 'self'; frame-ancestors 'none'");
+    } else {
+      res.set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    }
+
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('Cache-Control', 'no-store, max-age=0');
   }

@@ -136,17 +136,38 @@
           </div>
           <p class="entry-desc">{{ entry.description }}</p>
           
-          <!-- ATTACHMENT DISPLAY -->
-          <div *ngIf="entry.attachment_filename" class="attachment-preview">
-            <a 
-              [href]="getAttachmentUrl(entry.attachment_filename)" 
-              target="_blank"
-              rel="noopener noreferrer"
-              class="attachment-link"
-            >
-              📎 View Attachment
-            </a>
-            <span class="mime-type">{{ entry.attachment_mime_type?.toUpperCase() }}</span>
+          <!-- Multiple Attachments Display -->
+          <div *ngIf="entry.attachments?.length" class="attachments-grid">
+            <div class="attachments-header">
+              📎 Attachments ({{ entry.attachments?.length || 0 }})
+            </div>
+            <div class="attachments-list">
+              <div class="attachment-item" *ngFor="let att of entry.attachments">
+                <div class="attachment-icon">
+                  {{ getFileIcon(att.mime_type) }}
+                </div>
+                <div class="attachment-info">
+                  <div class="attachment-name">{{ att.original_name }}</div>
+                  <div class="attachment-meta">
+                    {{ workEntryService.formatFileSize(att.file_size) }} • 
+                    {{ att.mime_type.split('/')[1] | uppercase }}
+                  </div>
+                </div>
+                <a 
+                  [href]="getAttachmentUrl(att.filename)" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="attachment-view-btn"
+                  title="View/Open"
+                >
+                  View
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!entry.attachments?.length" class="no-attachments">
+            No attachments
           </div>
         </div>
       </div>
