@@ -25,25 +25,45 @@ const storage = multer.diskStorage({
   }
 });
 
-// Strict file validation
+// Extended file validation - ALL requested types
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
-    'image/jpeg', 'image/png', 'application/pdf',
-    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain'
+    // Images
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    // Documents
+    'application/pdf',
+    'application/msword', 
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'text/csv', // .csv
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+    // Text
+    'text/plain', 'text/html', 'text/markdown',
+    // Video
+    'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo',
+    // Audio
+    'audio/mpeg', 'audio/wav', 'audio/ogg',
+    // Archives
+    'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed',
+    // Other
+    'application/json'
   ];
   
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Allowed: JPG, PNG, PDF, DOC/X, XLS/X, TXT'));
+    cb(new Error('Invalid file type. Allowed: Images, PDF, DOC/X, XLS/X, CSV, PPT/X, TXT, MP4, MP3, ZIP, etc.'));
   }
 };
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { 
+    fileSize: 100 * 1024 * 1024, // 100MB max per file
+    files: 5 // Max 5 files per request
+  },
   fileFilter
 });
 
@@ -75,50 +95,75 @@ router.get('/', async (req, res) => {
 
 /**
  * POST /api/work-entries
+ * Create work entry WITH attachments in single request
  */
-router.post('/', upload.single('attachment'), async (req, res) => {
+router.post('/', upload.array('attachments', 5), async (req, res) => {
+  const { project, description, hours, date, employeeId } = req.body;
+
+  if (!project || !description || !hours || !date || !employeeId) {
+    // Cleanup orphaned files
+    if (req.files) {
+      req.files.forEach(file => {
+        fs.unlink(path.join(UPLOAD_DIR, file.filename)).catch(() => {});
+      });
+    }
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
   try {
-    const { project, description, hours, date, employeeId } = req.body;
-    
-    // Validate required fields
-    if (!project || !description || !hours || !date || !employeeId) {
-      // Cleanup orphaned file on validation error
-      if (req.file) await fs.unlink(path.join(UPLOAD_DIR, req.file.filename)).catch(() => {});
-      return res.status(400).json({ message: 'Missing required fields' });
+    // Validate attachments (if any provided)
+    if (req.files && req.files.length > 0) {
+      // Check file count
+      if (req.files.length > 5) {
+        req.files.forEach(file => {
+          fs.unlink(path.join(UPLOAD_DIR, file.filename)).catch(() => {});
+        });
+        return res.status(400).json({ message: 'Maximum 5 attachments allowed' });
+      }
     }
 
-    // Require attachments
-    if (!req.file) {
-      return res.status(400).json({ message: 'Attachment file is required' });
-    }
-
-    // Prepare attachment metadata
-    const attachmentData = req.file 
-      ? { 
-          attachment_filename: req.file.filename,
-          attachment_mime_type: req.file.mimetype 
-        } 
-      : {};
-
+    // Create work entry first
     const newEntry = await WorkEntry.create({
       project,
       description,
       hours,
       date,
-      employeeId,
-      attachment_filename: req.file.filename,
-      attachment_mime_type: req.file.mimetype
+      employeeId
     });
 
-    res.status(201).json(newEntry);
+    // Add attachments if provided
+    const savedAttachments = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const attachment = await WorkEntry.addAttachment(newEntry.id, {
+          filename: file.filename,
+          original_name: file.originalname,
+          mime_type: file.mimetype,
+          file_size: file.size
+        });
+        savedAttachments.push(attachment);
+      }
+    }
+
+    res.status(201).json({
+      ...newEntry,
+      attachments: savedAttachments
+    });
   } catch (err) {
-    // Cleanup file on any error
-    if (req.file) await fs.unlink(path.join(UPLOAD_DIR, req.file.filename)).catch(() => {});
+    // Cleanup on error
+    if (req.files) {
+      req.files.forEach(file => {
+        fs.unlink(path.join(UPLOAD_DIR, file.filename)).catch(() => {});
+      });
+    }
     
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'File too large. Max 200MB allowed.' });
+      return res.status(400).json({ message: 'File too large. Max 100MB per file.' });
     }
-    if (err.message.includes('Invalid file type')) {
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({ message: 'Maximum 5 files allowed.' });
+    }
+    if (err.message && err.message.includes('Invalid file type')) {
       return res.status(400).json({ message: err.message });
     }
     
@@ -128,7 +173,8 @@ router.post('/', upload.single('attachment'), async (req, res) => {
 });
 
 /**
- * DELETE /api/work-entries/:id?employeeId=123
+ * DELETE /api/work-entries/:id
+ * Delete work entry (attachments auto-deleted via CASCADE)
  */
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
@@ -139,22 +185,11 @@ router.delete('/:id', async (req, res) => {
   }
 
   try {
-    // First get the entry to check if it has an attachment
-    const entry = await WorkEntry.findById(id);
-    if (entry && entry.employee_id == employeeId) {
-      // Delete attachment file if exists
-      if (entry.attachment_filename) {
-        await fs.unlink(path.join(UPLOAD_DIR, entry.attachment_filename)).catch(() => {});
-      }
-      
-      const result = await WorkEntry.deleteByEmployeeAndId(id, employeeId);
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Entry not found or not authorized' });
-      }
-      res.json({ message: 'Entry deleted successfully' });
-    } else {
+    const result = await WorkEntry.deleteByEmployeeAndId(id, employeeId);
+    if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Entry not found or not authorized' });
     }
+    res.json({ message: 'Entry deleted successfully' });
   } catch (err) {
     console.error('DELETE work entry error:', err);
     res.status(500).json({ message: 'Failed to delete work entry' });

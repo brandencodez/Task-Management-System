@@ -287,3 +287,77 @@
   color: #888;
   font-style: italic;
 }
+
+/* ===== ATTACHMENTS IN MODAL ===== */
+.attachments-grid {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.attachments-header {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.attachment-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-meta {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.attachment-view-btn {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.attachment-view-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
