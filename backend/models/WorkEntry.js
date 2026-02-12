@@ -5,13 +5,20 @@ class WorkEntry {
    * Create a new work entry
    */
   static async create(workEntryData) {
-    const { project, description, hours, date, employeeId } = workEntryData;
+    const { 
+      project, 
+      description, 
+      hours, 
+      date, 
+      employeeId,
+      attachment_filename,
+      attachment_mime_type
+    } = workEntryData;
 
-    // Removed 'progress' column
     const query = `
       INSERT INTO work_entries 
-      (project, description, hours, date, employee_id)
-      VALUES (?, ?, ?, ?, ?)
+      (project, description, hours, date, employee_id, attachment_filename, attachment_mime_type)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await db.execute(query, [
@@ -19,10 +26,21 @@ class WorkEntry {
       description,
       hours,
       date,
-      employeeId
+      employeeId,
+      attachment_filename || null,
+      attachment_mime_type || null
     ]);
 
-    return { id: result.insertId, ...workEntryData };
+    return {
+      id: result.insertId,
+      project,
+      description,
+      hours,
+      date,
+      employeeId,
+      attachment_filename,
+      attachment_mime_type
+    };
   }
 
   /**
@@ -56,7 +74,6 @@ class WorkEntry {
   static async update(id, workEntryData) {
     const { project, description, hours, date } = workEntryData;
 
-    // Removed 'progress' from UPDATE
     const query = `
       UPDATE work_entries 
       SET project = ?, description = ?, hours = ?, date = ?
@@ -123,7 +140,6 @@ class WorkEntry {
   static async updateByEmployeeAndId(id, employeeId, updateData) {
     const { project, description, hours, date } = updateData;
     
-    // Removed 'progress' from UPDATE
     const query = `
       UPDATE work_entries 
       SET project = ?, description = ?, hours = ?, date = ?

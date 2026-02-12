@@ -8,11 +8,9 @@
 
     <!-- Project -->
     <div class="form-group">
-      <label>Project</label>
+      <label>Project <span class="required">*</span></label>
       <select [(ngModel)]="project">
         <option value="">Select project</option>
-
-        <!-- Department-based projects -->
         <option *ngFor="let p of assignedProjects" [value]="p.name">
           {{ p.name }}
         </option>
@@ -21,31 +19,53 @@
 
     <!-- Hours -->
     <div class="form-group">
-      <label>Hours Worked</label>
+      <label>Hours Worked <span class="required">*</span></label>
       <input
         type="number"
         placeholder="e.g. 4"
         [(ngModel)]="hours"
         min="0"
         max="24"
+        required
       />
     </div>
 
     <!-- Date -->
     <div class="form-group">
-      <label>Date</label>
+      <label>Date <span class="required">*</span></label>
       <input type="date" [(ngModel)]="date" readonly />
     </div>
     
     <!-- Description -->
     <div class="form-group full-width">
-      <label>Work Description</label>
+      <label>Work Description <span class="required">*</span></label>
       <textarea
         placeholder="Describe what you worked on today..."
-        [(ngModel)]="description">
+        [(ngModel)]="description"
+        required>
       </textarea>
     </div>
 
+    <!-- Attachment Upload -->
+    <div class="form-group full-width">
+      <label>Attachment <span class="required">*</span></label>
+      <div class="file-upload-container">
+        <input 
+          type="file" 
+          id="attachmentInput"
+          #attachmentInput
+          (change)="onFileSelected($event)"
+          accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+          class="file-input"
+        />
+        <label for="attachmentInput" class="file-label">
+          <span *ngIf="!selectedFileName">📎 Choose file (Max 200 MB)</span>
+          <span *ngIf="selectedFileName" class="file-selected">✅ {{ selectedFileName }}</span>
+        </label>
+      </div>
+      <small class="file-hint">Required: Images, PDF, DOC/X, XLS/X, TXT | Max 200 MB</small>
+    </div>
+ 
     <!-- Submit -->
     <div class="form-group full-width">
       <button class="add-btn" (click)="addEntry()">
@@ -66,12 +86,25 @@
       </div>
 
       <p class="entry-desc">{{ entry.description }}</p>
-        <div class="actions">
-          <!-- ✅ ONLY DELETE -->
-          <button class="delete" (click)="deleteEntry(entry.id)">
-            Delete
-          </button>
-        </div>
+      
+      <!-- Attachment Display -->
+      <div *ngIf="entry.attachment_filename" class="attachment-section">
+        <a 
+          [href]="getAttachmentUrl(entry.attachment_filename)" 
+          target="_blank"
+          rel="noopener noreferrer"
+          class="attachment-link"
+          title="Open attachment"
+        >
+          📎 {{ getAttachmentName(entry.attachment_filename) }}
+        </a>
+        <span class="mime-type">{{ entry.attachment_mime_type?.toUpperCase() }}</span>
+      </div>
+
+      <div class="actions">
+        <button class="delete" (click)="deleteEntry(entry.id)">
+          Delete
+        </button>
       </div>
 
     </div>
@@ -81,3 +114,4 @@
   <p class="empty-text" *ngIf="!entries.length">
     No work entries yet. Start by adding one above 👆
   </p>
+</div>
