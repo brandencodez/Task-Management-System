@@ -2,18 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path'); 
 require('dotenv').config();
 
 // Routes
 const employeeRoutes = require('./routes/employees');
 const projectRoutes = require('./routes/projects');
 const authRoutes = require('./routes/auth');
-const AdminRoutes = require('./routes/admin')
+const AdminRoutes = require('./routes/admin');
 const reminderRoutes = require('./routes/reminder');
 const workEntriesRouter = require('./routes/work-entries');
 const DepartmentRoutes = require('./routes/department');
 const attendanceRoutes = require('./routes/attendance');
 const assignmentRoutes = require('./routes/assignments');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -24,8 +26,18 @@ app.use(cors({
   credentials: true
 }));
 app.use(morgan('combined'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: true, limit: '200mb' }));
+
+// SERVE UPLOADS STATICALLY 
+const uploadsDir = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(uploadsDir, {
+  setHeaders: (res) => {
+    res.set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Cache-Control', 'no-store, max-age=0');
+  }
+}));
 
 // Routes
 app.use('/api/employees', employeeRoutes);
@@ -52,5 +64,6 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`📁 Uploads served at: http://localhost:${PORT}/uploads/`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
 });

@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -21,12 +21,15 @@ import { WorkEntryService } from '../../../../../shared/services/work-entry.serv
 export class DailyWorkEntryComponent implements OnInit {
 
   @Output() entriesChange = new EventEmitter<WorkEntry[]>();
+  @ViewChild('attachmentInput') attachmentInput!: ElementRef<HTMLInputElement>;
 
   assignedProjects: Project[] = [];
   project = '';
   description = '';
   hours: number | null = null;
   date = this.today();
+  selectedFile: File | null = null;
+  selectedFileName: string = '';
 
   entries: WorkEntry[] = [];
   private currentEmployeeId: string | null = null;
@@ -44,10 +47,6 @@ export class DailyWorkEntryComponent implements OnInit {
     this.loadEmployeeInfo();
   }
 
-  /**
-   * Load current logged-in employee information
-   * Gets employee ID and department ID for filtering projects
-   */
   private loadEmployeeInfo(): void {
     const currentUser = this.userService.getCurrentUser();
     if (!currentUser) return;
@@ -77,10 +76,6 @@ export class DailyWorkEntryComponent implements OnInit {
     });
   }
 
-  /**
-   * Load projects assigned to the logged-in user's department
-   * Filters projects based on department_id match
-   */
   private loadProjectsForLoggedUser(): void {
     if (this.currentUserDepartmentId === null) return;
 
@@ -88,14 +83,10 @@ export class DailyWorkEntryComponent implements OnInit {
       this.assignedProjects = projects.filter((p: Project) => 
         p.department_id === this.currentUserDepartmentId
       );
-      // Manually trigger change detection after loading projects
       this.cdr.detectChanges();
     });
   }
 
-  /**
-   * Load all work entries for the current employee
-   */
   private loadEntries(): void {
     if (!this.currentEmployeeId) {
       console.warn('Cannot load entries: employeeId not available');
@@ -105,7 +96,6 @@ export class DailyWorkEntryComponent implements OnInit {
       next: (entries) => {
         this.entries = entries;
         this.emitEntries();
-        // Trigger change detection after loading entries
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -115,54 +105,85 @@ export class DailyWorkEntryComponent implements OnInit {
     });
   }
 
-  /**
-   * Add a new work entry
-   * Validates all required fields before submitting
-   */
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      const file = input.files[0];
+      
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File too large! Max 10MB allowed.');
+        this.resetFileInput();
+        return;
+      }
+      
+      const validTypes = [
+        'image/jpeg', 'image/png', 'application/pdf',
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain'
+      ];
+      
+      if (!validTypes.includes(file.type)) {
+        alert('Invalid file type! Please upload JPG, PNG, PDF, DOC/X, XLS/X, or TXT.');
+        this.resetFileInput();
+        return;
+      }
+      
+      this.selectedFile = file;
+      this.selectedFileName = file.name;
+    }
+  }
+
+  private resetFileInput(): void {
+    this.selectedFile = null;
+    this.selectedFileName = '';
+    if (this.attachmentInput) {
+      this.attachmentInput.nativeElement.value = '';
+    }
+  }
+
   addEntry(): void {
+    // Validate all fields INCLUDING mandatory attachment
     if (!this.project || !this.description || !this.hours || !this.currentEmployeeId) {
       alert('Please fill all required fields and ensure you are logged in.');
       return;
     }
 
-    const newEntry = {
-      project: this.project,
-      description: this.description,
-      hours: this.hours,
-      date: this.date,
-      employeeId: this.currentEmployeeId 
-    };
+    if (!this.selectedFile) {
+      alert('Attachment is required. Please upload a file.');
+      return;
+    }
 
-    console.log('Sending to server:', newEntry);
+    const formData = new FormData();
+    formData.append('project', this.project);
+    formData.append('description', this.description);
+    formData.append('hours', this.hours!.toString());
+    formData.append('date', this.date);
+    formData.append('employeeId', this.currentEmployeeId);
+    formData.append('attachment', this.selectedFile, this.selectedFile.name);
 
-    this.workEntryService.createEntry(newEntry).subscribe({
+    this.workEntryService.createEntry(formData).subscribe({
       next: (createdEntry) => {
         this.entries.unshift(createdEntry); 
         this.emitEntries();
         this.resetForm();
-        // Trigger change detection after adding entry
         this.cdr.detectChanges();
         alert('Work entry added successfully!');
       },
       error: (err) => {
         console.error('Failed to create work entry:', err);
-        console.error('Error details:', err.error);
-        alert('Failed to save work entry. Please try again.');
+        const msg = err?.error?.message || 'Failed to save work entry. Please try again.';
+        alert(msg);
       }
     });
   }
 
-  /**
-   * Delete a work entry by ID
-   * Only deletes if it belongs to the current employee
-   */
   deleteEntry(id: number): void {
     if (!this.currentEmployeeId) return;
     this.workEntryService.deleteEntry(id, this.currentEmployeeId).subscribe({
       next: () => {
         this.entries = this.entries.filter(e => e.id !== id);
         this.emitEntries();
-        // Trigger change detection after deleting entry
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -172,26 +193,18 @@ export class DailyWorkEntryComponent implements OnInit {
     });
   }
 
-  /**
-   * Emit entries to parent component
-   */
   private emitEntries(): void {
     this.entriesChange.emit([...this.entries]);
   }
 
-  /**
-   * Reset form fields to default values
-   */
   private resetForm(): void {
     this.project = '';
     this.description = '';
     this.hours = null;
     this.date = this.today();
+    this.resetFileInput();
   }
 
-  /**
-   * Get today's date in YYYY-MM-DD format
-   */
   private today(): string {
     const now = new Date();
     const year = now.getFullYear();
@@ -200,9 +213,6 @@ export class DailyWorkEntryComponent implements OnInit {
     return `${year}-${month}-${day}`; 
   }
 
-  /**
-   * Format date for display in DD-MM-YYYY format
-   */
   formatDateForDisplay(dateString: string): string {
     if (!dateString) return '';
     
@@ -214,5 +224,13 @@ export class DailyWorkEntryComponent implements OnInit {
     const year = date.getFullYear();
     
     return `${day}-${month}-${year}`;
+  }
+
+  getAttachmentUrl(filename: string): string {
+    return this.workEntryService.getAttachmentUrl(filename);
+  }
+
+  getAttachmentName(filename: string): string {
+    return filename.split('-').slice(1).join('-') || filename;
   }
 }

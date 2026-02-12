@@ -60,27 +60,45 @@
   resize: vertical;
 }
 
-/* ===== PROGRESS ===== */
-.progress-group {
-  grid-column: span 2;
+/* ===== FILE UPLOAD ===== */
+.file-upload-container {
+  position: relative;
+  width: 100%;
 }
 
-.progress-input {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.file-input {
+  position: absolute;
+  left: -9999px;
 }
 
-.progress-input input[type="range"] {
-  flex: 1;
-}
-
-.progress-value {
+.file-label {
+  display: block;
+  padding: 10px 15px;
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
   font-size: 14px;
-  font-weight: 600;
-  color: #2563eb;
-  min-width: 48px;
-  text-align: right;
+  color: #4b5563;
+}
+
+.file-label:hover {
+  background: #e5e7eb;
+  border-color: #2563eb;
+}
+
+.file-selected {
+  color: #0e7490;
+  font-weight: 500;
+}
+
+.file-hint {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+  display: block;
 }
 
 /* ===== ADD / UPDATE BUTTON ===== */
@@ -138,50 +156,43 @@
   margin: 8px 0;
 }
 
-/* Progress bar */
-.progress-bar {
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 999px;
-  overflow: hidden;
-  margin: 10px 0;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #22c55e);
-  transition: width 0.3s ease;
-}
-
-/* Footer */
-.entry-footer {
+/* Attachment Section */
+.attachment-section {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 13px;
-  color: #374151;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.attachment-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s;
+}
+
+.attachment-link:hover {
+  opacity: 0.85;
+  text-decoration: underline;
+}
+
+.mime-type {
+  font-size: 11px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 /* ===== ACTION BUTTONS ===== */
 .actions {
   display: flex;
   gap: 8px;
-}
-
-/* Edit button (BLUE) */
-.edit {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.edit:hover {
-  background: #1e40af;
 }
 
 /* Delete button (RED) */
@@ -205,4 +216,9 @@
   font-style: italic;
   text-align: center;
   margin-top: 20px;
+}
+
+.required {
+  color: #222121;
+  font-weight: bold;
 }

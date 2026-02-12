@@ -4,4 +4,6 @@ export interface WorkEntry {
   description: string;
   hours: number;
   date: string;
+  attachment_filename?: string;
+  attachment_mime_type?: string;
 }
