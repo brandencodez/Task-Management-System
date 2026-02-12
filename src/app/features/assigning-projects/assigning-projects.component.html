@@ -1,0 +1,152 @@
+<div class="assigning-page">
+  <div class="page-header">
+    <div>
+      <h2>Assigning Project</h2>
+      <p class="subtitle">Assign employees to projects by department.</p>
+    </div>
+  </div>
+
+  <div class="department-card">
+    <label for="departmentSelect">Department</label>
+    <select
+      id="departmentSelect"
+      [(ngModel)]="selectedDepartmentId"
+      (change)="onDepartmentChange()"
+    >
+      <option [ngValue]="null">Select a department</option>
+      <option *ngFor="let dept of departments" [ngValue]="dept.id">
+        {{ dept.name }}
+      </option>
+    </select>
+  </div>
+
+  <div *ngIf="selectedDepartmentId" class="assignment-panels">
+    <div class="panel project-panel">
+      <div class="panel-header">
+        <h3>Projects</h3>
+        <select
+          class="project-select"
+          [ngModel]="activeProjectId"
+          (ngModelChange)="setActiveProject($event)"
+        >
+          <option [ngValue]="null">Select a project</option>
+          <option *ngFor="let project of filteredProjects" [ngValue]="project.id">
+            {{ project.name }}
+          </option>
+        </select>
+      </div>
+
+      <ul class="list">
+        <li
+          *ngFor="let project of filteredProjects"
+          [class.active]="project.id === activeProjectId"
+          (click)="setActiveProject(project.id)"
+        >
+          <div class="list-main">
+            <span class="title">{{ project.name }}</span>
+            <span class="meta">{{ project.status }}</span>
+          </div>
+        </li>
+      </ul>
+
+      <div
+        class="drop-zone"
+        (dragover)="allowDrop($event)"
+        (drop)="onDrop($event)"
+      >
+        <div class="drop-header">
+          <h4>Assigned Employees</h4>
+          <span class="drop-subtitle">{{ getActiveProjectName() }}</span>
+        </div>
+
+        <div *ngIf="!activeProjectId" class="empty-state">
+          Select a project to start assigning employees.
+        </div>
+
+        <ul *ngIf="activeProjectId" class="assigned-list">
+          <li *ngFor="let employee of getAssignedEmployees()">
+            <div class="list-main">
+              <span class="title">{{ employee.name }}</span>
+              <span class="meta">{{ employee.position }}</span>
+            </div>
+            <button class="btn-remove" (click)="removeEmployeeFromProject(employee.id)">
+              Remove
+            </button>
+          </li>
+          <li *ngIf="getAssignedEmployees().length === 0" class="empty">
+            Drop employees here or use Add.
+          </li>
+        </ul>
+
+        <button
+          class="btn-primary"
+          (click)="saveAssignments()"
+          [disabled]="!activeProjectId || isSaving"
+        >
+          {{ isSaving ? 'Saving...' : 'Save Assignments' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="panel employee-panel">
+      <div class="panel-header">
+        <h3>Employees</h3>
+        <p class="hint">Drag employees into the project list or click Add.</p>
+      </div>
+
+      <ul class="list">
+        <li
+          *ngFor="let employee of filteredEmployees"
+          [class.disabled]="isEmployeeAssigned(employee.id)"
+          draggable="true"
+          (dragstart)="onDragStart(employee)"
+        >
+          <div class="list-main">
+            <span class="title">{{ employee.name }}</span>
+            <span class="meta">{{ employee.position }}</span>
+          </div>
+          <button
+            class="btn-add"
+            (click)="addEmployeeToProject(employee)"
+            [disabled]="isEmployeeAssigned(employee.id)"
+          >
+            Add
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div *ngIf="selectedDepartmentId" class="recent-assignments">
+    <div class="section-header">
+      <h3>Recent Assignments</h3>
+    </div>
+
+    <ul class="assignment-history">
+      <li *ngFor="let group of assignmentGroups">
+        <div class="history-main">
+          <div class="history-title">
+            <span class="project-name">{{ group.project_name }}</span>
+            <span class="timestamp">{{ formatDate(group.latest_assigned_at) }}</span>
+          </div>
+          <div class="history-meta">
+            {{ group.employees.length }} employee(s)
+          </div>
+          <div class="chips">
+            <span class="chip" *ngFor="let employee of group.employees">
+              {{ employee.name }}
+            </span>
+          </div>
+        </div>
+        <button class="btn-edit" (click)="editAssignmentGroup(group)">Edit</button>
+      </li>
+      <li *ngIf="assignmentGroups.length === 0" class="empty">
+        No assignments created yet.
+      </li>
+    </ul>
+  </div>
+
+  <div *ngIf="!selectedDepartmentId" class="empty-state">
+    Select a department to start assigning projects.
+  </div>
+</div>

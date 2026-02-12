@@ -130,6 +130,14 @@ export const routes: Routes = [
             .then(m => m.ProjectListComponent)
       },
 
+      // 🔹 Assigning Projects
+      {
+        path: 'assigning-projects',
+        loadComponent: () =>
+          import('./features/assigning-projects/assigning-projects.component')
+            .then(m => m.AssigningProjectsComponent)
+      },
+
       // 🔔 Reminders
       {
         path: 'reminders',
