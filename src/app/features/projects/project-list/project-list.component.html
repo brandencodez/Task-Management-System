@@ -1,14 +1,18 @@
 <div class="container">
+
   <div class="page-header">
     <h2>Project Management</h2>
     <button class="btn btn-primary" (click)="openAddForm()">Add Project</button>
   </div>
 
-  <!-- Project Form (Add/Edit) -->
+  <!-- ================= ADD / EDIT FORM ================= -->
   @if (showForm) {
     <div class="card form-card">
       <h3>{{ isEditing ? 'Edit Project' : 'Add Project' }}</h3>
+
       <form (ngSubmit)="saveProject()" class="form-grid">
+
+        <!-- Project Name -->
         <div class="form-group">
           <label class="form-label">Project Name *</label>
           <input
@@ -16,20 +20,20 @@
             name="name"
             required
             class="form-control"
-            placeholder="e.g., Website Redesign"
           />
         </div>
 
+        <!-- Project Type -->
         <div class="form-group">
           <label class="form-label">Project Type</label>
           <input
             [(ngModel)]="currentProject.projectType"
             name="projectType"
             class="form-control"
-            placeholder="Enter project type"
           />
         </div>
 
+        <!-- Department -->
         <div class="form-group">
           <label class="form-label">Department *</label>
           <select
@@ -45,112 +49,81 @@
           </select>
         </div>
 
-        <!-- COMPACT CLIENT DETAILS SECTION -->
-        <div class="form-group client-section">
-          <label class="form-label">Client Details *</label>
+        <!-- ================= CLIENT DETAILS ================= -->
 
-          <!-- Company Name -->
-          <div class="form-group">
-            <input
-              [(ngModel)]="currentProject.clientDetails.companyName"
-              name="companyName"
-              class="form-control"
-              placeholder="Company Name *"
-              required
-            />
-          </div>
+        <div class="form-group client-section">
+          <label class="form-label">Company Details *</label>
+
+          <!-- Company -->
+          <input
+            [(ngModel)]="currentProject.clientDetails.companyName"
+            name="companyName"
+            required
+            class="form-control"
+            placeholder="Company Name *"
+          />
 
           <!-- Address -->
-          <div class="form-group">
-            <input
-              [(ngModel)]="currentProject.clientDetails.address"
-              name="address"
-              class="form-control"
-              placeholder="Address *"
-            />
-          </div>
+          <input
+            [(ngModel)]="currentProject.clientDetails.address"
+            name="address"
+            class="form-control"
+            placeholder="Address"
+          />
 
-          <!-- Multiple Contacts -->
+          <!-- Contacts -->
           <div class="contacts-container">
             @for (contact of currentProject.clientDetails.contacts; track $index) {
+
               <div class="contact-row">
-                <!-- Contact Name -->
-                <div class="form-group contact-name">
-                  <input
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index].name"
-                    [name]="'contactName' + $index"
-                    class="form-control"
-                    placeholder="Contact Name *"
-                    required
-                  />
-                </div>
 
-                <!-- Designation -->
-                <div class="form-group contact-designation">
-                  <select
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index].designation"
-                    [name]="'contactDesignation' + $index"
-                    class="form-control"
-                    required
-                  >
-                    <option value="">Select Designation *</option>
+                <input
+                  [(ngModel)]="currentProject.clientDetails.contacts[$index].name"
+                  [name]="'contactName' + $index"
+                  class="form-control"
+                  placeholder="Contact Name *"
+                  required
+                />
 
-                    <!-- Most common defaults -->
-                    <option value="Owner">Owner</option>
-                    <option value="Founder">Founder</option>
-                    <option value="CEO">CEO</option>
-                    <option value="Managing Director">Managing Director</option>
-                    <option value="Director">Director</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Project Manager">Project Manager</option>
-                    <option value="Team Lead">Team Lead</option>
-                    <option value="Consultant">Consultant</option>
-                    <option value="Administrator">Administrator</option>
-                    <option value="Coordinator">Coordinator</option>
+                <select
+                  [(ngModel)]="currentProject.clientDetails.contacts[$index].designation"
+                  [name]="'contactDesignation' + $index"
+                  class="form-control"
+                >
+                  <option value="">Designation</option>
+                  <option value="Owner">Owner</option>
+                  <option value="Founder">Founder</option>
+                  <option value="CEO">CEO</option>
+                  <option value="Director">Director</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Project Manager">Project Manager</option>
+                  <option value="Team Lead">Team Lead</option>
+                </select>
 
-                    <!-- Fallback -->
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+                <input
+                  [(ngModel)]="currentProject.clientDetails.contacts[$index]['contact for']"
+                  [name]="'contactFor' + $index"
+                  class="form-control"
+                  placeholder="Contact For"
+                />
 
-                <!-- Contact For -->
-                <div class="form-group contact-for">
-                  <input
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index]['contact for']"
-                    [name]="'contactFor' + $index"
-                    class="form-control"
-                    placeholder="Contact For *"
-                    required
-                  />
-                </div>
+                <input
+                  type="email"
+                  [(ngModel)]="currentProject.clientDetails.contacts[$index].email"
+                  [name]="'contactEmail' + $index"
+                  class="form-control"
+                  placeholder="Email"
+                />
 
-                <!-- Email -->
-                <div class="form-group contact-email">
-                  <input
-                    type="email"
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index].email"
-                    [name]="'contactEmail' + $index"
-                    class="form-control"
-                    placeholder="Email *"
-                    required
-                  />
-                </div>
+                <input
+                  [(ngModel)]="currentProject.clientDetails.contacts[$index].phone"
+                  [name]="'contactPhone' + $index"
+                  class="form-control"
+                  placeholder="Phone *"
+                  maxlength="10"
+                  required
+                />
 
-                <!-- Phone -->
-                <div class="form-group contact-phone">
-                  <input 
-                    [(ngModel)]="currentProject.clientDetails.contacts[$index].phone" 
-                    [name]="'contactPhone' + $index" 
-                    class="form-control"
-                    placeholder="Phone *"
-                    required
-                    maxlength="10"
-                    pattern="[0-9]{10}"
-                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"
-                  />
-                </div>
-                
-                <!-- Remove Button -->
                 @if (currentProject.clientDetails.contacts.length > 1) {
                   <button
                     type="button"
@@ -160,27 +133,32 @@
                     ×
                   </button>
                 }
+
               </div>
             }
 
-            <!-- Add Contact Button -->
-            <button type="button" class="btn-add-contact" (click)="addClientContact()">
+            <button
+              type="button"
+              class="btn-add-contact"
+              (click)="addClientContact()"
+            >
               + Add Contact
             </button>
           </div>
         </div>
 
+        <!-- Project Brief -->
         <div class="form-group">
           <label class="form-label">Project Brief</label>
           <textarea
             [(ngModel)]="currentProject.projectBrief"
             name="projectBrief"
             class="form-control"
-            rows="4"
-            placeholder="Describe project scope, requirements, deliverables"
+            rows="3"
           ></textarea>
         </div>
 
+        <!-- Dates -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Start Date *</label>
@@ -205,6 +183,7 @@
           </div>
         </div>
 
+        <!-- Status -->
         <div class="form-group">
           <label class="form-label">Status</label>
           <select [(ngModel)]="currentProject.status" name="status" class="form-control">
@@ -214,75 +193,78 @@
           </select>
         </div>
 
+        <!-- Actions -->
         <div class="form-actions">
           <button type="submit" class="btn btn-success">
             {{ isEditing ? 'Update Project' : 'Save Project' }}
           </button>
-          <button type="button" class="btn btn-outline" (click)="cancelForm()">Cancel</button>
+
+          <button type="button" class="btn btn-outline" (click)="cancelForm()">
+            Cancel
+          </button>
         </div>
+
       </form>
     </div>
   }
 
-  <!-- Projects by Status -->
+  <!-- ================= PROJECTS LIST ================= -->
+
   @for (status of statuses; track status) {
     @if (getProjectsByStatus(status).length > 0) {
+
       <div class="status-section">
-        <h3 class="section-title">{{ status }} Projects</h3>
+
+        <!-- Gradient Capsule (UNCHANGED) -->
+        <h3 
+          class="section-title"
+          [ngClass]="{
+            'upcoming-title': status === 'UPCOMING',
+            'ongoing-title': status === 'ONGOING',
+            'completed-title': status === 'COMPLETED'
+          }"
+        >
+          {{ status }} Projects
+        </h3>
+
         <div class="projects-grid">
+
           @for (project of getProjectsByStatus(status); track project.id) {
+
             <div class="project-card">
+
               <div class="project-header">
                 <h4>{{ project.name }}</h4>
-                <span class="badge badge-{{ status.toLowerCase() }}">{{ status }}</span>
+                <span class="badge badge-{{ status.toLowerCase() }}">
+                  {{ status }}
+                </span>
               </div>
 
               <div class="project-details">
                 <p><strong>Type:</strong> {{ project.projectType || 'Not specified' }}</p>
-                <div class="client-details">
-                  <p>
-                    <strong>Company:</strong>
-                    {{ project.clientDetails.companyName || 'Not specified' }}
-                  </p>
-                  @for (contact of project.clientDetails.contacts; track $index) {
-                    <p>
-                      <strong>Contact {{ $index + 1 }}:</strong> {{ contact.name }}
-                      @if (contact.designation) {
-                        ({{ contact.designation }})
-                      }
-                      @if (contact['contact for']) {
-                        - {{ contact['contact for'] }}
-                      }
-                      @if (contact.email || contact.phone) {
-                        ({{ contact.email || contact.phone }})
-                      }
-                    </p>
-                  }
-                  @if (project.clientDetails.address) {
-                    <p><strong>Address:</strong> {{ project.clientDetails.address }}</p>
-                  }
-                </div>
-                <p><strong>Department:</strong> {{ project.department_name || 'Not specified' }}</p>
+                <p><strong>Company:</strong> {{ project.clientDetails.companyName }}</p>
+                <p><strong>Department:</strong> {{ project.department_name }}</p>
                 <p>
-                  <strong>Duration:</strong> {{ formatDateForDisplay(project.startDate) }} to {{ formatDateForDisplay(project.finishDate) }}
+                  <strong>Duration:</strong>
+                  {{ formatDateForDisplay(project.startDate) }}
+                  to
+                  {{ formatDateForDisplay(project.finishDate) }}
                 </p>
-                <p><strong>Brief: </strong>{{ project.projectBrief || 'No brief provided' }}</p>
+                <p><strong>Brief:</strong> {{ project.projectBrief || 'No brief provided' }}</p>
               </div>
 
               <div class="project-actions">
                 <button class="btn btn-outline" (click)="openEditForm(project)">Edit</button>
                 <button class="btn btn-danger" (click)="deleteProject(project.id)">Delete</button>
               </div>
+
             </div>
+
           }
+
         </div>
       </div>
     }
   }
 
-  @if (projects.length === 0 && !showForm) {
-    <div class="no-results">
-      <p>No projects yet. Click "Add Project" to get started.</p>
-    </div>
-  }
 </div>

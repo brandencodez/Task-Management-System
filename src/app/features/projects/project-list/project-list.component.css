@@ -4,11 +4,15 @@
   padding: 0 1.5rem;
 }
 
+/* ================= HEADER ================= */
+
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 2rem 0;
+  position: relative;
+  z-index: 5;
 }
 
 .page-header h2 {
@@ -17,19 +21,8 @@
   color: var(--secondary);
 }
 
-/* Loading Indicator */
-.loading-indicator {
-  text-align: center;
-  padding: 2rem;
-  background: rgba(37, 99, 235, 0.05);
-  border: 1px solid var(--primary);
-  border-radius: var(--radius-md);
-  margin: 1rem 0;
-  color: var(--primary);
-  font-weight: 500;
-}
+/* ================= FORM ================= */
 
-/* Form Styles */
 .form-card {
   margin-bottom: 2rem;
   position: relative;
@@ -81,115 +74,79 @@
   gap: 1rem;
   margin-top: 1rem;
 }
-.client-section {
-  margin-bottom: 1.5rem;
-}
 
-.client-section .form-label {
-  margin-bottom: 0.75rem;
-}
+/* ================= STATUS SECTION ================= */
 
-/* Contacts Container */
-.contacts-container {
-  background: var(--background);
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  margin-top: 0.75rem;
-
-  width: 100%;
-  max-width: 1000px;      
-  display: flex; 
-  flex-wrap: wrap; 
-  gap: 1rem; 
-
-}
-
-/* Contact Row - Horizontal Layout */
-.contact-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  align-items: end;
-}
-
-
-.contact-row:last-child {
-  margin-bottom: 0;
-}
-
-.contact-name input,
-.contact-email input,
-.contact-phone input {
-  font-size: 0.875rem;
-  padding: 0.625rem 0.875rem; 
-  min-height: 45px;
-  min-width: 174px;
-  box-sizing: border-box; 
-}
-
-/* Remove Contact Button */
-.btn-remove-contact {
-  background: var(--danger);
-  color: white;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  font-weight: bold; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.btn-remove-contact:hover {
-  background: #c82333;
-}
-/* Add Contact Button */
-.btn-add-contact {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 0.625rem 1.25rem; 
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 0.875rem;
-  width: fit-content;
-  margin-top: 1rem;
-}
-
-.btn-add-contact:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-/* Help Text */
-.help-text {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
-  font-style: italic;
-}
-
-/* Status Sections */
 .status-section {
   margin: 3rem 0;
+  position: relative;
+  z-index: 1;
 }
 
+/* ✨ FULL WIDTH ANIMATED TITLE BAR */
 .section-title {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 600;
-  color: var(--text-primary);
   margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--border);
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+
+  animation: slideFadeIn 0.6s ease forwards;
+  opacity: 0;
+  transform: translateY(15px);
 }
 
-/* Projects Grid */
+/* 🟨 UPCOMING (UNCHANGED) */
+.upcoming-title {
+  background: linear-gradient(
+    to right,
+    #facc15 0%,
+    #fde047 30%,
+    #fef3c7 60%,
+    rgba(254, 243, 199, 0.15) 100%
+  );
+  color: #7c2d12;
+}
+
+/* 🔵 ONGOING (CHANGED TO BLUE) */
+.ongoing-title {
+  background: linear-gradient(
+    to right,
+    #2563eb 0%,
+    #3b82f6 30%,
+    #bfdbfe 60%,
+    rgba(219, 234, 254, 0.15) 100%
+  );
+  color: #1e3a8a;
+}
+
+/* 🟢 COMPLETED (NEW GREEN GRADIENT ADDED) */
+.completed-title {
+  background: linear-gradient(
+    to right,
+    #16a34a 0%,
+    #22c55e 30%,
+    #bbf7d0 60%,
+    rgba(220, 252, 231, 0.15) 100%
+  );
+  color: #064e3b;
+}
+
+/* ✨ Smooth Animation */
+@keyframes slideFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= PROJECT CARDS ================= */
+
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -202,6 +159,8 @@
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
   transition: var(--transition);
+  position: relative;
+  z-index: 2;
 }
 
 .project-card:hover {
@@ -243,7 +202,8 @@
   margin-top: 1rem;
 }
 
-/* Status Badges */
+/* ================= BADGES ================= */
+
 .badge {
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
@@ -253,10 +213,11 @@
 }
 
 .badge-upcoming { background-color: #fef3c7; color: #92400e; }
-.badge-ongoing { background-color: #dcfce7; color: #166534; }
-.badge-completed { background-color: #d1fae5; color: #065f46; }
+.badge-ongoing { background-color: #dbeafe; color: #1e3a8a; }   /* Blue */
+.badge-completed { background-color: #dcfce7; color: #065f46; } /* Green */
 
-/* Buttons */
+/* ================= BUTTONS ================= */
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -312,52 +273,41 @@
   transform: translateY(-1px);
 }
 
-/* No Results */
-.no-results {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-secondary);
-  font-style: italic;
-  background: var(--background);
-  border-radius: var(--radius-lg);
+/* ================= ADD CONTACT BUTTON ================= */
+
+.btn-add-contact {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 0.75rem;
 }
 
-/* Responsive */
+.btn-add-contact:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+/* ================= RESPONSIVE ================= */
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .form-grid,
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .projects-grid {
     grid-template-columns: 1fr;
   }
-  
-  /* Responsive Contact Row */
-  .contact-row {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 1.5fr auto;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  align-items: end;
-}
-  
-  .btn-remove-contact {
-    align-self: start;
-    margin-top: 0.5rem;
-  }
-}
-
-.contact-designation select {
-  font-size: 0.800rem;
-  padding: 0.625rem 0.875rem;
-  min-height: 45px;
-  min-width: 174px;
-  box-sizing: border-box;
 }

@@ -7,7 +7,6 @@ import { EmployeeService } from './employee.service';
 import { Department } from '../department/department.model';
 import { DepartmentService } from '../department/department.service';
 
-
 @Component({
   selector: 'app-employee-list',
   standalone: true,
@@ -16,12 +15,13 @@ import { DepartmentService } from '../department/department.service';
   styleUrls: ['./employee-list.component.css']
 })
 export class EmployeeListComponent implements OnInit {
+
   employees: Employee[] = [];
   filteredEmployees: Employee[] = [];
   showAddForm = false;
   editingEmployee: Employee | null = null;
   searchQuery = '';
- departments: Department[] = [];
+  departments: Department[] = [];
 
   newEmployee: Employee = {
     id: 0,
@@ -44,14 +44,20 @@ export class EmployeeListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEmployees();
-      this.loadDepartments();
+    this.loadDepartments();
   }
 
+  // ✅ UPDATED — Alphabetical Sorting Added
   loadEmployees(): void {
     this.employeeService.getEmployees().subscribe({
       next: (employees) => {
         console.log('Loaded employees:', employees);
-        this.employees = employees;
+
+        // 🔥 SORT ALPHABETICALLY BY NAME
+        this.employees = employees.sort((a, b) =>
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        );
+
         this.applyFilter();
         this.cdr.detectChanges();
       },
@@ -61,15 +67,16 @@ export class EmployeeListComponent implements OnInit {
       }
     });
   }
+
   loadDepartments(): void {
-  this.departmentService.getDepartments().subscribe({
-    next: (data) => {
-      this.departments = data.filter(d => d.status === 'active');
-      this.cdr.detectChanges();
-    },
-    error: (err) => console.error('Failed to load departments', err)
-  });
-}
+    this.departmentService.getDepartments().subscribe({
+      next: (data) => {
+        this.departments = data.filter(d => d.status === 'active');
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Failed to load departments', err)
+    });
+  }
 
   applyFilter(): void {
     if (this.searchQuery.trim() === '') {
@@ -96,31 +103,27 @@ export class EmployeeListComponent implements OnInit {
     }
   }
 
-  // Format date for HTML5 date input (yyyy-MM-dd)
   private formatDateForInput(dateString: string): string {
     if (!dateString) return '';
-    
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
-    
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
   }
 
-  // Format YYYY-MM-DD to DD-MM-YYYY for display
   formatDateForDisplay(dateString: string): string {
     if (!dateString) return '';
-    
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
-    
+
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear(); // Use full year 
-    
+    const year = date.getFullYear();
+
     return `${day}-${month}-${year}`;
   }
 
@@ -135,21 +138,20 @@ export class EmployeeListComponent implements OnInit {
         },
         error: (error) => {
           console.error('Add employee error:', error);
-          alert('Failed to add employee. Please check all fields and try again.');
+          alert('Failed to add employee.');
         }
       });
     }
   }
 
-  //  proper date format when editing
   editEmployee(employee: Employee): void {
-    // Create a proper deep copy using JSON.parse(JSON.stringify())
     const employeeCopy = JSON.parse(JSON.stringify(employee));
     employeeCopy.join_date = this.formatDateForInput(employeeCopy.join_date);
-    
+
     this.editingEmployee = employeeCopy;
     this.newEmployee = employeeCopy;
     this.showAddForm = true;
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -164,7 +166,7 @@ export class EmployeeListComponent implements OnInit {
         },
         error: (error) => {
           console.error('Update employee error:', error);
-          alert('Failed to update employee. Please try again.');
+          alert('Failed to update employee.');
         }
       });
     }
@@ -179,7 +181,7 @@ export class EmployeeListComponent implements OnInit {
         },
         error: (error) => {
           console.error('Delete employee error:', error);
-          alert('Failed to delete employee. Please try again.');
+          alert('Failed to delete employee.');
         }
       });
     }
@@ -187,28 +189,25 @@ export class EmployeeListComponent implements OnInit {
 
   validateForm(): boolean {
     if (!this.newEmployee.name || !this.newEmployee.email ||
-        !this.newEmployee.phone ||!this.newEmployee.department_id||
+        !this.newEmployee.phone || !this.newEmployee.department_id ||
         !this.newEmployee.position || !this.newEmployee.join_date) {
       alert('Please fill in all required fields');
       return false;
     }
 
-    // Validate phone number is exactly 10 digits
     const phoneDigits = this.newEmployee.phone.replace(/\D/g, '');
     if (phoneDigits.length !== 10) {
       alert('Phone number must be exactly 10 digits');
       return false;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.newEmployee.email)) {
       alert('Please enter a valid email address');
       return false;
     }
 
-    // Check for duplicate email (exclude current employee when editing)
-    const duplicateEmail = this.employees.find(emp => 
+    const duplicateEmail = this.employees.find(emp =>
       emp.email.toLowerCase() === this.newEmployee.email.toLowerCase() &&
       emp.id !== this.editingEmployee?.id
     );
@@ -217,11 +216,11 @@ export class EmployeeListComponent implements OnInit {
       return false;
     }
 
-    // Check for duplicate phone (exclude current employee when editing)
     const newPhoneDigits = this.newEmployee.phone.replace(/\D/g, '');
     const duplicatePhone = this.employees.find(emp => {
       const empPhoneDigits = emp.phone.replace(/\D/g, '');
-      return empPhoneDigits === newPhoneDigits && emp.id !== this.editingEmployee?.id;
+      return empPhoneDigits === newPhoneDigits &&
+             emp.id !== this.editingEmployee?.id;
     });
     if (duplicatePhone) {
       alert('An employee with this phone number already exists');
@@ -232,12 +231,10 @@ export class EmployeeListComponent implements OnInit {
   }
 
   resetForm(): void {
-    // Generate date in local YYYY-MM-DD format
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
-    const todayLocal = `${year}-${month}-${day}`;
 
     this.newEmployee = {
       id: 0,
@@ -246,11 +243,12 @@ export class EmployeeListComponent implements OnInit {
       phone: '',
       department_id: 0,
       position: '',
-      join_date: todayLocal, 
+      join_date: `${year}-${month}-${day}`,
       home_address: '',
       status: 'active',
       issued_items: ''
     };
+
     this.editingEmployee = null;
   }
 
