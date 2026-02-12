@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -26,24 +26,28 @@ export class DailyWorkEntryComponent implements OnInit {
   project = '';
   description = '';
   hours: number | null = null;
-  progress = 0;
   date = this.today();
 
   entries: WorkEntry[] = [];
   private currentEmployeeId: string | null = null;
-  private currentUserDepartmentId: number | null = null; // Store department_id
+  private currentUserDepartmentId: number | null = null; 
 
   constructor(
     private projectService: ProjectService,
     private employeeService: EmployeeService,
     private userService: UserService,
-    private workEntryService: WorkEntryService
+    private workEntryService: WorkEntryService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadEmployeeInfo();
   }
 
+  /**
+   * Load current logged-in employee information
+   * Gets employee ID and department ID for filtering projects
+   */
   private loadEmployeeInfo(): void {
     const currentUser = this.userService.getCurrentUser();
     if (!currentUser) return;
@@ -58,7 +62,7 @@ export class DailyWorkEntryComponent implements OnInit {
 
         if (employee) {
           this.currentEmployeeId = String(employee.id);
-          this.currentUserDepartmentId = employee.department_id; // Get department_id
+          this.currentUserDepartmentId = employee.department_id; 
           this.loadEntries();
           this.loadProjectsForLoggedUser();
         } else {
@@ -73,6 +77,10 @@ export class DailyWorkEntryComponent implements OnInit {
     });
   }
 
+  /**
+   * Load projects assigned to the logged-in user's department
+   * Filters projects based on department_id match
+   */
   private loadProjectsForLoggedUser(): void {
     if (this.currentUserDepartmentId === null) return;
 
@@ -80,9 +88,14 @@ export class DailyWorkEntryComponent implements OnInit {
       this.assignedProjects = projects.filter((p: Project) => 
         p.department_id === this.currentUserDepartmentId
       );
+      // Manually trigger change detection after loading projects
+      this.cdr.detectChanges();
     });
   }
 
+  /**
+   * Load all work entries for the current employee
+   */
   private loadEntries(): void {
     if (!this.currentEmployeeId) {
       console.warn('Cannot load entries: employeeId not available');
@@ -92,6 +105,8 @@ export class DailyWorkEntryComponent implements OnInit {
       next: (entries) => {
         this.entries = entries;
         this.emitEntries();
+        // Trigger change detection after loading entries
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Failed to load work entries:', err);
@@ -100,41 +115,55 @@ export class DailyWorkEntryComponent implements OnInit {
     });
   }
 
+  /**
+   * Add a new work entry
+   * Validates all required fields before submitting
+   */
   addEntry(): void {
     if (!this.project || !this.description || !this.hours || !this.currentEmployeeId) {
       alert('Please fill all required fields and ensure you are logged in.');
       return;
     }
 
-    const newEntry: WorkEntry & { employeeId: string } = {
-      id: Date.now(),
+    const newEntry = {
       project: this.project,
       description: this.description,
       hours: this.hours,
-      progress: this.progress,
       date: this.date,
-      employeeId: this.currentEmployeeId
+      employeeId: this.currentEmployeeId 
     };
+
+    console.log('Sending to server:', newEntry);
 
     this.workEntryService.createEntry(newEntry).subscribe({
       next: (createdEntry) => {
-        this.entries.unshift(createdEntry);
+        this.entries.unshift(createdEntry); 
         this.emitEntries();
         this.resetForm();
+        // Trigger change detection after adding entry
+        this.cdr.detectChanges();
+        alert('Work entry added successfully!');
       },
       error: (err) => {
         console.error('Failed to create work entry:', err);
+        console.error('Error details:', err.error);
         alert('Failed to save work entry. Please try again.');
       }
     });
   }
 
+  /**
+   * Delete a work entry by ID
+   * Only deletes if it belongs to the current employee
+   */
   deleteEntry(id: number): void {
     if (!this.currentEmployeeId) return;
     this.workEntryService.deleteEntry(id, this.currentEmployeeId).subscribe({
       next: () => {
         this.entries = this.entries.filter(e => e.id !== id);
         this.emitEntries();
+        // Trigger change detection after deleting entry
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Failed to delete work entry:', err);
@@ -143,28 +172,37 @@ export class DailyWorkEntryComponent implements OnInit {
     });
   }
 
+  /**
+   * Emit entries to parent component
+   */
   private emitEntries(): void {
     this.entriesChange.emit([...this.entries]);
   }
 
+  /**
+   * Reset form fields to default values
+   */
   private resetForm(): void {
     this.project = '';
     this.description = '';
     this.hours = null;
-    this.progress = 0;
     this.date = this.today();
   }
 
+  /**
+   * Get today's date in YYYY-MM-DD format
+   */
   private today(): string {
     const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${day}-${month}-${year}`; 
-    
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`; 
   }
 
-  // fix date format
+  /**
+   * Format date for display in DD-MM-YYYY format
+   */
   formatDateForDisplay(dateString: string): string {
     if (!dateString) return '';
     

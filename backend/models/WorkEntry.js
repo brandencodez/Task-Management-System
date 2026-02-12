@@ -1,20 +1,23 @@
 const db = require('../config/database');
 
 class WorkEntry {
+  /**
+   * Create a new work entry
+   */
   static async create(workEntryData) {
-    const { project, description, hours, progress, date, employeeId } = workEntryData;
+    const { project, description, hours, date, employeeId } = workEntryData;
 
+    // Removed 'progress' column
     const query = `
       INSERT INTO work_entries 
-      (project, description, hours, progress, date, employee_id)
-      VALUES (?, ?, ?, ?, ?, ?)
+      (project, description, hours, date, employee_id)
+      VALUES (?, ?, ?, ?, ?)
     `;
 
     const [result] = await db.execute(query, [
       project,
       description,
       hours,
-      progress,
       date,
       employeeId
     ]);
@@ -22,16 +25,22 @@ class WorkEntry {
     return { id: result.insertId, ...workEntryData };
   }
 
+  /**
+   * Find all work entries for a specific employee
+   */
   static async findAllByEmployee(employeeId) {
     const query = `
       SELECT * FROM work_entries 
       WHERE employee_id = ?
-      ORDER BY date DESC
+      ORDER BY date DESC, id DESC
     `;
     const [rows] = await db.execute(query, [employeeId]);
     return rows;
   }
 
+  /**
+   * Find a single work entry by ID
+   */
   static async findById(id) {
     const query = `
       SELECT * FROM work_entries 
@@ -41,12 +50,16 @@ class WorkEntry {
     return rows[0];
   }
 
+  /**
+   * Update a work entry
+   */
   static async update(id, workEntryData) {
-    const { project, description, hours, progress, date } = workEntryData;
+    const { project, description, hours, date } = workEntryData;
 
+    // Removed 'progress' from UPDATE
     const query = `
       UPDATE work_entries 
-      SET project = ?, description = ?, hours = ?, progress = ?, date = ?
+      SET project = ?, description = ?, hours = ?, date = ?
       WHERE id = ?
     `;
 
@@ -54,7 +67,6 @@ class WorkEntry {
       project,
       description,
       hours,
-      progress,
       date,
       id
     ]);
@@ -62,11 +74,16 @@ class WorkEntry {
     return { id, ...workEntryData };
   }
 
+  /**
+   * Delete a work entry by ID
+   */
   static async delete(id) {
     await db.execute('DELETE FROM work_entries WHERE id = ?', [id]);
   }
 
-  // Optional: Get entries for today (used in dashboard stats)
+  /**
+   * Get work entries for a specific date
+   */
   static async findByDate(employeeId, targetDate) {
     const query = `
       SELECT * FROM work_entries 
@@ -77,7 +94,9 @@ class WorkEntry {
     return rows;
   }
 
-  // Optional: Get entries for last 7 days
+  /**
+   * Get work entries for the last 7 days
+   */
   static async findByWeek(employeeId) {
     const query = `
       SELECT * FROM work_entries 
@@ -89,26 +108,40 @@ class WorkEntry {
     return rows;
   }
 
+  /**
+   * Delete a work entry (with employee authorization)
+   */
   static async deleteByEmployeeAndId(id, employeeId) {
-  const query = 'DELETE FROM work_entries WHERE id = ? AND employee_id = ?';
-  const [result] = await db.execute(query, [id, employeeId]);
-  return result;
-}
+    const query = 'DELETE FROM work_entries WHERE id = ? AND employee_id = ?';
+    const [result] = await db.execute(query, [id, employeeId]);
+    return result;
+  }
 
-static async updateByEmployeeAndId(id, employeeId, updateData) {
-  const { project, description, hours, progress, date } = updateData;
-  const query = `
-    UPDATE work_entries 
-    SET project = ?, description = ?, hours = ?, progress = ?, date = ?
-    WHERE id = ? AND employee_id = ?
-  `;
-  const [result] = await db.execute(query, [
-    project, description, hours, progress, date,
-    id, employeeId
-  ]);
-  if (result.affectedRows === 0) return null;
-  return { id, ...updateData }; // simple return; you can fetch full row if needed
-}
+  /**
+   * Update a work entry (with employee authorization)
+   */
+  static async updateByEmployeeAndId(id, employeeId, updateData) {
+    const { project, description, hours, date } = updateData;
+    
+    // Removed 'progress' from UPDATE
+    const query = `
+      UPDATE work_entries 
+      SET project = ?, description = ?, hours = ?, date = ?
+      WHERE id = ? AND employee_id = ?
+    `;
+    
+    const [result] = await db.execute(query, [
+      project, 
+      description, 
+      hours, 
+      date,
+      id, 
+      employeeId
+    ]);
+    
+    if (result.affectedRows === 0) return null;
+    return { id, ...updateData };
+  }
 }
 
 module.exports = WorkEntry;

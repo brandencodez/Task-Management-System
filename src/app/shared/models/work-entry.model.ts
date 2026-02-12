@@ -3,6 +3,5 @@ export interface WorkEntry {
   project: string;
   description: string;
   hours: number;
-  progress: number;
   date: string;
 }
