@@ -25,6 +25,11 @@ export class ProjectAssignmentService {
     return this.http.get<ProjectAssignment[]>(`${this.apiUrl}/project/${projectId}`);
   }
 
+  // ✅ NEW METHOD: Get assignments for a specific employee
+  getAssignmentsByEmployee(employeeId: number): Observable<ProjectAssignment[]> {
+    return this.http.get<ProjectAssignment[]>(`${this.apiUrl}/employee/${employeeId}`);
+  }
+
   replaceAssignments(projectId: number, employeeIds: number[]): Observable<ProjectAssignment[]> {
     return this.http.put<ProjectAssignment[]>(
       `${this.apiUrl}/project/${projectId}`,

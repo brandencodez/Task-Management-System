@@ -10,6 +10,40 @@ class Attendance {
     );
     return rows[0];
   }
+   static async getAllActiveEmployees() {
+  const [rows] = await db.execute(`
+    SELECT id 
+    FROM employees 
+    WHERE status='active'
+    AND id NOT IN (
+      SELECT employee_id 
+      FROM leave_requests 
+      WHERE leave_date = CURDATE() 
+      AND status='approved'
+    )
+  `);
+
+  return rows;
+}
+
+
+  static async markAbsent(employeeId, date) {
+    await pool.query(
+      `INSERT INTO attendance 
+       (employee_id, attendance_date, status, work_hours) 
+       VALUES (?, ?, 'absent', 0)`,
+      [employeeId, date]
+    );
+  }
+   static async markLeave(employeeId, date) {
+    await pool.query(
+      `INSERT INTO attendance 
+       (employee_id, attendance_date, status, work_hours) 
+       VALUES (?, ?, 'leave', 0)`,
+      [employeeId, date]
+    );
+  }
+
 
   static async getToday(employeeId, date) {
     const [rows] = await pool.query(
@@ -100,6 +134,7 @@ static async getMonthlyAnalytics(month) {
     [month]
   );
   
+  
   // Get all employee IDs from the summary
   const employeeIds = summaryRows.map(row => row.employee_id);
   
@@ -121,6 +156,7 @@ static async getMonthlyAnalytics(month) {
       monthlyData: []
     }));
   }
+  
   
   // Now get detailed daily attendance data for all employees in this month
   const placeholders = employeeIds.map(() => '?').join(',');
