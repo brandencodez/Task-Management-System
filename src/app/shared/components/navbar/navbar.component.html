@@ -5,11 +5,31 @@
       routerLink="/"
       class="logo"
       aria-label="Go to home"
+      (click)="closeMenu()"
     >
       Eazy Track
     </a>
 
-    <ul class="nav-links">
+    @if (role === 'user' || role === 'admin') {
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="Toggle navigation"
+        aria-controls="primary-navigation"
+        [attr.aria-expanded]="isMenuOpen"
+        (click)="toggleMenu()"
+      >
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    }
+
+    <ul
+      class="nav-links"
+      id="primary-navigation"
+      [class.open]="isMenuOpen"
+    >
       
 
       <!-- ================= USER NAV ================= -->
@@ -21,6 +41,7 @@
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }"
             aria-label="My projects"
+            (click)="closeMenu()"
           >
             My Projects
           </a>
@@ -31,6 +52,7 @@
             routerLink="/user-dashboard/work-entry"
             routerLinkActive="active"
             aria-label="Work entry"
+            (click)="closeMenu()"
           >
             Work Entry
           </a>
@@ -40,9 +62,20 @@
           <a
             routerLink="/user-dashboard/attendance"
             routerLinkActive="active"
+            (click)="closeMenu()"
           >
             My Attendance
           </a>
+        </li>
+
+        <li class="logout-item">
+          <button
+            type="button"
+            class="logout-btn"
+            (click)="handleLogout()"
+          >
+            Logout
+          </button>
         </li>
       }
 
@@ -55,6 +88,7 @@
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }"
             aria-label="Admin dashboard"
+            (click)="closeMenu()"
           >
             Dashboard
           </a>
@@ -66,6 +100,7 @@
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }"
             aria-label="Departments"
+            (click)="closeMenu()"
           >
             Department
           </a>
@@ -76,6 +111,7 @@
             routerLink="/admin-dashboard/employees"
             routerLinkActive="active"
             aria-label="Employees"
+            (click)="closeMenu()"
           >
             Employees
           </a>
@@ -86,6 +122,7 @@
             routerLink="/admin-dashboard/projects"
             routerLinkActive="active"
             aria-label="Projects"
+            (click)="closeMenu()"
           >
             Projects
           </a>
@@ -96,6 +133,7 @@
             routerLink="/admin-dashboard/assigning-projects"
             routerLinkActive="active"
             aria-label="Assigning Project"
+            (click)="closeMenu()"
           >
             Assigning Project
           </a>
@@ -107,6 +145,7 @@
             routerLink="/admin-dashboard/work-summary"
             routerLinkActive="active"
             aria-label="Work entry summary"
+            (click)="closeMenu()"
           >
             Work Summary
           </a>
@@ -119,6 +158,7 @@
             routerLinkActive="active"
             class="reminder-link"
             aria-label="Reminders"
+            (click)="closeMenu()"
           >
              Reminders
           </a>
@@ -128,9 +168,20 @@
           <a
             routerLink="/admin/attendance"
             routerLinkActive="active"
+            (click)="closeMenu()"
           >
             Attendance
           </a>
+        </li>
+
+        <li class="logout-item">
+          <button
+            type="button"
+            class="logout-btn"
+            (click)="handleLogout()"
+          >
+            Logout
+          </button>
         </li>
       }
 
