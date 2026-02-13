@@ -102,6 +102,14 @@ class Admin {
   static async updateProfile(id, profileData) {
     const { full_name, gender, profile_image, email, status, bio, date_of_birth } = profileData;
 
+    const normalizeDate = (value) => {
+      if (!value) return null;
+      if (value instanceof Date) return value.toISOString().slice(0, 10);
+      const text = String(value);
+      if (text.includes('T')) return text.slice(0, 10);
+      return text;
+    };
+
     const [existing] = await db.execute(
       'SELECT id, full_name, email, status, bio, date_of_birth FROM admins WHERE id = ? LIMIT 1',
       [id]
@@ -117,7 +125,7 @@ class Admin {
     const nextEmail = email && email.trim() ? email : current.email;
     const nextStatus = status && status.trim() ? status : current.status;
     const nextBio = bio && bio.trim() ? bio : (current.bio || null);
-    const nextDateOfBirth = date_of_birth || (current.date_of_birth || null);
+    const nextDateOfBirth = normalizeDate(date_of_birth) || normalizeDate(current.date_of_birth);
 
     if (nextEmail && nextEmail !== current.email) {
       const [duplicate] = await db.execute(

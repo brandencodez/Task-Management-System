@@ -60,7 +60,7 @@ export class AdminProfileComponent implements OnInit {
         this.profileForm.email = admin?.email || '';
         this.profileForm.status = admin?.status || 'active';
         this.profileForm.bio = admin?.bio || '';
-        this.profileForm.date_of_birth = admin?.date_of_birth || '';
+        this.profileForm.date_of_birth = this.normalizeDateForInput(admin?.date_of_birth || '');
         this.isLoading = false;
         this.isEditMode = false;
         this.cdr.detectChanges();
@@ -85,18 +85,22 @@ export class AdminProfileComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => {
       this.profileForm.profile_image = String(reader.result || '');
+      this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);
   }
 
   clearPhoto() {
     this.profileForm.profile_image = '';
+    this.cdr.detectChanges();
   }
 
   saveProfile() {
     if (!this.adminId) return;
     this.isSaving = true;
     this.saveMessage = '';
+
+    const normalizedDob = this.normalizeDateForInput(this.profileForm.date_of_birth);
 
     this.adminService.updateAdminProfile(this.adminId, {
       full_name: this.profileForm.full_name.trim(),
@@ -105,7 +109,7 @@ export class AdminProfileComponent implements OnInit {
       email: this.profileForm.email.trim(),
       status: this.profileForm.status,
       bio: this.profileForm.bio.trim(),
-      date_of_birth: this.profileForm.date_of_birth || undefined
+      date_of_birth: normalizedDob || undefined
     }).subscribe({
       next: (updated) => {
         this.admin = updated;
@@ -125,5 +129,10 @@ export class AdminProfileComponent implements OnInit {
   cancelEdit() {
     this.isEditMode = false;
     this.loadProfile();
+  }
+
+  private normalizeDateForInput(value: string): string {
+    if (!value) return '';
+    return value.includes('T') ? value.slice(0, 10) : value;
   }
 }

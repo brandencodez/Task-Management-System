@@ -77,7 +77,7 @@ export class UserProfileComponent implements OnInit {
         this.profileForm.position = employee?.position || '';
         this.profileForm.home_address = employee?.home_address || '';
         this.profileForm.bio = employee?.bio || '';
-        this.profileForm.date_of_birth = employee?.date_of_birth || '';
+        this.profileForm.date_of_birth = this.normalizeDateForInput(employee?.date_of_birth || '');
         this.isLoading = false;
         this.isEditMode = false;
         this.cdr.detectChanges();
@@ -102,18 +102,22 @@ export class UserProfileComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => {
       this.profileForm.profile_image = String(reader.result || '');
+      this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);
   }
 
   clearPhoto() {
     this.profileForm.profile_image = '';
+    this.cdr.detectChanges();
   }
 
   saveProfile() {
     if (!this.employeeId) return;
     this.isSaving = true;
     this.saveMessage = '';
+
+    const normalizedDob = this.normalizeDateForInput(this.profileForm.date_of_birth);
 
     this.employeeService.updateEmployeeProfile(this.employeeId, {
       name: this.profileForm.name.trim(),
@@ -125,7 +129,7 @@ export class UserProfileComponent implements OnInit {
       position: this.profileForm.position.trim(),
       home_address: this.profileForm.home_address.trim(),
       bio: this.profileForm.bio.trim(),
-      date_of_birth: this.profileForm.date_of_birth || undefined
+      date_of_birth: normalizedDob || undefined
     }).subscribe({
       next: (updated) => {
         this.employee = updated;
@@ -145,5 +149,10 @@ export class UserProfileComponent implements OnInit {
   cancelEdit() {
     this.isEditMode = false;
     this.loadProfile();
+  }
+
+  private normalizeDateForInput(value: string): string {
+    if (!value) return '';
+    return value.includes('T') ? value.slice(0, 10) : value;
   }
 }

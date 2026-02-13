@@ -139,6 +139,14 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   static async updateProfile(id, profileData) {
     const { name, gender, profile_image, email, phone, department_id, position, home_address, bio, date_of_birth } = profileData;
 
+    const normalizeDate = (value) => {
+      if (!value) return null;
+      if (value instanceof Date) return value.toISOString().slice(0, 10);
+      const text = String(value);
+      if (text.includes('T')) return text.slice(0, 10);
+      return text;
+    };
+
     const [existing] = await db.execute(
       'SELECT id, name, email, phone, department_id, position, home_address, bio, date_of_birth FROM employees WHERE id = ? LIMIT 1',
       [id]
@@ -156,7 +164,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     const nextPosition = position && position.trim() ? position : current.position;
     const nextHomeAddress = home_address && home_address.trim() ? home_address : current.home_address;
     const nextBio = bio && bio.trim() ? bio : (current.bio || null);
-    const nextDateOfBirth = date_of_birth || (current.date_of_birth || null);
+    const nextDateOfBirth = normalizeDate(date_of_birth) || normalizeDate(current.date_of_birth);
 
     if (nextEmail && nextEmail !== current.email) {
       const [existingEmail] = await db.execute(
