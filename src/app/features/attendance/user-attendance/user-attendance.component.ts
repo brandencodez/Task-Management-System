@@ -119,7 +119,7 @@ export class UserAttendanceComponent implements OnInit {
           this.isOnLeaveToday = false;
         }
         
-        this.hasCheckedOutToday = !!record.checkInTime || !!record.out_time;
+this.hasCheckedOutToday = !!(record.checkOutTime || record.out_time);
         
         if (record.status && record.status !== 'pending') {
           this.attendanceStatus = record.status;
@@ -193,55 +193,67 @@ export class UserAttendanceComponent implements OnInit {
 
   // Mark attendance
   markAttendance() {
-    const userId = this.getUserIdentifier();
-    if (!userId) {
-      alert('User not logged in');
-      return;
-    }
-
-    const attendanceData = {
-      employeeId: userId,
-      status: this.attendanceStatus
-    };
-
-    this.http.post(`http://localhost:5000/api/attendance/check-in`, attendanceData)
-      .subscribe({
-        next: () => {
-          alert('Attendance marked successfully!');
-          // Reload all data
-          this.loadTodayStatus();
-          this.loadMonthlyStats();
-          this.loadAttendanceHistory();
-          
-          // Force change detection after all updates
-          this.cdr.detectChanges();
-        },
-        error: (err: any) => {
-          console.error('Error checking in:', err);
-          alert(err.error?.details || 'Failed to mark attendance. Please try again.');
-        }
-      });
+  const userId = this.getUserIdentifier();
+  if (!userId) {
+    alert('User not logged in');
+    return;
   }
 
-  // Check out
-  checkOut() {
-    const userId = this.getUserIdentifier();
-    if (!userId) return;
+  const attendanceData = {
+    employeeId: userId,
+    status: this.attendanceStatus
+  };
 
-    this.attendanceService.checkOut(userId).subscribe({
+  this.http.post(`http://localhost:5000/api/attendance/check-in`, attendanceData)
+    .subscribe({
       next: () => {
-        alert('Checked out successfully!');
-        this.loadTodayStatus();
-        
-        // Force change detection
+
+        this.hasMarkedToday = true;
+        this.hasCheckedOutToday = false;
+        this.isPendingLeave = false;
+        this.isOnLeaveToday = false;
+
+        this.todayRecord = {
+          ...this.todayRecord,
+          status: 'present'
+        };
+
+        alert('Checked in successfully!');
+
+        this.loadMonthlyStats();
+        this.loadAttendanceHistory();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
-        console.error('Error checking out:', err);
-        alert('Failed to check out. Please try again.');
+        console.error('Error checking in:', err);
+        alert(err.error?.details || 'Failed to mark attendance. Please try again.');
       }
     });
-  }
+}
+
+
+  // Check out
+ checkOut() {
+  const userId = this.getUserIdentifier();
+  if (!userId) return;
+
+  this.attendanceService.checkOut(userId).subscribe({
+    next: () => {
+
+      this.hasCheckedOutToday = true;
+
+      alert('Checked out successfully!');
+
+      this.loadTodayStatus();
+      this.cdr.detectChanges();
+    },
+    error: (err: any) => {
+      console.error('Error checking out:', err);
+      alert('Failed to check out. Please try again.');
+    }
+  });
+}
+
 
   // Helper method for status color classes
   getStatusColor(status: string): string {
