@@ -60,6 +60,13 @@ html, body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
   letter-spacing: -0.5px;
 }
 
+.section-divider {
+  margin: 40px 0 20px 0;
+  border: none;
+  height: 1px;
+  background: #e5e7eb;
+}
+
 /* ===== FORM ===== */
 .entry-form {
   display: grid;
