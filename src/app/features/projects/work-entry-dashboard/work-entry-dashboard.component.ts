@@ -39,21 +39,36 @@ export class WorkEntryDashboardComponent implements OnInit {
   }
 
   private countToday(entries: WorkEntry[]): number {
-    const today = this.getToday(); //Now exists and returns YYYY-MM-DD
-    return entries.filter(e => e.date === today).length;
+    const today = this.getToday();
+    return entries.filter(e => this.normalizeDate(e.date) === today).length;
   }
 
   private countThisWeek(entries: WorkEntry[]): number {
     const today = new Date();
     const start = new Date();
     start.setDate(today.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+    today.setHours(23, 59, 59, 999);
 
     return entries.filter(e => {
-      // Parse YYYY-MM-DD as local date 
-      const [year, month, day] = e.date.split('-').map(Number);
+      const dateStr = this.normalizeDate(e.date);
+      const [year, month, day] = dateStr.split('-').map(Number);
       const entryDate = new Date(year, month - 1, day); 
       return entryDate >= start && entryDate <= today;
     }).length;
+  }
+
+  private normalizeDate(dateStr: string): string {
+    if (!dateStr) return '';
+    // Already YYYY-MM-DD
+    if (dateStr.length === 10) return dateStr;
+    // Parse ISO string and extract LOCAL date to handle timezone shifts
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private getToday(): string {
