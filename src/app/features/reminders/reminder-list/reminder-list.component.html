@@ -2,7 +2,7 @@
 
   <!-- 🔔 SCHEDULE MEETING FORM -->
   <div class="schedule-reminder-section">
-    <app-reminder-form></app-reminder-form>
+    <app-reminder-form (reminderSaved)="loadReminders()"></app-reminder-form>
   </div>
 
   <!-- 🔔 SCHEDULED MEETINGS WRAPPER CARD -->

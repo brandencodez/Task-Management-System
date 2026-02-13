@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -16,6 +16,7 @@ import { Department } from '../../department/department.model';
   styleUrls: ['./reminder-form.component.css']
 })
 export class ReminderFormComponent implements OnInit {
+  @Output() reminderSaved = new EventEmitter<void>();
   employees: Employee[] = [];
   departments: Department[] = [];
   employeeId: number | null = null;
@@ -64,6 +65,7 @@ export class ReminderFormComponent implements OnInit {
     this.reminderService.addReminder(reminder).subscribe({
       next: () => {
         alert('Reminder added successfully!');
+        this.reminderSaved.emit();
         this.resetForm();
       },
       error: (error) => {
