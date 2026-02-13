@@ -44,13 +44,25 @@
         <h3>Today's Attendance</h3>
         <span class="today-date">{{ todayRecord?.date | date:'EEEE, MMMM d, yyyy' }}</span>
       </div>
-      <span class="badge" [ngClass]="getStatusColor(isPendingLeave ? 'pending' : (todayRecord?.status || 'not-marked'))">
-        {{ isPendingLeave ? 'PENDING LEAVE' : (todayRecord?.status ? todayRecord.status.toUpperCase() : 'NOT MARKED') }}
+      <span class="badge"
+            [ngClass]="getStatusColor(
+              isPendingLeave ? 'pending' :
+              isOnLeaveToday ? 'leave' :
+              (todayRecord?.status || 'not-marked')
+            )">
+        {{ isPendingLeave
+            ? 'PENDING LEAVE'
+            : isOnLeaveToday
+              ? 'ON LEAVE'
+              : (todayRecord?.status ? todayRecord.status.toUpperCase() : 'NOT MARKED')
+        }}
       </span>
     </div>
 
-    <!-- CHECK IN VIEW - Show if no attendance marked and no pending leave -->
-    <div class="card-body" *ngIf="!hasMarkedToday && !isOnLeaveToday && !isPendingLeave">
+    <!-- CHECK IN VIEW -->
+    <div class="card-body"
+         *ngIf="!hasMarkedToday && !isOnLeaveToday && !isPendingLeave">
+
       <div class="check-in-section">
         <div class="check-in-info">
           <div class="info-icon">🕐</div>
@@ -74,31 +86,29 @@
       </div>
     </div>
 
-    <!-- PENDING LEAVE VIEW - NEW -->
+    <!-- PENDING LEAVE VIEW -->
     <div class="card-body" *ngIf="isPendingLeave">
       <div class="pending-section">
         <div class="pending-info">
           <span class="pending-icon">⏳</span>
           <div class="pending-text">
             <h4>Leave Request Pending</h4>
-            <p>Your leave request is awaiting admin approval. You'll be notified once it's reviewed.</p>
+            <p>Your leave request for today is awaiting admin approval.</p>
           </div>
         </div>
-        
-        <!-- Optional: Allow check-in while leave is pending -->
-        <div class="pending-actions">
-          <p class="hint-text">You can still check in for today while waiting for approval</p>
-          <button class="btn-check-in-alt" (click)="markAttendance()">
-            <span class="btn-icon">✓</span>
-            <span>Check In Anyway</span>
-          </button>
+
+        <div class="pending-note">
+          <p class="hint-text">
+            Attendance is temporarily locked until your leave request is reviewed.
+          </p>
         </div>
       </div>
     </div>
 
     <!-- PRESENT / HALF DAY VIEW -->
     <div class="card-body"
-         *ngIf="hasMarkedToday && !isPendingLeave && (todayRecord?.status === 'present' || todayRecord?.status === 'half-day')">
+         *ngIf="hasMarkedToday && !isPendingLeave &&
+                (todayRecord?.status === 'present' || todayRecord?.status === 'half-day')">
 
       <div class="attendance-summary">
         <div class="summary-item">
@@ -117,7 +127,6 @@
         </div>
       </div>
 
-      <!-- CHECKOUT BUTTON -->
       <div class="checkout-section" *ngIf="!hasCheckedOutToday">
         <div class="checkout-info">
           <span class="status-indicator"></span>
@@ -129,14 +138,12 @@
         </button>
       </div>
 
-      <!-- COMPLETED -->
       <div class="completed-section" *ngIf="hasCheckedOutToday">
         <div class="completed-info">
           <span class="completed-icon">✓</span>
           <span class="completed-text">Attendance marked for today</span>
         </div>
       </div>
-
     </div>
 
     <!-- APPROVED LEAVE VIEW -->

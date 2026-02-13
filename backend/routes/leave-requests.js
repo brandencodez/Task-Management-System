@@ -6,61 +6,76 @@ const Attendance = require('../models/Attendance'); // Import to check attendanc
 // EMPLOYEE — REQUEST LEAVE
 router.post('/request', async (req, res) => {
   try {
-    const { employeeId, date, reason } = req.body;
-    
-    // Validate required fields
-    if (!employeeId || !date || !reason) {
-      return res.status(400).json({ 
-        error: 'Missing required fields',
-        details: 'employeeId, date, and reason are required' 
-      });
-    }
-   
-    // Validate and convert date to MySQL-compatible format (YYYY-MM-DD)
-    const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) {
-      return res.status(400).json({ 
-        error: 'Invalid date format. Use YYYY-MM-DD or valid ISO date string.' 
-      });
-    }
-    const mysqlDate = dateObj.toISOString().split('T')[0]; // Converts to YYYY-MM-DD
+    const { employeeId, fromDate, toDate, reason } = req.body;
 
-    // NEW: Convert employeeId to integer for consistency
+    if (!employeeId || !fromDate || !toDate || !reason) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        details: 'employeeId, fromDate, toDate, and reason are required'
+      });
+    }
+
     const empId = parseInt(employeeId);
     if (isNaN(empId)) {
-      return res.status(400).json({ error: 'Invalid employeeId format' });
+      return res.status(400).json({ error: 'Invalid employeeId' });
     }
 
-    // NEW: Check if employee has already checked in for this date
-    const existingAttendance = await Attendance.getToday(empId, mysqlDate);
-    if (existingAttendance && existingAttendance.in_time) {
-      return res.status(400).json({ 
-        error: 'Cannot apply for leave',
-        details: 'You have already checked in for this date' 
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+
+    if (end < start) {
+      return res.status(400).json({ error: 'To date must be after from date' });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const insertedDates = [];
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const date = d.toISOString().split('T')[0];
+
+      // If today: prevent leave if already checked in
+      if (date === today) {
+        const attendance = await Attendance.getToday(empId, date);
+        if (attendance && attendance.in_time) {
+          return res.status(400).json({
+            error: 'Cannot apply leave',
+            details: 'You have already checked in today'
+          });
+        }
+      }
+
+      // Prevent duplicate pending leave
+      const existingLeave = await LeaveRequest.getByEmployeeAndDate(empId, date);
+      if (existingLeave && existingLeave.status === 'pending') {
+        continue; // skip duplicates
+      }
+
+      await LeaveRequest.create(empId, date, reason);
+      insertedDates.push(date);
+    }
+
+    if (!insertedDates.length) {
+      return res.status(400).json({
+        error: 'No new leave entries created',
+        details: 'Leave already exists for selected date range'
       });
     }
 
-    // NEW: Check if there's already a pending leave request for this date
-    const existingLeave = await LeaveRequest.getByEmployeeAndDate(empId, mysqlDate);
-    if (existingLeave && existingLeave.status === 'pending') {
-      return res.status(400).json({ 
-        error: 'Duplicate request',
-        details: 'You already have a pending leave request for this date' 
-      });
-    }
-
-    // Create the leave request
-    await LeaveRequest.create(empId, mysqlDate, reason);
-    
-    res.json({ 
-      message: 'Leave request submitted successfully. Awaiting admin approval.',
-      status: 'pending'
+    res.json({
+      message: `Leave request submitted for ${insertedDates.length} day(s). Awaiting admin approval.`,
+      insertedDates
     });
+
   } catch (err) {
     console.error('Error creating leave request:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // EMPLOYEE — MY LEAVE REQUESTS
 router.get('/my/:employeeId', async (req, res) => {
