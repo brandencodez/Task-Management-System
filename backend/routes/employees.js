@@ -12,6 +12,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get employee by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.id, 10);
+    if (isNaN(employeeId)) {
+      return res.status(400).json({ error: 'Invalid employee ID' });
+    }
+
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    res.json(employee);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Create employee
 router.post('/', async (req, res) => {
   try {
@@ -64,6 +83,22 @@ router.put('/:id', async (req, res) => {
     res.json(employee);
   } catch (error) {
     console.error('Update employee error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update employee profile
+router.put('/:id/profile', async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.id, 10);
+    if (isNaN(employeeId)) {
+      return res.status(400).json({ error: 'Invalid employee ID' });
+    }
+
+    const updated = await Employee.updateProfile(employeeId, req.body);
+    res.json(updated);
+  } catch (error) {
+    console.error('Update employee profile error:', error);
     res.status(400).json({ error: error.message });
   }
 });

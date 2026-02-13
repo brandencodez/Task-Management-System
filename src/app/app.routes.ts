@@ -61,6 +61,14 @@ export const routes: Routes = [
             .then(m => m.UserDashboardComponent)
       },
 
+      // 🔹 User Profile
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/user-profile/user-profile.component')
+            .then(m => m.UserProfileComponent)
+      },
+
       // 🔹 My Projects
       {
         path: 'my-projects',
@@ -112,6 +120,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/dashboard.component')
             .then(m => m.DashboardComponent)
+      },
+
+      // 🔹 Admin Profile
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/admin-profile/admin-profile.component')
+            .then(m => m.AdminProfileComponent)
       },
         
    {

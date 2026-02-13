@@ -64,6 +64,19 @@ export class EmployeeService {
     );
   }
 
+  updateEmployeeProfile(id: number, profileData: Partial<Employee>): Observable<Employee> {
+    return this.http.put<Employee>(
+      `${this.apiUrl}/employees/${id}/profile`,
+      profileData,
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error('Update employee profile error:', error);
+        throw error;
+      })
+    );
+  }
+
   deleteEmployee(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/employees/${id}`).pipe(
       catchError(error => {

@@ -17,6 +17,21 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * ✅ Get admin by ID
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.params.id);
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+    res.json(admin);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * ✅ Create admin (Registration)
  */
 router.post('/', async (req, res) => {
@@ -66,10 +81,13 @@ router.post('/login', async (req, res) => {
 
     // ❌ Do not return password_hash
     res.json({
+      success: true,
       message: 'Login successful',
       admin: {
         id: admin.id,
         full_name: admin.full_name,
+        gender: admin.gender,
+        profile_image: admin.profile_image,
         email: admin.email,
         role: admin.role,
         status: admin.status
@@ -88,6 +106,18 @@ router.put('/:id', async (req, res) => {
   try {
     const admin = await Admin.update(req.params.id, req.body);
     res.json(admin);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * ✅ Update admin profile
+ */
+router.put('/:id/profile', async (req, res) => {
+  try {
+    const updated = await Admin.updateProfile(req.params.id, req.body);
+    res.json(updated);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
