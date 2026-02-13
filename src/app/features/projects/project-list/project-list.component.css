@@ -105,36 +105,32 @@
 .upcoming-title {
   background: linear-gradient(
     to right,
-    #facc15 0%,
-    #fde047 30%,
-    #fef3c7 60%,
-    rgba(254, 243, 199, 0.15) 100%
+    #ffffcc 0%,  
+    #ffffff 100%  
   );
-  color: #7c2d12;
+  color: #666600; 
 }
 
 /* 🔵 ONGOING (CHANGED TO BLUE) */
 .ongoing-title {
   background: linear-gradient(
     to right,
-    #2563eb 0%,
-    #3b82f6 30%,
-    #bfdbfe 60%,
-    rgba(219, 234, 254, 0.15) 100%
+    #cce7ff 0%,   
+    #e6f2ff 50%,  
+    #ffffff 100%  
   );
-  color: #1e3a8a;
+  color: #023549; 
 }
 
 /* 🟢 COMPLETED (NEW GREEN GRADIENT ADDED) */
 .completed-title {
   background: linear-gradient(
     to right,
-    #16a34a 0%,
-    #22c55e 30%,
-    #bbf7d0 60%,
-    rgba(220, 252, 231, 0.15) 100%
+    #ccffeb 0%,   
+    #e6fff5 50%,  
+    #ffffff 100%  
   );
-  color: #064e3b;
+  color: #064e3b; 
 }
 
 /* ✨ Smooth Animation */

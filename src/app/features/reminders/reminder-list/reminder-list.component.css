@@ -58,26 +58,24 @@
 
 /* 🔵 UPCOMING */
 .upcoming-title {
- background: linear-gradient(
-  to right,
-  #7cb3f7 0%,
-  #9fc3ec 30%,
-  #dbeafe 60%,
-  rgba(219, 234, 254, 0.4) 100%
-);
-  color: #023549;
+  background: linear-gradient(
+    to right,
+    #cce7ff 0%,   
+    #e6f2ff 50%,  
+    #ffffff 100%  
+  );
+  color: #023549; 
 }
 
 /* 🔴 MISSED */
 .missed-title {
   background: linear-gradient(
     to right,
-    #f39292 0%,
-    #e98f8f 30%,
-    #fecaca 60%,
-    rgba(254, 226, 226, 0.15) 100%
+    #ffdede 0%,   
+    #ffeaea 50%,  
+    #ffffff 100%  
   );
-  color: #7f1d1d;
+  color: #7f1d1d; 
 }
 
 @keyframes slideFadeIn {
