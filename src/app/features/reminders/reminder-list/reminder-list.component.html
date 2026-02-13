@@ -5,53 +5,106 @@
     <app-reminder-form></app-reminder-form>
   </div>
 
-  <!--  SCHEDULED MEETINGS -->
-    <br>
-  <div class="scheduled-meetings-section">
-
-    <h2 class="title">🔔 Scheduled Meetings</h2>
+  <!-- 🔔 SCHEDULED MEETINGS WRAPPER CARD -->
+  <div class="scheduled-meetings-card">
+    <h2 class="scheduled-meetings-heading">🔔 Scheduled Meetings</h2>
 
     <!-- EMPTY STATE -->
     <p class="empty-text" *ngIf="reminders.length === 0">
       No meetings found.
     </p>
 
-    <!-- REMINDER CARDS -->
-    <div
-      class="reminder-card"
-      *ngFor="let r of reminders"
-    >
-
-      <!-- HEADER -->
-      <div class="header">
-        <div class="header-left">
-          <strong>{{ r.title }}</strong>
-          <span class="dept">{{ r.department }}</span>
+    <!-- ======== TODAY'S MEETINGS ======== -->
+    <div class="status-section" *ngIf="todayReminders.length > 0">
+      <h3 class="section-title today-title">TODAY'S Meetings</h3>
+      <div class="reminders-grid">
+        <div class="reminder-card today-card" *ngFor="let r of todayReminders">
+          <div class="card-accent today-accent"></div>
+          <div class="card-body">
+            <div class="header">
+              <div class="header-left">
+                <strong class="card-title">{{ r.title }}</strong>
+                <span class="dept">{{ r.department }}</span>
+              </div>
+              <span class="status-badge today">TODAY</span>
+            </div>
+            <p class="purpose">{{ r.purpose }}</p>
+            <div class="meta-grid">
+              <p><strong>Employee:</strong> {{ r.employee_name }}</p>
+              <p><strong>Client:</strong> {{ r.client_name }}</p>
+              <p><strong>Contact:</strong> {{ r.client_contact }}</p>
+              <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
+            </div>
+            <div class="card-footer">
+              <a *ngIf="r.meeting_link" [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
+              <button class="delete-btn" (click)="delete(r.id)">Delete</button>
+            </div>
+          </div>
         </div>
-
-        <!-- 🟢 STATUS BADGE -->
-        <span
-          class="status-badge"
-          [ngClass]="getReminderStatus(r).toLowerCase()"
-        >
-          {{ getReminderStatus(r) }}
-        </span>
       </div>
+    </div>
 
-      <p class="purpose">{{ r.purpose }}</p>
+    <!-- ======== UPCOMING MEETINGS ======== -->
+    <div class="status-section" *ngIf="upcomingReminders.length > 0">
+      <h3 class="section-title upcoming-title">UPCOMING Meetings</h3>
+      <div class="reminders-grid">
+        <div class="reminder-card upcoming-card" *ngFor="let r of upcomingReminders">
+          <div class="card-accent upcoming-accent"></div>
+          <div class="card-body">
+            <div class="header">
+              <div class="header-left">
+                <strong class="card-title">{{ r.title }}</strong>
+                <span class="dept">{{ r.department }}</span>
+              </div>
+              <span class="status-badge upcoming">UPCOMING</span>
+            </div>
+            <p class="purpose">{{ r.purpose }}</p>
+            <div class="meta-grid">
+              <p><strong>Employee:</strong> {{ r.employee_name }}</p>
+              <p><strong>Client:</strong> {{ r.client_name }}</p>
+              <p><strong>Contact:</strong> {{ r.client_contact }}</p>
+              <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
+            </div>
+            <div class="card-footer">
+              <a *ngIf="r.meeting_link" [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
+              <button class="delete-btn" (click)="delete(r.id)">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      <p><strong>Employee:</strong> {{ r.employee_name }}</p>
-<p><strong>Client:</strong> {{ r.client_name }}</p>
-<p><strong>Contact:</strong> {{ r.client_contact }}</p>
-<p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
-<p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
-<div *ngIf="r.meeting_link">
-  <a [href]="r.meeting_link" target="_blank">Join Meeting</a>
-</div>
-
-      <button class="delete-btn" (click)="delete(r.id)">
-        Delete
-      </button>
+    <!-- ======== MISSED MEETINGS ======== -->
+    <div class="status-section" *ngIf="missedReminders.length > 0">
+      <h3 class="section-title missed-title">MISSED Meetings</h3>
+      <div class="reminders-grid">
+        <div class="reminder-card missed-card" *ngFor="let r of missedReminders">
+          <div class="card-accent missed-accent"></div>
+          <div class="card-body">
+            <div class="header">
+              <div class="header-left">
+                <strong class="card-title">{{ r.title }}</strong>
+                <span class="dept">{{ r.department }}</span>
+              </div>
+              <span class="status-badge missed">MISSED</span>
+            </div>
+            <p class="purpose">{{ r.purpose }}</p>
+            <div class="meta-grid">
+              <p><strong>Employee:</strong> {{ r.employee_name }}</p>
+              <p><strong>Client:</strong> {{ r.client_name }}</p>
+              <p><strong>Contact:</strong> {{ r.client_contact }}</p>
+              <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
+            </div>
+            <div class="card-footer">
+              <a *ngIf="r.meeting_link" [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
+              <button class="delete-btn" (click)="delete(r.id)">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
