@@ -36,7 +36,7 @@
     </textarea>
   </div>
 
-  <!-- DEPARTMENT + CLIENT NAME + CONTACT (3 columns) -->
+  <!-- DEPARTMENT + CLIENT NAME + CONTACT TYPE (3 columns) -->
   <div class="form-grid three-col">
     <div class="form-group">
       <label>Department</label>
@@ -58,23 +58,43 @@
     </div>
 
     <div class="form-group">
-      <label>Client Contact</label>
-      <input
-        type="text"
-        placeholder="Email or phone"
-        [(ngModel)]="clientContact"
-      />
+      <label>Contact Type</label>
+      <select [(ngModel)]="contactType" (ngModelChange)="clientContact = ''">
+        <option value="email">Email</option>
+        <option value="phone">Phone</option>
+      </select>
     </div>
   </div>
 
-  <!-- MEETING LINK (full width) -->
-  <div class="form-group">
-    <label>Meeting Link</label>
-    <input
-      type="url"
-      placeholder="Google Meet / Zoom link"
-      [(ngModel)]="meetingLink"
-    />
+  <!-- CLIENT CONTACT + MEETING LINK (2 columns) -->
+  <div class="form-grid two-col">
+    <div class="form-group">
+      <label>Client Contact</label>
+      <input
+        *ngIf="contactType === 'email'"
+        type="email"
+        placeholder="client@example.com"
+        [(ngModel)]="clientContact"
+      />
+      <input
+        *ngIf="contactType === 'phone'"
+        type="tel"
+        placeholder="9999888117"
+        [(ngModel)]="clientContact"
+        maxlength="10"
+        pattern="[0-9]{10}"
+        (input)="clientContact = clientContact.replace(/[^0-9]/g, '').slice(0, 10)"
+      />
+    </div>
+
+    <div class="form-group">
+      <label>Meeting Link</label>
+      <input
+        type="url"
+        placeholder="Google Meet / Zoom link"
+        [(ngModel)]="meetingLink"
+      />
+    </div>
   </div>
 
   <!-- DATES (2 columns) -->
@@ -109,3 +129,4 @@
   </div>
 
 </div>
+

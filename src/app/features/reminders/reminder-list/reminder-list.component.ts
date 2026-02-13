@@ -52,6 +52,18 @@ export class ReminderListComponent implements OnInit {
     return 'Missed';
   }
 
+  get todayReminders(): Reminder[] {
+    return this.reminders.filter(r => this.getReminderStatus(r) === 'Today');
+  }
+
+  get upcomingReminders(): Reminder[] {
+    return this.reminders.filter(r => this.getReminderStatus(r) === 'Upcoming');
+  }
+
+  get missedReminders(): Reminder[] {
+    return this.reminders.filter(r => this.getReminderStatus(r) === 'Missed');
+  }
+
   private getTodayDate(): string {
     return new Date().toISOString().split('T')[0];
   }

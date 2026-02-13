@@ -24,6 +24,7 @@ export class ReminderFormComponent implements OnInit {
   purpose = '';
   department = '';
   clientName = '';
+  contactType: 'email' | 'phone' = 'email';
   clientContact = '';
   meetingLink = '';
   meetingDate = '';
@@ -90,6 +91,7 @@ export class ReminderFormComponent implements OnInit {
     this.purpose = '';
     this.department = '';
     this.clientName = '';
+    this.contactType = 'email';
     this.clientContact = '';
     this.meetingLink = '';
     this.meetingDate = '';

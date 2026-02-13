@@ -1,73 +1,173 @@
 /* ================= PAGE ================= */
 .reminder-list-container {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto 80px;
   padding: 30px 20px 0;
 }
 
-
-
-/* ================= SPACING CONTROL ================= */
-.section-spacer {
-  height: 36px;
-  background: transparent;
+/* ================= SCHEDULED MEETINGS WRAPPER ================= */
+.scheduled-meetings-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 28px 20px;
+  margin-top: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
 }
 
-.scheduled-meetings-section {
-  margin-top: 16px;
+.scheduled-meetings-heading {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #f3f4f6;
 }
 
-/* 👇 FIX: gap between heading & first card */
-.scheduled-meetings-section .title {
-  margin-bottom: 32px;
+/* ================= STATUS SECTIONS ================= */
+.status-section {
+  margin: 1.5rem 0;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  width: 100%;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  animation: slideFadeIn 0.6s ease forwards;
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+/* 🟡 TODAY */
+.today-title {
+  background: linear-gradient(
+    to right,
+    #facc15 0%,
+    #fde047 30%,
+    #fef3c7 60%,
+    rgba(254, 243, 199, 0.15) 100%
+  );
+  color: #7c2d12;
+}
+
+/* 🔵 UPCOMING */
+.upcoming-title {
+ background: linear-gradient(
+  to right,
+  #7cb3f7 0%,
+  #9fc3ec 30%,
+  #dbeafe 60%,
+  rgba(219, 234, 254, 0.4) 100%
+);
+  color: #023549;
+}
+
+/* 🔴 MISSED */
+.missed-title {
+  background: linear-gradient(
+    to right,
+    #f39292 0%,
+    #e98f8f 30%,
+    #fecaca 60%,
+    rgba(254, 226, 226, 0.15) 100%
+  );
+  color: #7f1d1d;
+}
+
+@keyframes slideFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= GRID ================= */
+.reminders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
 }
 
 /* ================= EMPTY ================= */
 .empty-text {
   text-align: center;
-  color: #6b7280;
-  margin-top: 40px;
+  color: #9ca3af;
+  margin: 40px 0 20px;
   font-size: 15px;
 }
 
-/* ================= CARD ================= */
+/* ================= MEETING CARD ================= */
 .reminder-card {
   background: #ffffff;
   border-radius: 14px;
-  padding: 20px 24px;
-  margin-bottom: 22px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   border: 1px solid #e5e7eb;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
 }
 
-/* ================= HEADER ================= */
+.reminder-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Color accent bar on left */
+.card-accent {
+  width: 5px;
+  flex-shrink: 0;
+}
+
+.today-accent { background: #facc15; }
+.upcoming-accent { background: #2563eb; }
+.missed-accent { background: #ef4444; }
+
+.card-body {
+  padding: 18px 20px;
+  flex: 1;
+}
+
+/* ================= CARD HEADER ================= */
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
+  align-items: flex-start;
+  margin-bottom: 10px;
 }
 
 .header-left {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .dept {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
   text-transform: capitalize;
 }
 
 /* ================= STATUS BADGE ================= */
 .status-badge {
-  padding: 6px 14px;
+  padding: 4px 12px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
   white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 
 .status-badge.today {
@@ -77,9 +177,9 @@
 }
 
 .status-badge.upcoming {
-  background-color: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
 }
 
 .status-badge.missed {
@@ -90,40 +190,66 @@
 
 /* ================= CONTENT ================= */
 .purpose {
-  margin: 14px 0 18px;
+  margin: 8px 0 12px;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.5;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  margin-bottom: 14px;
+}
+
+.meta-grid p {
+  margin: 0;
+  font-size: 13px;
   color: #374151;
   line-height: 1.6;
 }
 
-.meta p {
-  margin: 4px 0;
-  font-size: 14px;
-  color: #374151;
+.meta-grid p strong {
+  color: #6b7280;
+  font-weight: 500;
 }
 
-/* ================= LINK ================= */
-.meeting-link {
-  display: inline-block;
-  margin-top: 10px;
-  margin-right: 12px;
+/* ================= FOOTER ================= */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.join-link {
   color: #2563eb;
   font-weight: 500;
+  font-size: 13px;
   text-decoration: none;
+  transition: color 0.2s;
 }
 
-.meeting-link:hover {
+.join-link:hover {
+  color: #1d4ed8;
   text-decoration: underline;
 }
 
-/* ================= ACTION ================= */
+/* ================= DELETE ================= */
 .delete-btn {
   background: #ef4444;
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 .delete-btn:hover {
@@ -132,25 +258,21 @@
 
 /* ================= MOBILE ================= */
 @media (max-width: 640px) {
-  .section-spacer {
-    height: 24px;
+  .scheduled-meetings-card {
+    padding: 18px 16px 14px;
   }
 
-  .scheduled-meetings-section {
-    margin-top: 12px;
+  .reminders-grid {
+    grid-template-columns: 1fr;
   }
 
-  .scheduled-meetings-section .title {
-    margin-bottom: 24px;
+  .meta-grid {
+    grid-template-columns: 1fr;
   }
 
   .header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
-  }
-
-  .reminder-search {
-    margin-top: 16px;
+    gap: 8px;
   }
 }
