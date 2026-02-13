@@ -15,10 +15,11 @@ const workEntriesRouter = require('./routes/work-entries');
 const DepartmentRoutes = require('./routes/department');
 const attendanceRoutes = require('./routes/attendance');
 const assignmentRoutes = require('./routes/assignments');
-
+const leaveRequestRoutes = require('./routes/leave-requests');
 const app = express();
 const PORT = process.env.PORT || 5000;
-
+require('./jobs/autoAbsent.job');
+require('./jobs/autoCheckout');
 // Middleware
 app.use(helmet());
 app.use(cors({
@@ -60,6 +61,7 @@ app.use('/api/admins', AdminRoutes);
 app.use('/api/departments', DepartmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/leave-requests', leaveRequestRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

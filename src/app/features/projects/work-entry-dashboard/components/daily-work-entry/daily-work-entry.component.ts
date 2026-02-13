@@ -6,12 +6,10 @@ import { HttpClientModule } from '@angular/common/http';
 import { ProjectService } from '../../../project.service';
 import { EmployeeService } from '../../../../employees/employee.service';
 import { UserService } from '../../../../../shared/services/user.service';
-import { ProjectAssignmentService } from '../../../../../shared/services/project-assignment.service'; // ✅ Add this import
 import { Project } from '../../../../../shared/models/project.model';
 import { Employee } from '../../../../employees/employee.model';
 import { WorkEntry, WorkEntryAttachment } from '../../../../../shared/models/work-entry.model';
 import { WorkEntryService } from '../../../../../shared/services/work-entry.service';
-import { forkJoin } from 'rxjs'; // ✅ Add this import
 
 @Component({
   selector: 'app-daily-work-entry',
@@ -34,7 +32,7 @@ export class DailyWorkEntryComponent implements OnInit {
   isDragging = false;
 
   entries: WorkEntry[] = [];
-  private currentEmployeeId: number | null = null; // ✅ Changed to number
+  private currentEmployeeId: string | null = null;
   private currentUserDepartmentId: number | null = null; 
 
   isSubmitting = false;
@@ -43,8 +41,7 @@ export class DailyWorkEntryComponent implements OnInit {
     private projectService: ProjectService,
     private employeeService: EmployeeService,
     private userService: UserService,
-    private workEntryService: WorkEntryService,
-    private projectAssignmentService: ProjectAssignmentService, // ✅ Add this dependency
+    public workEntryService: WorkEntryService, // 👈 PUBLIC
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -65,10 +62,10 @@ export class DailyWorkEntryComponent implements OnInit {
         );
 
         if (employee) {
-          this.currentEmployeeId = employee.id; // ✅ Store as number
+          this.currentEmployeeId = String(employee.id);
           this.currentUserDepartmentId = employee.department_id; 
           this.loadEntries();
-          this.loadProjectsForLoggedUser(); // ✅ This will now load assigned projects only
+          this.loadProjectsForLoggedUser();
         } else {
           console.warn('Employee not found for current user:', currentUser);
           alert('Your employee record was not found. Please contact admin.');
@@ -81,44 +78,14 @@ export class DailyWorkEntryComponent implements OnInit {
     });
   }
 
-  /**
-   * ✅ UPDATED: Load only projects assigned to the logged-in employee
-   * Uses project assignments to filter projects
-   */
   private loadProjectsForLoggedUser(): void {
-    if (this.currentEmployeeId === null) {
-      console.warn('Cannot load projects: employeeId not available');
-      return;
-    }
+    if (this.currentUserDepartmentId === null) return;
 
-    // Load assignments and projects in parallel
-    forkJoin({
-      assignments: this.projectAssignmentService.getAssignmentsByEmployee(this.currentEmployeeId),
-      projects: this.projectService.getProjects()
-    }).subscribe({
-      next: ({ assignments, projects }) => {
-        // Extract project IDs from assignments
-        const assignedProjectIds = assignments.map(assignment => assignment.project_id);
-
-        // ✅ Filter projects to only those assigned to this employee
-        this.assignedProjects = projects.filter(project =>
-          assignedProjectIds.includes(project.id)
-        );
-
-        console.log('✅ Assigned projects loaded:', {
-          employeeId: this.currentEmployeeId,
-          assignedProjectIds,
-          projectCount: this.assignedProjects.length
-        });
-
-        // Manually trigger change detection after loading projects
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Failed to load assigned projects:', err);
-        this.assignedProjects = [];
-        this.cdr.detectChanges();
-      }
+    this.projectService.getProjects().subscribe((projects: Project[]) => {
+      this.assignedProjects = projects.filter((p: Project) => 
+        p.department_id === this.currentUserDepartmentId
+      );
+      this.cdr.detectChanges();
     });
   }
 
@@ -127,8 +94,7 @@ export class DailyWorkEntryComponent implements OnInit {
       console.warn('Cannot load entries: employeeId not available');
       return;
     }
-    // Convert to string for the work entry service
-    this.workEntryService.getEntries(String(this.currentEmployeeId)).subscribe({
+    this.workEntryService.getEntries(this.currentEmployeeId).subscribe({
       next: (entries) => {
         this.entries = entries;
         this.emitEntries();

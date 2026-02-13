@@ -16,6 +16,10 @@ export class UserAttendanceComponent implements OnInit {
 
   todayRecord: any = null;
   
+  isOnLeaveToday = false;
+  leaveSubmitted = false;
+  isPendingLeave = false; // NEW: Track pending leave status
+  
   // Check-in/out status
   hasMarkedToday = false;
   hasCheckedOutToday = false;
@@ -75,30 +79,57 @@ export class UserAttendanceComponent implements OnInit {
     return this.userService.getCurrentUserId() || this.userService.getCurrentUser();
   }
 
-  private loadTodayStatus() {
-    const userId = this.getUserIdentifier();
-    if (!userId) return;
+ private loadTodayStatus() {
+  const userId = this.getUserIdentifier();
+  if (!userId) return;
 
-    this.attendanceService.getTodayAttendance(userId)
-      .subscribe({
-        next: (record) => {
-          console.log('Today\'s attendance record:', record); // Debug log
-          this.todayRecord = record;
-          this.hasMarkedToday = !!record;
-          this.hasCheckedOutToday = !!record?.out_time || !!record?.checkOutTime;
-          
-          if (record?.status) {
-            this.attendanceStatus = record.status;
-          }
-          
-          // Manually trigger change detection
+  this.attendanceService.getTodayAttendance(userId)
+    .subscribe({
+      next: (record) => {
+        console.log('Today record from API:', record); // DEBUG - check what you're getting
+        
+        this.todayRecord = record;
+        
+        // If no record at all
+        if (!record) {
+          this.isPendingLeave = false;
+          this.isOnLeaveToday = false;
+          this.hasMarkedToday = false;
+          this.hasCheckedOutToday = false;
           this.cdr.detectChanges();
-        },
-        error: (err) => {
-          console.error('Error loading today status:', err);
+          return;
         }
-      });
-  }
+        
+        // Check for pending leave status
+        if (record.status === 'pending') {
+          this.isPendingLeave = true;
+          this.hasMarkedToday = false;
+          this.isOnLeaveToday = false;
+        } 
+        // Check for APPROVED LEAVE - THIS WAS THE MISSING PART
+        else if (record.status === 'leave') {
+          this.isOnLeaveToday = true;
+          this.hasMarkedToday = true;
+          this.isPendingLeave = false;
+        }
+        // Normal attendance (present/half-day/absent)
+        else {
+          this.hasMarkedToday = true;
+          this.isPendingLeave = false;
+          this.isOnLeaveToday = false;
+        }
+        
+        this.hasCheckedOutToday = !!record.checkInTime || !!record.out_time;
+        
+        if (record.status && record.status !== 'pending') {
+          this.attendanceStatus = record.status;
+        }
+
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error loading today status:', err)
+    });
+}
 
   private loadMonthlyStats() {
     const userId = this.getUserIdentifier();
@@ -219,9 +250,107 @@ export class UserAttendanceComponent implements OnInit {
       'absent': 'status-absent',
       'half-day': 'status-halfday',
       'leave': 'status-leave',
+      'pending': 'status-pending', // NEW: pending status color
       'not-marked': 'status-pending'
     };
     return colorMap[status] || 'status-pending';
+  }
+
+  showLeaveModal = false;
+
+  openLeaveModal() {
+    this.showLeaveModal = true;
+  }
+
+  closeLeaveModal() {
+    this.showLeaveModal = false;
+  }
+
+  leaveFrom!: string;
+  leaveTo!: string;
+  leaveReason: string = '';
+
+  submitLeave() {
+    if (!this.leaveFrom || !this.leaveTo || !this.leaveReason) {
+      alert('Please fill all fields');
+      return;
+    }
+
+    const userId = this.getUserIdentifier();
+    if (!userId) {
+      alert('User not logged in');
+      return;
+    }
+
+    const fromDate = new Date(this.leaveFrom);
+    const toDate = new Date(this.leaveTo);
+
+    if (toDate < fromDate) {
+      alert('End date must be after start date');
+      return;
+    }
+
+    const dates: string[] = [];
+
+    for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
+      dates.push(d.toISOString().split('T')[0]);
+    }
+
+    let completedRequests = 0;
+    let failedRequests = 0;
+    const totalRequests = dates.length;
+
+    dates.forEach(date => {
+      const payload = {
+        employeeId: userId,
+        date: date,
+        reason: this.leaveReason
+      };
+
+      this.attendanceService.applyLeave(payload).subscribe({
+        next: () => {
+          completedRequests++;
+
+          if (completedRequests + failedRequests === totalRequests) {
+            if (failedRequests === 0) {
+
+              // ✅ Update UI to show PENDING status
+              this.isPendingLeave = true;
+              this.isOnLeaveToday = false;
+              this.hasMarkedToday = false; // Can still check in if leave is pending
+
+              this.todayRecord = {
+                ...this.todayRecord,
+                status: 'pending', // Set as pending, not leave
+                leaveStatus: 'pending',
+                date: new Date().toISOString().split('T')[0]
+              };
+
+              alert(`Leave request submitted for ${totalRequests} day(s). Awaiting admin approval.`);
+
+              this.closeLeaveModal();
+              this.leaveFrom = '';
+              this.leaveTo = '';
+              this.leaveReason = '';
+
+              this.loadTodayStatus(); // Reload to get updated status
+              this.loadMonthlyStats();
+              this.cdr.detectChanges();
+
+            } else {
+              alert(`Leave partially completed: ${completedRequests} success, ${failedRequests} failed`);
+            }
+          }
+        },
+        error: err => {
+          failedRequests++;
+
+          if (completedRequests + failedRequests === totalRequests) {
+            alert(`Leave partially completed: ${completedRequests} success, ${failedRequests} failed`);
+          }
+        }
+      });
+    });
   }
 
   // Format time string from "HH:mm:ss" to "h:mm AM/PM"
@@ -238,4 +367,3 @@ export class UserAttendanceComponent implements OnInit {
     return `${displayHour}:${minutes} ${period}`;
   }
 }
-  
