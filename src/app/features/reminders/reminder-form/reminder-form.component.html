@@ -11,7 +11,7 @@
       <select [(ngModel)]="employeeId">
         <option [ngValue]="null">Select employee</option>
         <option *ngFor="let emp of employees" [ngValue]="emp.id">
-         {{ emp.name }} (Dept ID: {{ emp.department_id }})
+         {{ emp.name }} ({{ emp.department_name || 'No Dept' }})
         </option>
       </select>
     </div>
@@ -40,11 +40,12 @@
   <div class="form-grid three-col">
     <div class="form-group">
       <label>Department</label>
-      <input
-        type="text"
-        placeholder="Development, Sales"
-        [(ngModel)]="department"
-      />
+      <select [(ngModel)]="department">
+        <option value="">Select department</option>
+        <option *ngFor="let dept of departments" [value]="dept.name">
+          {{ dept.name }}
+        </option>
+      </select>
     </div>
 
     <div class="form-group">

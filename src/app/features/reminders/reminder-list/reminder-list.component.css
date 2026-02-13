@@ -2,34 +2,10 @@
 .reminder-list-container {
   max-width: 900px;
   margin: 0 auto 80px;
-  padding: 0 20px;
+  padding: 30px 20px 0;
 }
 
-/* ================= SEARCH ================= */
-.reminder-search {
-  max-width: 900px;
-  margin: 20px auto 0;
-  padding: 0 20px;
-}
 
-.search-input {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  font-size: 14px;
-  outline: none;
-  background: #ffffff;
-}
-
-.search-input::placeholder {
-  color: #9ca3af;
-}
-
-.search-input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
 
 /* ================= SPACING CONTROL ================= */
 .section-spacer {

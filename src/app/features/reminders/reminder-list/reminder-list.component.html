@@ -5,33 +5,21 @@
     <app-reminder-form></app-reminder-form>
   </div>
 
-  <!-- 🔍 SEARCH FILTER -->
-  <div class="reminder-search">
-    <input
-      type="text"
-      class="search-input"
-      placeholder="Search by title, employee, client, department, or status..."
-      [(ngModel)]="searchText"
-    />
-  </div>
-
-  <!-- 🔥 HARD SPACER -->
-  <div class="section-spacer"></div>
-
-  <!-- 🔔 SCHEDULED MEETINGS -->
+  <!--  SCHEDULED MEETINGS -->
+    <br>
   <div class="scheduled-meetings-section">
 
     <h2 class="title">🔔 Scheduled Meetings</h2>
 
     <!-- EMPTY STATE -->
-    <p class="empty-text" *ngIf="filteredReminders.length === 0">
+    <p class="empty-text" *ngIf="reminders.length === 0">
       No meetings found.
     </p>
 
     <!-- REMINDER CARDS -->
     <div
       class="reminder-card"
-      *ngFor="let r of filteredReminders"
+      *ngFor="let r of reminders"
     >
 
       <!-- HEADER -->
