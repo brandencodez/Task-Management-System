@@ -5,6 +5,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { ReminderService } from '../reminder.service';
 import { EmployeeService } from '../../employees/employee.service';
 import { Employee } from '../../employees/employee.model';
+import { DepartmentService } from '../../department/department.service';
+import { Department } from '../../department/department.model';
 
 @Component({
   selector: 'app-reminder-form',
@@ -15,6 +17,7 @@ import { Employee } from '../../employees/employee.model';
 })
 export class ReminderFormComponent implements OnInit {
   employees: Employee[] = [];
+  departments: Department[] = [];
   employeeId: number | null = null;
 
   title = '';
@@ -29,14 +32,17 @@ export class ReminderFormComponent implements OnInit {
   constructor(
     private reminderService: ReminderService,
     private employeeService: EmployeeService,
+    private departmentService: DepartmentService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    // ✅ Load employees created in Employee Management
-   this.employeeService.getEmployees().subscribe((employees: Employee[]) => {
-  this.employees = employees; // Assign inside subscribe callback
-});
+    this.employeeService.getEmployees().subscribe((employees: Employee[]) => {
+      this.employees = employees;
+    });
+    this.departmentService.getDepartments().subscribe((departments: Department[]) => {
+      this.departments = departments;
+    });
   }
 
   addReminder(): void {
