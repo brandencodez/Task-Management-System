@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, ElementRef, HostListener, Input } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../../features/admins/admin.service';
@@ -18,7 +18,8 @@ export class NavbarComponent {
   constructor(
     private router: Router,
     private adminService: AdminService,
-    private userService: UserService
+    private userService: UserService,
+    private elementRef: ElementRef
   ) {}
 
   toggleMenu(): void {
@@ -27,6 +28,19 @@ export class NavbarComponent {
 
   closeMenu(): void {
     this.isMenuOpen = false;
+  }
+
+  @HostListener('document:click', ['$event'])
+  @HostListener('document:touchstart', ['$event'])
+  handleOutsideClick(event: Event): void {
+    if (!this.isMenuOpen) {
+      return;
+    }
+
+    const target = event.target as Node | null;
+    if (target && !this.elementRef.nativeElement.contains(target)) {
+      this.closeMenu();
+    }
   }
 
   handleLogout(): void {

@@ -39,6 +39,8 @@
     box-shadow: var(--shadow-md);
     width: 20rem;
     height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     z-index: 110;
     transform: translateX(100%);
     opacity: 0;
