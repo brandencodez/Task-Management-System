@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 
 @Component({
   selector: 'app-project-status-chart',
-  template: `<div #chartContainer class="chart-container"></div>`,
+  template: `<div #chartContainer class="chart-container" (click)="onChartClick()" (touchstart)="onChartClick()"></div>`,
   styles: [`
     .chart-container {
       height: 350px;
@@ -23,6 +23,7 @@ export class ProjectStatusChartComponent implements AfterViewInit, OnChanges {
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
   
   private chartDrawn = false;
+  private isActive = false;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -95,9 +96,28 @@ export class ProjectStatusChartComponent implements AfterViewInit, OnChanges {
       .enter().append('g')
       .attr('class', 'arc');
 
+    const largerPath = d3.arc<d3.PieArcDatum<{label: string, value: number, color: string}>>()
+      .outerRadius(radius * 1.1)
+      .innerRadius(0);
+
     arcs.append('path')
       .attr('d', path)
       .style('fill', d => d.data.color)
+      .style('cursor', 'pointer')
+      .on('mouseenter', function() {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr('d', (d: any) => largerPath(d) || '')
+          .style('filter', 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))');
+      })
+      .on('mouseleave', function() {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr('d', (d: any) => path(d) || '')
+          .style('filter', 'none');
+      })
       .style('stroke', '#fff')
       .style('stroke-width', '2px');
 
@@ -140,5 +160,16 @@ export class ProjectStatusChartComponent implements AfterViewInit, OnChanges {
     
     // Trigger change detection
     this.cdr.markForCheck();
+  }
+
+  onChartClick(): void {
+    this.isActive = !this.isActive;
+    if (this.chartContainer) {
+      if (this.isActive) {
+        this.chartContainer.nativeElement.classList.add('active');
+      } else {
+        this.chartContainer.nativeElement.classList.remove('active');
+      }
+    }
   }
 }

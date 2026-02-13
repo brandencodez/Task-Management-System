@@ -16,3 +16,14 @@ svg text {
   justify-content: center;
   align-items: center;
 }
+
+/* Pop-up effect on touch/click */
+.chart-container {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.chart-container.active {
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}

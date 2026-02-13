@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 
 @Component({
   selector: 'app-projects-completed-per-month',
-  template: `<div #chartContainer></div>`,
+  template: `<div #chartContainer class="chart-container" (click)="onChartClick()" (touchstart)="onChartClick()"></div>`,
   styles: [`
     .chart-container {
       height: 280px;
@@ -19,6 +19,7 @@ export class ProjectsCompletedPerMonthComponent implements AfterViewInit, OnChan
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
   
   private chartDrawn = false;
+  private isActive = false;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -97,7 +98,22 @@ export class ProjectsCompletedPerMonthComponent implements AfterViewInit, OnChan
       .attr('r', 4)
       .style('fill', '#2196F3')
       .style('stroke', '#fff')
-      .style('stroke-width', '2px');
+      .style('stroke-width', '2px')
+      .style('cursor', 'pointer')
+      .on('mouseenter', function() {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr('r', 7)
+          .style('filter', 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))');
+      })
+      .on('mouseleave', function() {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr('r', 4)
+          .style('filter', 'none');
+      });
 
     // Axes
     svg.append('g')
@@ -109,5 +125,16 @@ export class ProjectsCompletedPerMonthComponent implements AfterViewInit, OnChan
     
     // Trigger change detection
     this.cdr.markForCheck();
+  }
+
+  onChartClick(): void {
+    this.isActive = !this.isActive;
+    if (this.chartContainer) {
+      if (this.isActive) {
+        this.chartContainer.nativeElement.classList.add('active');
+      } else {
+        this.chartContainer.nativeElement.classList.remove('active');
+      }
+    }
   }
 }

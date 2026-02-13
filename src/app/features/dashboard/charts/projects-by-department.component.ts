@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 
 @Component({
   selector: 'app-projects-by-department',
-  template: `<div #chartContainer></div>`,
+  template: `<div #chartContainer class="chart-container" (click)="onChartClick()" (touchstart)="onChartClick()"></div>`,
   styles: [`
     .chart-container {
       height: 280px;
@@ -19,6 +19,7 @@ export class ProjectsByDepartmentComponent implements AfterViewInit, OnChanges {
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
   
   private chartDrawn = false;
+  private isActive = false;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -96,7 +97,24 @@ export class ProjectsByDepartmentComponent implements AfterViewInit, OnChanges {
       .attr('height', d => innerHeight - yScale(d.count))
       .style('fill', (d, i) => colors[i % colors.length])
       .style('stroke', '#388E3C')
-      .style('stroke-width', '1px');
+      .style('stroke-width', '1px')
+      .style('cursor', 'pointer')
+      .on('mouseenter', function() {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr('y', (d: any) => yScale(d.count) - 8)
+          .attr('height', (d: any) => innerHeight - yScale(d.count) + 8)
+          .style('filter', 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))');
+      })
+      .on('mouseleave', function() {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr('y', (d: any) => yScale(d.count))
+          .attr('height', (d: any) => innerHeight - yScale(d.count))
+          .style('filter', 'none');
+      });
 
     // Bar labels
     svg.selectAll('.bar-label')
@@ -111,5 +129,16 @@ export class ProjectsByDepartmentComponent implements AfterViewInit, OnChanges {
     
     // Trigger change detection
     this.cdr.markForCheck();
+  }
+
+  onChartClick(): void {
+    this.isActive = !this.isActive;
+    if (this.chartContainer) {
+      if (this.isActive) {
+        this.chartContainer.nativeElement.classList.add('active');
+      } else {
+        this.chartContainer.nativeElement.classList.remove('active');
+      }
+    }
   }
 }
