@@ -30,40 +30,6 @@
             <span>📥</span> Download Report (PDF)
           </button>
         </div>
-        
-      <!-- Settings Dropdown -->
-<div class="settings-dropdown">
-  <button
-    class="settings-btn"
-    title="Settings"
-    (click)="toggleSettings($event)"
-  >
-    ⚙️
-  </button>
-
-  <div class="settings-menu" *ngIf="showSettings">
-    <div class="setting-item">
-      <label class="switch">
-        <input type="checkbox"
-               [(ngModel)]="autoMarkEnabled"
-               (change)="toggleAutoMark()">
-        <span class="slider"></span>
-      </label>
-      <span>Auto-mark absent</span>
-    </div>
-
-    <div class="setting-item">
-      <label class="switch">
-        <input type="checkbox"
-               [(ngModel)]="notificationsEnabled"
-               (change)="toggleNotifications()">
-        <span class="slider"></span>
-      </label>
-      <span>Notifications</span>
-    </div>
-  </div>
-</div>
-
       </div>
     </div>
     
@@ -120,6 +86,13 @@
       >
         <span class="btn-icon">📈</span> Monthly Analytics
       </button>
+      <button 
+        class="toggle-btn" 
+        [class.active]="selectedView === 'leave'"
+        (click)="onViewChange('leave')"
+      >
+        <span class="btn-icon">📝</span> Leave Requests
+      </button>
     </div>
   </div>
 
@@ -155,35 +128,31 @@
         </div>
 
         <!-- Quick Stats -->
-      <div class="quick-stats">
+        <div class="quick-stats">
+          <div class="quick-stat">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-content">
+              <h3>{{ quickStats.onTime }}</h3>
+              <p>On Time Arrivals</p>
+            </div>
+          </div>
 
-  <div class="quick-stat">
-    <div class="stat-icon">⏰</div>
-    <div class="stat-content">
-      <h3>{{ quickStats.onTime }}</h3>
-      <p>On Time Arrivals</p>
-    </div>
-  </div>
+          <div class="quick-stat">
+            <div class="stat-icon">🚨</div>
+            <div class="stat-content">
+              <h3>{{ quickStats.lateComers }}</h3>
+              <p>Late Arrivals</p>
+            </div>
+          </div>
 
-  <div class="quick-stat">
-    <div class="stat-icon">🚨</div>
-    <div class="stat-content">
-      <h3>{{ quickStats.lateComers }}</h3>
-      <p>Late Arrivals</p>
-    </div>
-  </div>
-
-  <div class="quick-stat">
-    <div class="stat-icon">🚪</div>
-    <div class="stat-content">
-      <h3>{{ quickStats.earlyLeavers }}</h3>
-      <p>Early Departures</p>
-    </div>
-  </div>
-
-</div>
-
-
+          <div class="quick-stat">
+            <div class="stat-icon">🚪</div>
+            <div class="stat-content">
+              <h3>{{ quickStats.earlyLeavers }}</h3>
+              <p>Early Departures</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Search & Filter Section -->
@@ -237,14 +206,6 @@
       <div class="employee-grid-section">
         <div class="grid-header">
           <h3>Employee Attendance Details</h3>
-          <div class="grid-actions">
-            <select class="sort-select" [(ngModel)]="sortBy" (change)="onSortChange()">
-              <option value="name">Sort by Name</option>
-              <option value="status">Sort by Status</option>
-              <option value="department">Sort by Department</option>
-              <option value="checkIn">Sort by Check-in Time</option>
-            </select>
-          </div>
         </div>
 
         <div class="enhanced-employee-grid">
@@ -300,10 +261,6 @@
                     <p class="details-text">{{ record.workDetails }}</p>
                   </div>
                 }
-              </div>
-              
-              <div class="card-footer-compact">
-                <button class="card-action-btn-sm" title="View Details">👁️</button>
               </div>
             </div>
           } @empty {
@@ -510,7 +467,7 @@
                               <div class="day-status">
                                 @switch (day.status) {
                                   @case ('present') { ✅ }
-                                  @case ('absent') { ❌ }
+                                  @case ('absent') { ❌ } 
                                   @case ('half-day') { ⏰ }
                                   @case ('leave') { 🏖️ }
                                   @case ('not-marked') { ⏳ }
@@ -563,4 +520,83 @@
     </div>
   }
 
+  <!-- LEAVE REQUESTS VIEW -->
+  @if (selectedView === 'leave') {
+    <div class="leave-view">
+      <div class="leave-header">
+        <div class="leave-title">
+          <span class="icon">📝</span>
+          <div>
+            <h3>Leave Requests</h3>
+            <p>Manage employee leave approvals</p>
+          </div>
+        </div>
+
+        <div class="leave-stats">
+          <span class="badge pending">
+            Pending: {{ groupedLeaveRequests.length }}
+          </span>
+        </div>
+      </div>
+
+      <div class="leave-table-card">
+        <table class="leave-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Department</th>
+              <th>Leave Period</th>
+              <th>Duration</th>
+              <th>Reason</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (leave of groupedLeaveRequests; track leave.id) {
+              <tr>
+                <td class="employee-cell">
+                  <div class="avatar">
+                    {{ leave.employeeName.charAt(0) }}
+                  </div>
+                  <span>{{ leave.employeeName }}</span>
+                </td>
+
+                <td>
+                  <span class="dept-badge">{{ leave.department }}</span>
+                </td>
+
+                <td>
+                  {{ getDateRangeText(leave.startDate, leave.endDate, leave.duration) }}
+                </td>
+
+                <td>
+                  <span class="duration-badge">
+                    {{ leave.duration }} {{ leave.duration === 1 ? 'day' : 'days' }}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="reason-text">
+                    {{ leave.reason || '—' }}
+                  </span>
+                </td>
+
+                <td class="action-col">
+                  <button class="approve-btn" (click)="approveLeave(leave.leaveIds)">Approve</button>
+                  <button class="reject-btn" (click)="rejectLeave(leave.leaveIds)">Reject</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="no-data">
+                  🎉 No pending leave requests
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
 </div>

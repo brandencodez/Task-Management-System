@@ -49,6 +49,31 @@ class ProjectAssignment {
     return rows;
   }
 
+  // ✅ NEW METHOD: Find all assignments for a specific employee
+  static async findByEmployee(employeeId) {
+    const query = `
+      SELECT 
+        pa.id AS assignment_id,
+        pa.project_id,
+        p.project_name,
+        pa.employee_id,
+        e.name AS employee_name,
+        e.position AS employee_position,
+        p.department_id,
+        d.name AS department_name,
+        pa.assigned_at
+      FROM project_assignments pa
+      JOIN projects p ON pa.project_id = p.id
+      JOIN employees e ON pa.employee_id = e.id
+      LEFT JOIN departments d ON p.department_id = d.id
+      WHERE pa.employee_id = ?
+      ORDER BY pa.assigned_at DESC, pa.id DESC
+    `;
+
+    const [rows] = await db.execute(query, [employeeId]);
+    return rows;
+  }
+
   static async replaceForProject(projectId, employeeIds) {
     const connection = await db.getConnection();
     try {

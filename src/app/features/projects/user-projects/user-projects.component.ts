@@ -5,6 +5,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { ProjectService } from '../../projects/project.service';
 import { UserService } from '../../../shared/services/user.service';
 import { EmployeeService } from '../../employees/employee.service';
+import { ProjectAssignmentService } from '../../../shared/services/project-assignment.service'; // ✅ Add this import
 import { Project } from '../../../shared/models/project.model';
 import { Router } from '@angular/router';
 import { ChatService } from '../../../shared/services/chat.service';
@@ -44,6 +45,7 @@ export class UserProjectsComponent implements OnInit {
     private projectService: ProjectService,
     private userService: UserService,
     private employeeService: EmployeeService,
+    private projectAssignmentService: ProjectAssignmentService, // ✅ Add this dependency
     private router: Router,
     private chatService: ChatService,
     private cdr: ChangeDetectorRef,
@@ -59,74 +61,96 @@ export class UserProjectsComponent implements OnInit {
     // Load all data in parallel using forkJoin for better reliability
     this.loadAllData();
   }
+
   loadUserInfo(user: any) {
     this.userDepartment_id = user.department_id;
     this.userDepartment_name = user.department_name;
   }
+
   loadAllData() {
     this.isLoading = true;
 
-    // Load employees and projects in parallel
-    forkJoin({
-      employees: this.employeeService.getEmployees(),
-      projects: this.projectService.getProjects(),
-    }).subscribe({
-      next: ({ employees, projects }) => {
+    // ✅ STEP 1: Load employees first to get the current employee ID
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
         // Find current employee
         const employee = employees.find((emp) => emp.name === this.currentUser);
 
-        if (employee) {
-          this.userDepartment_id = employee.department_id;
-
-          // Filter projects by department
-          this.projects = projects.filter(
-            (project) => project.department_id === this.userDepartment_id,
-          );
-
-          // Initialize chat user
-          this.chatCurrentUser = {
-            id: employee.id.toString(),
-            name: employee.name,
-            department: employee.department_id.toString(),
-            role: 'employee' as 'employee',
-          };
-
-          this.chatService.setCurrentUser(employee.id.toString(), employee.name, 'employee');
-
-          // Load other employees for chat
-          this.otherEmployees = employees
-            .filter((emp) => emp.name !== this.currentUser)
-            .map((emp) => ({
-              id: emp.id.toString(),
-              name: emp.name,
-              department: emp.department_id.toString(),
-              role: 'employee' as 'employee',
-            }));
-
-          console.log('✅ Data loaded:', {
-            department: this.userDepartment_id,
-            projectCount: this.projects.length,
-            employeeCount: this.otherEmployees.length,
-          });
-        } else {
+        if (!employee) {
           console.warn('Current user not found in employees');
           this.projects = [];
+          this.isLoading = false;
+          this.cdr.detectChanges();
+          return;
         }
 
-        this.isLoading = false;
-        this.cdr.detectChanges(); // ✅ Force UI update
+        // Store employee info
+        this.userDepartment_id = employee.department_id;
 
-        // Auto-select admin for chat if no participant selected
-        if (!this.selectedParticipant) {
-          this.selectParticipant(this.adminParticipant);
-        }
+        // Initialize chat user
+        this.chatCurrentUser = {
+          id: employee.id.toString(),
+          name: employee.name,
+          department: employee.department_id.toString(),
+          role: 'employee' as 'employee',
+        };
+
+        this.chatService.setCurrentUser(employee.id.toString(), employee.name, 'employee');
+
+        // Load other employees for chat
+        this.otherEmployees = employees
+          .filter((emp) => emp.name !== this.currentUser)
+          .map((emp) => ({
+            id: emp.id.toString(),
+            name: emp.name,
+            department: emp.department_id.toString(),
+            role: 'employee' as 'employee',
+          }));
+
+        // ✅ STEP 2: Load assignments and projects for this specific employee
+        forkJoin({
+          assignments: this.projectAssignmentService.getAssignmentsByEmployee(employee.id),
+          projects: this.projectService.getProjects(),
+        }).subscribe({
+          next: ({ assignments, projects }) => {
+            // Extract project IDs from assignments
+            const assignedProjectIds = assignments.map((assignment) => assignment.project_id);
+
+            // ✅ Filter projects to only those assigned to this employee
+            this.projects = projects.filter((project) =>
+              assignedProjectIds.includes(project.id)
+            );
+
+            console.log('✅ Data loaded:', {
+              employeeId: employee.id,
+              department: this.userDepartment_id,
+              assignedProjects: assignedProjectIds,
+              projectCount: this.projects.length,
+              employeeCount: this.otherEmployees.length,
+            });
+
+            this.isLoading = false;
+            this.cdr.detectChanges(); // ✅ Force UI update
+
+            // Auto-select admin for chat if no participant selected
+            if (!this.selectedParticipant) {
+              this.selectParticipant(this.adminParticipant);
+            }
+          },
+          error: (error) => {
+            console.error('Error loading assignments/projects:', error);
+            this.projects = [];
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          },
+        });
       },
       error: (error) => {
-        console.error('Error loading data:', error);
+        console.error('Error loading employees:', error);
         this.projects = [];
         this.otherEmployees = [];
         this.isLoading = false;
-        this.cdr.detectChanges(); // Force UI update on error
+        this.cdr.detectChanges();
       },
     });
   }

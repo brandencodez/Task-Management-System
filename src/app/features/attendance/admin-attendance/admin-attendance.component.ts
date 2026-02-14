@@ -14,6 +14,18 @@ interface DailyAttendanceRecord {
   checkInTime: string | null;
 }
 
+interface GroupedLeaveRequest {
+  id: number;
+  employeeId: number;
+  employeeName: string;
+  department: string;
+  startDate: string;
+  endDate: string;
+  duration: number;
+  reason: string;
+  leaveIds: number[];
+}
+
 @Component({
   selector: 'app-admin-attendance',
   standalone: true,
@@ -23,7 +35,7 @@ interface DailyAttendanceRecord {
 })
 export class AdminAttendanceComponent implements OnInit {
 
-  selectedView: 'daily' | 'monthly' = 'daily';
+  selectedView: 'daily' | 'monthly' | 'leave' = 'daily';
   selectedDate = this.formatDate(new Date());
   selectedMonth = this.formatMonth(new Date());
 
@@ -31,6 +43,9 @@ export class AdminAttendanceComponent implements OnInit {
   filteredRecords: any[] = []; 
   attendanceSummary: any[] = [];
   allEmployees: any[] = [];
+  leaveRequests: any[] = [];
+  groupedLeaveRequests: GroupedLeaveRequest[] = [];
+  loadingLeaves = false;
 
   // Today's Overview with all required properties
   todayOverview = {
@@ -58,6 +73,7 @@ export class AdminAttendanceComponent implements OnInit {
   autoMarkEnabled = false;
   notificationsEnabled = true;
   officeEndTime = '6:00 PM';
+  showSettings = false;
 
   // Monthly view
   months: Date[] = [];
@@ -77,10 +93,160 @@ export class AdminAttendanceComponent implements OnInit {
   }
 
   // View Management
-  onViewChange(view: 'daily' | 'monthly') {
+  onViewChange(view: 'daily' | 'monthly' | 'leave') {
     this.selectedView = view;
-    view === 'daily' ? this.loadDailyData() : this.loadMonthlyData();
+
+    if (view === 'daily') this.loadDailyData();
+    if (view === 'monthly') this.loadMonthlyData();
+    if (view === 'leave') this.loadLeaveRequests();
+
     this.cdr.detectChanges();
+  }
+
+  loadLeaveRequests() {
+    this.loadingLeaves = true;
+
+    this.attendanceService.getPendingLeaves().subscribe({
+      next: res => {
+        this.leaveRequests = res;
+        this.groupedLeaveRequests = this.groupConsecutiveLeaves(res);
+        this.loadingLeaves = false;
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        console.error('Leave load error:', err);
+        this.loadingLeaves = false;
+      }
+    });
+  }
+
+  // Group consecutive leave requests
+  private groupConsecutiveLeaves(leaves: any[]): GroupedLeaveRequest[] {
+    if (!leaves || leaves.length === 0) return [];
+
+    // Sort by employee and date
+    const sorted = [...leaves].sort((a, b) => {
+      const empCompare = a.employeeId - b.employeeId;
+      if (empCompare !== 0) return empCompare;
+      return new Date(a.leave_date).getTime() - new Date(b.leave_date).getTime();
+    });
+
+    const grouped: GroupedLeaveRequest[] = [];
+    let currentGroup: GroupedLeaveRequest | null = null;
+
+    sorted.forEach(leave => {
+      if (!currentGroup) {
+        // Start new group
+        currentGroup = {
+          id: leave.id,
+          employeeId: leave.employeeId,
+          employeeName: leave.employeeName,
+          department: leave.department,
+          startDate: leave.leave_date,
+          endDate: leave.leave_date,
+          duration: 1,
+          reason: leave.reason,
+          leaveIds: [leave.id]
+        };
+      } else if (
+        currentGroup.employeeId === leave.employeeId &&
+        this.isConsecutiveDay(currentGroup.endDate, leave.leave_date)
+      ) {
+        // Extend current group
+        currentGroup.endDate = leave.leave_date;
+        currentGroup.duration++;
+        currentGroup.leaveIds.push(leave.id);
+      } else {
+        // Save current group and start new one
+        grouped.push({ ...currentGroup });
+        currentGroup = {
+          id: leave.id,
+          employeeId: leave.employeeId,
+          employeeName: leave.employeeName,
+          department: leave.department,
+          startDate: leave.leave_date,
+          endDate: leave.leave_date,
+          duration: 1,
+          reason: leave.reason,
+          leaveIds: [leave.id]
+        };
+      }
+    });
+
+    // Don't forget the last group
+    if (currentGroup) {
+      grouped.push(currentGroup);
+    }
+
+    return grouped;
+  }
+
+  // Helper to check if dates are consecutive
+  private isConsecutiveDay(date1Str: string, date2Str: string): boolean {
+    const d1 = new Date(date1Str);
+    const d2 = new Date(date2Str);
+    
+    // Add 1 day to date1
+    const nextDay = new Date(d1);
+    nextDay.setDate(nextDay.getDate() + 1);
+    
+    return nextDay.toDateString() === d2.toDateString();
+  }
+
+  approveLeave(leaveIds: number[]) {
+    if (!confirm(`Approve leave request for ${leaveIds.length} day(s)?`)) return;
+
+    // Approve all leave IDs in the group
+    const approvalPromises = leaveIds.map(id => 
+      this.attendanceService.approveLeave(id).toPromise()
+    );
+
+    Promise.all(approvalPromises).then(() => {
+      this.loadLeaveRequests();
+      alert('Leave request approved successfully');
+    }).catch(err => {
+      console.error('Approval error:', err);
+      alert('Error approving leave request');
+    });
+  }
+
+  rejectLeave(leaveIds: number[]) {
+    if (!confirm(`Reject leave request for ${leaveIds.length} day(s)?`)) return;
+
+    const rejectionPromises = leaveIds.map(id => 
+      this.attendanceService.rejectLeave(id).toPromise()
+    );
+
+    Promise.all(rejectionPromises).then(() => {
+      this.loadLeaveRequests();
+      alert('Leave request rejected');
+    }).catch(err => {
+      console.error('Rejection error:', err);
+      alert('Error rejecting leave request');
+    });
+  }
+
+  // Helper method to format date range
+  getDateRangeText(startDate: string, endDate: string, duration: number): string {
+    if (startDate === endDate) {
+      return new Date(startDate).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+    }
+    
+    const start = new Date(startDate).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    const end = new Date(endDate).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+    
+    return `${start} - ${end}`;
   }
 
   // Date Management
@@ -106,18 +272,14 @@ export class AdminAttendanceComponent implements OnInit {
     });
   }
 
-  showSettings = false;
+  toggleSettings(event: MouseEvent) {
+    event.stopPropagation();
+    this.showSettings = !this.showSettings;
+  }
 
-toggleSettings(event: MouseEvent) {
-  event.stopPropagation();
-  this.showSettings = !this.showSettings;
-}
-
-closeSettings() {
-  this.showSettings = false;
-}
-
-
+  closeSettings() {
+    this.showSettings = false;
+  }
 
   private loadDailyData() {
     this.attendanceService.getAttendanceByDate(this.selectedDate)
@@ -324,9 +486,15 @@ closeSettings() {
     return inTime > limit;
   }
 
-  private isEarlyLeaver(record: any): boolean {
-    return record.workHours < 8; 
-  }
+ private isEarlyLeaver(record: any): boolean {
+  // Only consider someone an early leaver if they have checked out before 6 PM
+  if (!record.checkOutTime) return false; // No checkout time = not an early leaver
+
+  const checkoutTime = new Date(`1970-01-01T${record.checkOutTime}`);
+  const officeEndTime = new Date(`1970-01-01T18:00:00`); // 6:00 PM in 24-hour format
+
+  return checkoutTime < officeEndTime;
+}
 
   // Settings
   toggleAutoMark() {

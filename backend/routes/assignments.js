@@ -33,6 +33,22 @@ router.get('/project/:projectId', async (req, res) => {
   }
 });
 
+// ✅ NEW ENDPOINT: Get assignments by employee ID
+router.get('/employee/:employeeId', async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.employeeId, 10);
+    if (Number.isNaN(employeeId)) {
+      return res.status(400).json({ error: 'Invalid employee ID' });
+    }
+
+    const assignments = await ProjectAssignment.findByEmployee(employeeId);
+    res.json(assignments);
+  } catch (error) {
+    console.error('Get employee assignments error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const { project_id, employee_ids } = req.body;
