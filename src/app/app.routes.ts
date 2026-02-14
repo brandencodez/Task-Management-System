@@ -53,9 +53,25 @@ export const routes: Routes = [
     component: UserLayoutComponent,
     children: [
 
-      // 🔹 Default → My Projects
+      // 🔹 Default → Employee Dashboard
       {
         path: '',
+        loadComponent: () =>
+          import('./features/user-dashboard/user-dashboard.component')
+            .then(m => m.UserDashboardComponent)
+      },
+
+      // 🔹 User Profile
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/user-profile/user-profile.component')
+            .then(m => m.UserProfileComponent)
+      },
+
+      // 🔹 My Projects
+      {
+        path: 'my-projects',
         loadComponent: () =>
           import('./features/projects/user-projects/user-projects.component')
             .then(m => m.UserProjectsComponent)
@@ -104,6 +120,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/dashboard.component')
             .then(m => m.DashboardComponent)
+      },
+
+      // 🔹 Admin Profile
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/admin-profile/admin-profile.component')
+            .then(m => m.AdminProfileComponent)
       },
         
    {

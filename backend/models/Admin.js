@@ -54,7 +54,7 @@ class Admin {
   // ✅ Find admin by ID
   static async findById(id) {
     const [rows] = await db.execute(
-      'SELECT id, full_name, email, role, status, created_at FROM admins WHERE id = ?',
+      'SELECT id, full_name, gender, profile_image, email, role, status, bio, date_of_birth, created_at FROM admins WHERE id = ?',
       [id]
     );
     return rows[0];
@@ -63,7 +63,7 @@ class Admin {
   // ✅ Get all admins
   static async findAll() {
     const [rows] = await db.execute(
-      'SELECT id, full_name, email, role, status, created_at FROM admins ORDER BY id'
+      'SELECT id, full_name, gender, profile_image, email, role, status, bio, date_of_birth, created_at FROM admins ORDER BY id'
     );
     return rows;
   }
@@ -96,6 +96,63 @@ class Admin {
     ]);
 
     return { id, full_name, email, status };
+  }
+
+  // ✅ Update admin profile
+  static async updateProfile(id, profileData) {
+    const { full_name, gender, profile_image, email, status, bio, date_of_birth } = profileData;
+
+    const normalizeDate = (value) => {
+      if (!value) return null;
+      if (value instanceof Date) return value.toISOString().slice(0, 10);
+      const text = String(value);
+      if (text.includes('T')) return text.slice(0, 10);
+      return text;
+    };
+
+    const [existing] = await db.execute(
+      'SELECT id, full_name, email, status, bio, date_of_birth FROM admins WHERE id = ? LIMIT 1',
+      [id]
+    );
+
+    if (existing.length === 0) {
+      throw new Error('Admin not found');
+    }
+
+    const current = existing[0];
+
+    const nextFullName = full_name && full_name.trim() ? full_name : current.full_name;
+    const nextEmail = email && email.trim() ? email : current.email;
+    const nextStatus = status && status.trim() ? status : current.status;
+    const nextBio = bio && bio.trim() ? bio : (current.bio || null);
+    const nextDateOfBirth = normalizeDate(date_of_birth) || normalizeDate(current.date_of_birth);
+
+    if (nextEmail && nextEmail !== current.email) {
+      const [duplicate] = await db.execute(
+        'SELECT id FROM admins WHERE LOWER(email) = LOWER(?) AND id != ?',
+        [nextEmail, id]
+      );
+
+      if (duplicate.length > 0) {
+        throw new Error('An admin with this email already exists');
+      }
+    }
+
+    await db.execute(
+      `
+        UPDATE admins
+        SET full_name = ?, gender = ?, profile_image = ?, email = ?, status = ?, bio = ?, date_of_birth = ?
+        WHERE id = ?
+      `,
+      [nextFullName, gender, profile_image, nextEmail, nextStatus, nextBio, nextDateOfBirth, id]
+    );
+
+    const [rows] = await db.execute(
+      'SELECT id, full_name, gender, profile_image, email, role, status, bio, date_of_birth, created_at FROM admins WHERE id = ?',
+      [id]
+    );
+
+    return rows[0];
   }
 
   // ✅ Update password

@@ -107,6 +107,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     SELECT 
       e.id,
       e.name,
+      e.gender,
+      e.profile_image,
       e.email,
       e.phone,
       e.department_id,
@@ -115,7 +117,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       e.join_date,
       e.home_address,
       e.status,
-      e.issued_items
+      e.issued_items,
+      e.bio,
+      e.date_of_birth
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
     ORDER BY e.id
@@ -126,9 +130,90 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
   static async findById(id) {
     const [rows] = await db.execute(
-      'SELECT id, name, email, phone, department_id, position, join_date, home_address, status, issued_items FROM employees WHERE id = ?',
+      'SELECT id, name, gender, profile_image, email, phone, department_id, position, join_date, home_address, status, issued_items, bio, date_of_birth FROM employees WHERE id = ?',
       [id]
     );
+    return rows[0];
+  }
+
+  static async updateProfile(id, profileData) {
+    const { name, gender, profile_image, email, phone, department_id, position, home_address, bio, date_of_birth } = profileData;
+
+    const normalizeDate = (value) => {
+      if (!value) return null;
+      if (value instanceof Date) return value.toISOString().slice(0, 10);
+      const text = String(value);
+      if (text.includes('T')) return text.slice(0, 10);
+      return text;
+    };
+
+    const [existing] = await db.execute(
+      'SELECT id, name, email, phone, department_id, position, home_address, bio, date_of_birth FROM employees WHERE id = ? LIMIT 1',
+      [id]
+    );
+
+    if (existing.length === 0) {
+      throw new Error('Employee not found');
+    }
+
+    const current = existing[0];
+    const nextName = name && name.trim() ? name : current.name;
+    const nextEmail = email && email.trim() ? email : current.email;
+    const nextPhone = phone && phone.trim() ? phone : current.phone;
+    const nextDepartmentId = department_id || current.department_id;
+    const nextPosition = position && position.trim() ? position : current.position;
+    const nextHomeAddress = home_address && home_address.trim() ? home_address : current.home_address;
+    const nextBio = bio && bio.trim() ? bio : (current.bio || null);
+    const nextDateOfBirth = normalizeDate(date_of_birth) || normalizeDate(current.date_of_birth);
+
+    if (nextEmail && nextEmail !== current.email) {
+      const [existingEmail] = await db.execute(
+        'SELECT id FROM employees WHERE LOWER(email) = LOWER(?) AND id != ?',
+        [nextEmail, id]
+      );
+      if (existingEmail.length > 0) {
+        throw new Error('An employee with this email already exists');
+      }
+    }
+
+    if (nextPhone) {
+      const phoneDigits = nextPhone.replace(/\D/g, '');
+      if (phoneDigits.length !== 10) {
+        throw new Error('Phone number must be exactly 10 digits');
+      }
+      const [existingPhone] = await db.execute(
+        'SELECT id FROM employees WHERE REPLACE(REPLACE(REPLACE(phone, "-", ""), " ", ""), "+", "") = ? AND id != ?',
+        [phoneDigits, id]
+      );
+      if (existingPhone.length > 0) {
+        throw new Error('An employee with this phone number already exists');
+      }
+    }
+
+    if (nextDepartmentId) {
+      const [dept] = await db.execute(
+        'SELECT id FROM departments WHERE id = ? AND status = "active"',
+        [nextDepartmentId]
+      );
+      if (dept.length === 0) {
+        throw new Error('Invalid or inactive department');
+      }
+    }
+
+    await db.execute(
+      `
+        UPDATE employees
+        SET name = ?, gender = ?, profile_image = ?, email = ?, phone = ?, department_id = ?, position = ?, home_address = ?, bio = ?, date_of_birth = ?
+        WHERE id = ?
+      `,
+      [nextName, gender, profile_image, nextEmail, nextPhone, nextDepartmentId, nextPosition, nextHomeAddress, nextBio, nextDateOfBirth, id]
+    );
+
+    const [rows] = await db.execute(
+      'SELECT id, name, gender, profile_image, email, phone, department_id, position, join_date, home_address, status, issued_items, bio, date_of_birth FROM employees WHERE id = ?',
+      [id]
+    );
+
     return rows[0];
   }
 

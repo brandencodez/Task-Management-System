@@ -1,0 +1,196 @@
+<div class="employee-dashboard">
+  <div class="dashboard-header">
+    <div>
+      <span class="eyebrow">Employee dashboard</span>
+      <h1>Overview</h1>
+      <p class="subtitle">Stay focused on what is coming next for your department.</p>
+    </div>
+    <div class="header-actions">
+      <button class="ghost-btn" type="button">Department view</button>
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-card">Loading your dashboard...</div>
+  } @else {
+    @if (!hasEmployeeRecord) {
+      <div class="empty-card">
+        <h3>No employee profile found</h3>
+        <p>We could not find your employee record. Please contact HR.</p>
+      </div>
+    } @else {
+      <div class="dashboard-grid">
+        <section class="card avatar-card">
+          <div class="card-header">
+            <h3>Your avatar</h3>
+            <span class="card-kicker">Pick your vibe</span>
+          </div>
+          <div class="avatar-panel" [class.female]="avatarChoice === 'female'">
+            <div class="avatar-circle">{{ avatarChoice === 'female' ? 'F' : 'M' }}</div>
+            <div class="avatar-meta">
+              <strong>{{ currentUser || 'Employee' }}</strong>
+              <span>{{ userDepartmentName || 'Department' }}</span>
+            </div>
+          </div>
+          <div class="avatar-actions">
+            <button
+              class="avatar-btn"
+              [class.active]="avatarChoice === 'male'"
+              (click)="setAvatar('male')"
+            >
+              Male avatar
+            </button>
+            <button
+              class="avatar-btn"
+              [class.active]="avatarChoice === 'female'"
+              (click)="setAvatar('female')"
+            >
+              Female avatar
+            </button>
+          </div>
+          <div class="avatar-footer">
+            <span class="chip">{{ userDepartmentName || 'Department' }}</span>
+            <span class="chip">Active employee</span>
+          </div>
+        </section>
+
+        <section class="card points-card">
+          <div class="card-header">
+            <h3>Your points</h3>
+            <button class="ghost-link" type="button">How to earn more?</button>
+          </div>
+          <div class="points-value">{{ points }}</div>
+          <div class="points-meta">
+            <span>{{ stats.completed }} completed</span>
+            <span>{{ stats.ongoing }} active</span>
+            <span>{{ stats.upcoming }} upcoming</span>
+          </div>
+          <div class="updates-list">
+            @for (update of quickUpdates; track update.label) {
+              <div class="update-row">
+                <span>{{ update.label }}</span>
+                <strong>+{{ update.points }}</strong>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="card trophy-card">
+          <div class="card-header">
+            <h3>Trophies</h3>
+            <span class="card-kicker">Kudo lover</span>
+          </div>
+          <div class="trophy-body">
+            <div class="trophy-icon">KL</div>
+            <div>
+              <p class="trophy-title">Kudo lover</p>
+              <p class="trophy-subtitle">You sent {{ kudosCount }} kudos</p>
+            </div>
+          </div>
+          <div class="trophy-footer">
+            <span class="pill">Team spirit</span>
+            <span class="pill">Reliable</span>
+          </div>
+        </section>
+
+        <section class="card stats-card">
+          <div class="card-header">
+            <h3>Global stats</h3>
+            <span class="card-kicker">Department snapshot</span>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span>Total projects</span>
+              <strong>{{ stats.total }}</strong>
+            </div>
+            <div class="stat-item">
+              <span>Upcoming</span>
+              <strong>{{ stats.upcoming }}</strong>
+            </div>
+            <div class="stat-item">
+              <span>Ongoing</span>
+              <strong>{{ stats.ongoing }}</strong>
+            </div>
+            <div class="stat-item">
+              <span>Completed</span>
+              <strong>{{ stats.completed }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card upcoming-card">
+          <div class="card-header">
+            <div>
+              <h3>Upcoming projects</h3>
+              <p>Only projects assigned to your department.</p>
+            </div>
+            <span class="counter">{{ upcomingProjects.length }} upcoming</span>
+          </div>
+
+          @if (upcomingProjects.length > 0) {
+            <div class="upcoming-list">
+              @for (project of upcomingProjects; track project.id) {
+                <div class="upcoming-item" (click)="openProjectModal(project)">
+                  <div class="upcoming-main">
+                    <h4>{{ project.name }}</h4>
+                    <span>{{ project.projectType || 'General' }}</span>
+                  </div>
+                  <div class="upcoming-meta">
+                    <span>Start {{ formatDateForDisplay(project.startDate) }}</span>
+                    <strong>{{ formatDateForDisplay(project.finishDate) }}</strong>
+                  </div>
+                  @if (getInterestBadge(project.id)) {
+                    <span class="interest-chip">{{ getInterestBadge(project.id) }}</span>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-card compact">
+              <h4>No upcoming projects yet</h4>
+              <p>Once new work lands for your department, it will appear here.</p>
+            </div>
+          }
+        </section>
+      </div>
+    }
+  }
+
+  @if (selectedProject) {
+    <div class="modal-overlay" (click)="closeProjectModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3>{{ selectedProject.name }}</h3>
+            <p>{{ selectedProject.projectType || 'General' }}</p>
+          </div>
+          <button class="close-btn" (click)="closeProjectModal()">x</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-row">
+            <span>Duration</span>
+            <strong>{{ formatDateForDisplay(selectedProject.startDate) }} - {{ formatDateForDisplay(selectedProject.finishDate) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Client</span>
+            <strong>{{ selectedProject.clientDetails.companyName || 'Not specified' }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Status</span>
+            <strong>{{ selectedProject.status }}</strong>
+          </div>
+          <p class="project-brief">{{ selectedProject.projectBrief || 'No brief provided yet.' }}</p>
+        </div>
+        <div class="interest-panel">
+          <h4>Interested in this project?</h4>
+          <div class="interest-actions">
+            <button class="btn-yes" (click)="setInterest('yes')">Yes</button>
+            <button class="btn-no" (click)="setInterest('no')">No</button>
+          </div>
+          <p class="interest-note">{{ getInterestLabel(selectedProject.id) }}</p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

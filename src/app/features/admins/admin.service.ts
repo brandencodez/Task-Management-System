@@ -132,6 +132,16 @@ export class AdminService {
     );
   }
 
+  // ✅ Get admin by ID
+  getAdminById(id: number): Observable<Admin | null> {
+    return this.http.get<Admin>(`${this.apiUrl}/${id}`).pipe(
+      catchError(error => {
+        console.error('Get admin by id error:', error);
+        return of(null);
+      })
+    );
+  }
+
   // ✅ Update admin
   updateAdmin(id: number, adminData: Partial<Admin>): Observable<Admin> {
     return this.http.put<Admin>(
@@ -145,6 +155,23 @@ export class AdminService {
       }),
       catchError(error => {
         console.error('Update admin error:', error);
+        throw error;
+      })
+    );
+  }
+
+  // ✅ Update admin profile
+  updateAdminProfile(id: number, profileData: Partial<Admin>): Observable<Admin> {
+    return this.http.put<Admin>(
+      `${this.apiUrl}/${id}/profile`,
+      profileData,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(updatedAdmin => {
+        this.updateCurrentAdminSession(updatedAdmin);
+      }),
+      catchError(error => {
+        console.error('Update admin profile error:', error);
         throw error;
       })
     );

@@ -1,0 +1,97 @@
+<div class="profile-page">
+  <div class="profile-header">
+    <div>
+      <span class="eyebrow">My Profile</span>
+      <h1>Profile</h1>
+      <p class="subtitle">Keep your profile up to date for your team.</p>
+    </div>
+    <div class="header-actions">
+      @if (!isEditMode) {
+        <button class="edit-btn" (click)="isEditMode = true">Edit Profile</button>
+      } @else {
+        <div class="action-group">
+          <button class="save-btn" (click)="saveProfile()" [disabled]="isSaving">
+            {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          </button>
+          <button class="cancel-btn" (click)="cancelEdit()" [disabled]="isSaving">
+            Cancel
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="card">Loading profile...</div>
+  } @else {
+    <div class="card profile-summary">
+      <div class="avatar-block">
+        <div class="avatar">
+          @if (profileForm.profile_image) {
+            <img [src]="profileForm.profile_image" alt="Profile photo" />
+          } @else {
+            <span>{{ displayName.charAt(0) || 'A' }}</span>
+          }
+        </div>
+        <div>
+          <h2>{{ displayName }}</h2>
+          <p class="role">Admin</p>
+        </div>
+      </div>
+      @if (isEditMode) {
+        <div class="photo-actions">
+          <label class="ghost-btn">
+            Change photo
+            <input type="file" accept="image/*" (change)="onFileChange($event)" />
+          </label>
+          <button class="ghost-btn" type="button" (click)="clearPhoto()">Remove</button>
+        </div>
+      }
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Personal Information</h3>
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Full Name</label>
+          <input type="text" [(ngModel)]="profileForm.full_name" placeholder="Full name" [disabled]="!isEditMode" />
+        </div>
+        <div class="form-field">
+          <label>Gender</label>
+          <select [(ngModel)]="profileForm.gender" [disabled]="!isEditMode">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Date of Birth</label>
+          <input type="date" [(ngModel)]="profileForm.date_of_birth" [disabled]="!isEditMode" />
+        </div>
+        <div class="form-field">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="profileForm.email" placeholder="Email address" [disabled]="!isEditMode" />
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Status</label>
+          <select [(ngModel)]="profileForm.status" [disabled]="!isEditMode">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="form-field form-wide">
+          <label>Bio</label>
+          <textarea [(ngModel)]="profileForm.bio" placeholder="Tell us about yourself" [disabled]="!isEditMode" class="bio-textarea"></textarea>
+        </div>
+      </div>
+
+      @if (saveMessage) {
+        <p class="save-message">{{ saveMessage }}</p>
+      }
+    </div>
+  }
+</div>
