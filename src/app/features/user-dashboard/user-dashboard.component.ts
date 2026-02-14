@@ -1,3 +1,6 @@
+// user-dashboard.component.ts
+// UPDATED VERSION - Now saves interest to database instead of localStorage
+
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -5,6 +8,7 @@ import { forkJoin } from 'rxjs';
 import { ProjectService } from '../projects/project.service';
 import { EmployeeService } from '../employees/employee.service';
 import { UserService } from '../../shared/services/user.service';
+import { ProjectInterestService } from '../../shared/services/project.interest.service';
 import { Project } from '../../shared/models/project.model';
 
 interface QuickUpdate {
@@ -21,6 +25,7 @@ interface QuickUpdate {
 })
 export class UserDashboardComponent implements OnInit {
   currentUser: string | null = null;
+  currentEmployeeId: number | null = null;
   userDepartmentId: number | null = null;
   userDepartmentName = '';
   hasEmployeeRecord = false;
@@ -48,6 +53,7 @@ export class UserDashboardComponent implements OnInit {
     private projectService: ProjectService,
     private employeeService: EmployeeService,
     private userService: UserService,
+    private projectInterestService: ProjectInterestService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -62,11 +68,6 @@ export class UserDashboardComponent implements OnInit {
     const savedAvatar = localStorage.getItem('employee_avatar_choice');
     if (savedAvatar === 'male' || savedAvatar === 'female') {
       this.avatarChoice = savedAvatar;
-    }
-
-    const storedResponses = localStorage.getItem('employee_project_interest');
-    if (storedResponses) {
-      this.interestResponses = JSON.parse(storedResponses);
     }
 
     this.loadDashboardData();
@@ -91,12 +92,26 @@ export class UserDashboardComponent implements OnInit {
   }
 
   setInterest(response: 'yes' | 'no') {
-    if (!this.selectedProject) return;
-    this.interestResponses[this.selectedProject.id] = response;
-    localStorage.setItem(
-      'employee_project_interest',
-      JSON.stringify(this.interestResponses),
-    );
+    if (!this.selectedProject || !this.currentEmployeeId) return;
+
+    const interest = {
+      project_id: this.selectedProject.id,
+      employee_id: this.currentEmployeeId,
+      employee_name: this.currentUser || '',
+      interest_status: response
+    };
+
+    // Save to database
+    this.projectInterestService.saveInterest(interest).subscribe({
+      next: () => {
+        this.interestResponses[this.selectedProject!.id] = response;
+        console.log('Interest saved successfully');
+      },
+      error: (err) => {
+        console.error('Failed to save interest:', err);
+        alert('Failed to save your interest. Please try again.');
+      }
+    });
   }
 
   getInterestLabel(projectId: number): string {
@@ -123,6 +138,7 @@ export class UserDashboardComponent implements OnInit {
 
         if (employee) {
           this.hasEmployeeRecord = true;
+          this.currentEmployeeId = employee.id;
           this.userDepartmentId = employee.department_id;
           this.userDepartmentName = employee.department_name || '';
 
@@ -135,6 +151,9 @@ export class UserDashboardComponent implements OnInit {
           this.points = this.calculatePoints(this.stats);
           this.kudosCount = this.stats.completed * 2;
           this.quickUpdates = this.buildQuickUpdates();
+
+          // Load employee's interests from database
+          this.loadEmployeeInterests();
         } else {
           this.hasEmployeeRecord = false;
           this.departmentProjects = [];
@@ -158,6 +177,23 @@ export class UserDashboardComponent implements OnInit {
         this.quickUpdates = [{ label: 'No updates yet', points: 0 }];
         this.isLoading = false;
         this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private loadEmployeeInterests() {
+    if (!this.currentEmployeeId) return;
+
+    this.projectInterestService.getEmployeeInterests(this.currentEmployeeId).subscribe({
+      next: (interests) => {
+        this.interestResponses = {};
+        interests.forEach(interest => {
+          this.interestResponses[interest.project_id] = interest.interest_status;
+        });
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load employee interests:', err);
       }
     });
   }
