@@ -215,7 +215,7 @@
 
       <div class="status-section">
 
-        <!-- Gradient Capsule (UNCHANGED) -->
+        <!-- Gradient Capsule -->
         <h3 
           class="section-title"
           [ngClass]="{
@@ -254,6 +254,16 @@
               </div>
 
               <div class="project-actions">
+                <!-- Show "View Interested" button only for UPCOMING projects -->
+                @if (status === 'UPCOMING') {
+                  <button 
+                    class="btn btn-info" 
+                    (click)="openInterestedModal(project)"
+                    title="View interested candidates"
+                  >
+                    👥 View Interested
+                  </button>
+                }
                 <button class="btn btn-outline" (click)="openEditForm(project)">Edit</button>
                 <button class="btn btn-danger" (click)="deleteProject(project.id)">Delete</button>
               </div>
@@ -268,3 +278,80 @@
   }
 
 </div>
+
+<!-- ================= INTERESTED CANDIDATES MODAL ================= -->
+@if (showInterestedModal && selectedProjectForInterest) {
+  <div class="modal-overlay" (click)="closeInterestedModal()">
+    <div class="modal-card interest-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Interested Candidates</h3>
+          <p class="modal-subtitle">{{ selectedProjectForInterest.name }}</p>
+        </div>
+        <button class="close-btn" (click)="closeInterestedModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Stats Summary -->
+        @if (!loadingInterests) {
+          <div class="interest-stats">
+            <div class="stat-box">
+              <span class="stat-label">Total Responses</span>
+              <strong class="stat-value">{{ interestStats.total }}</strong>
+            </div>
+            <div class="stat-box interested">
+              <span class="stat-label">Interested</span>
+              <strong class="stat-value">{{ interestStats.interested }}</strong>
+            </div>
+            <div class="stat-box not-interested">
+              <span class="stat-label">Not Interested</span>
+              <strong class="stat-value">{{ interestStats.not_interested }}</strong>
+            </div>
+          </div>
+        }
+
+        <!-- Loading State -->
+        @if (loadingInterests) {
+          <div class="loading-state">
+            <p>Loading interested candidates...</p>
+          </div>
+        }
+
+        <!-- Interested Candidates List -->
+        @if (!loadingInterests && interestedCandidates.length > 0) {
+          <div class="candidates-list">
+            <h4>Interested Employees</h4>
+            @for (candidate of interestedCandidates; track candidate.id) {
+              <div class="candidate-card">
+                <div class="candidate-info">
+                  <strong class="candidate-name">{{ candidate.employee_name }}</strong>
+                  <span class="candidate-dept">{{ candidate.department_name || 'N/A' }}</span>
+                </div>
+                <div class="candidate-contact">
+                  @if (candidate.email) {
+                    <span class="contact-item">📧 {{ candidate.email }}</span>
+                  }
+                  @if (candidate.phone) {
+                    <span class="contact-item">📱 {{ candidate.phone }}</span>
+                  }
+                </div>
+                <span class="interest-badge interested-badge">Interested</span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Empty State -->
+        @if (!loadingInterests && interestedCandidates.length === 0) {
+          <div class="empty-state">
+            <p>No employees have shown interest in this project yet.</p>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeInterestedModal()">Close</button>
+      </div>
+    </div>
+  </div>
+}

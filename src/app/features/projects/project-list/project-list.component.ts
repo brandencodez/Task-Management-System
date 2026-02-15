@@ -1,3 +1,6 @@
+// project-list.component.ts
+// UPDATED VERSION - Added ability to view interested candidates for upcoming projects
+
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +11,7 @@ import { ProjectService } from '../project.service';
 import { Project, ProjectStatus } from '../../../shared/models/project.model';
 import { Router, NavigationEnd } from '@angular/router';
 import { DepartmentService } from '../../department/department.service';
+import { ProjectInterestService, ProjectInterest, ProjectInterestStats } from '../../../shared/services/project.interest.service';
 
 @Component({
   selector: 'app-project-list',
@@ -31,11 +35,19 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
   currentProject: Project = this.getEmptyProject();
 
+  // Interested candidates modal
+  showInterestedModal = false;
+  selectedProjectForInterest: Project | null = null;
+  interestedCandidates: ProjectInterest[] = [];
+  interestStats: ProjectInterestStats = { interested: 0, not_interested: 0, total: 0 };
+  loadingInterests = false;
+
   constructor(
     private projectService: ProjectService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private departmentService: DepartmentService
+    private departmentService: DepartmentService,
+    private projectInterestService: ProjectInterestService
   ) {}
 
   // ================= INIT =================
@@ -91,6 +103,55 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   private validatePhone(phone: string | undefined): boolean {
     if (!phone) return false;
     return phone.replace(/\D/g, '').length === 10;
+  }
+
+  // ================= INTERESTED CANDIDATES =================
+
+  openInterestedModal(project: Project) {
+    this.selectedProjectForInterest = project;
+    this.showInterestedModal = true;
+    this.loadingInterests = true;
+    this.interestedCandidates = [];
+    this.interestStats = { interested: 0, not_interested: 0, total: 0 };
+
+    // Load interested candidates and stats
+    this.projectInterestService.getInterestedCandidates(project.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (candidates) => {
+          this.interestedCandidates = candidates;
+          this.loadInterestStats(project.id);
+        },
+        error: (err) => {
+          console.error('Failed to load interested candidates:', err);
+          this.loadingInterests = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private loadInterestStats(projectId: number) {
+    this.projectInterestService.getProjectStats(projectId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (stats) => {
+          this.interestStats = stats;
+          this.loadingInterests = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Failed to load interest stats:', err);
+          this.loadingInterests = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  closeInterestedModal() {
+    this.showInterestedModal = false;
+    this.selectedProjectForInterest = null;
+    this.interestedCandidates = [];
+    this.interestStats = { interested: 0, not_interested: 0, total: 0 };
   }
 
   // ================= DATE FORMATTERS =================
