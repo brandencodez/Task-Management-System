@@ -6,6 +6,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { ProjectService } from '../../../project.service';
 import { EmployeeService } from '../../../../employees/employee.service';
 import { UserService } from '../../../../../shared/services/user.service';
+import { ProjectAssignmentService } from '../../../../../shared/services/project-assignment.service'; 
 import { Project } from '../../../../../shared/models/project.model';
 import { Employee } from '../../../../employees/employee.model';
 import { WorkEntry, WorkEntryAttachment } from '../../../../../shared/models/work-entry.model';
@@ -23,7 +24,7 @@ export class DailyWorkEntryComponent implements OnInit {
   @Output() entriesChange = new EventEmitter<WorkEntry[]>();
   @ViewChild('attachmentInput') attachmentInput!: ElementRef<HTMLInputElement>;
 
-  assignedProjects: Project[] = [];
+  assignedProjects: Project[] = []; 
   project = '';
   description = '';
   hours: number | null = null;
@@ -41,7 +42,8 @@ export class DailyWorkEntryComponent implements OnInit {
     private projectService: ProjectService,
     private employeeService: EmployeeService,
     private userService: UserService,
-    public workEntryService: WorkEntryService, // 👈 PUBLIC
+    private projectAssignmentService: ProjectAssignmentService, 
+    public workEntryService: WorkEntryService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -65,7 +67,7 @@ export class DailyWorkEntryComponent implements OnInit {
           this.currentEmployeeId = String(employee.id);
           this.currentUserDepartmentId = employee.department_id; 
           this.loadEntries();
-          this.loadProjectsForLoggedUser();
+          this.loadAssignedProjects(); // ✅ UPDATED METHOD CALL
         } else {
           console.warn('Employee not found for current user:', currentUser);
           alert('Your employee record was not found. Please contact admin.');
@@ -78,14 +80,45 @@ export class DailyWorkEntryComponent implements OnInit {
     });
   }
 
-  private loadProjectsForLoggedUser(): void {
-    if (this.currentUserDepartmentId === null) return;
+  //  Load only assigned projects
+  private loadAssignedProjects(): void {
+    if (!this.currentEmployeeId) return;
 
-    this.projectService.getProjects().subscribe((projects: Project[]) => {
-      this.assignedProjects = projects.filter((p: Project) => 
-        p.department_id === this.currentUserDepartmentId
-      );
-      this.cdr.detectChanges();
+    const employeeIdNum = parseInt(this.currentEmployeeId, 10);
+    if (isNaN(employeeIdNum)) {
+      console.error('Invalid employee ID');
+      return;
+    }
+
+    this.projectAssignmentService.getAssignmentsByEmployee(employeeIdNum).subscribe({
+      next: (assignments) => {
+        // Extract unique projects from assignments
+        const projectMap = new Map<number, Project>();
+        
+        assignments.forEach(assignment => {
+          if (!projectMap.has(assignment.project_id)) {
+            projectMap.set(assignment.project_id, {
+              id: assignment.project_id,
+              name: assignment.project_name,
+              department_id: assignment.department_id,
+              // Add any other project fields you need
+            } as Project);
+          }
+        });
+
+        this.assignedProjects = Array.from(projectMap.values());
+        
+        if (this.assignedProjects.length === 0) {
+          console.warn('No projects assigned to this employee');
+        }
+        
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load assigned projects:', err);
+        alert('Failed to load your assigned projects. Please contact admin.');
+        this.assignedProjects = [];
+      }
     });
   }
 
