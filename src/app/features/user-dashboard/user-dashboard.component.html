@@ -5,10 +5,6 @@
       <h1>Overview</h1>
       <p class="subtitle">Stay focused on what is coming next for your department.</p>
     </div>
-    <div class="header-actions">
-      <button class="ghost-btn" type="button">Department view</button>
-      <button class="logout-btn" (click)="logout()">Logout</button>
-    </div>
   </div>
 
   @if (isLoading) {
@@ -24,30 +20,18 @@
         <section class="card avatar-card">
           <div class="card-header">
             <h3>Your avatar</h3>
-            <span class="card-kicker">Pick your vibe</span>
+            <span class="card-kicker">Profile</span>
           </div>
-          <div class="avatar-panel" [class.female]="avatarChoice === 'female'">
-            <div class="avatar-circle">{{ avatarChoice === 'female' ? 'F' : 'M' }}</div>
+          <div class="avatar-panel" [class.female]="employeeGender === 'female'">
+            @if (profileImageUrl) {
+              <img class="avatar-image" [src]="profileImageUrl" [alt]="currentUser || 'Employee'" />
+            } @else {
+              <div class="avatar-circle">{{ avatarInitial }}</div>
+            }
             <div class="avatar-meta">
               <strong>{{ currentUser || 'Employee' }}</strong>
               <span>{{ userDepartmentName || 'Department' }}</span>
             </div>
-          </div>
-          <div class="avatar-actions">
-            <button
-              class="avatar-btn"
-              [class.active]="avatarChoice === 'male'"
-              (click)="setAvatar('male')"
-            >
-              Male avatar
-            </button>
-            <button
-              class="avatar-btn"
-              [class.active]="avatarChoice === 'female'"
-              (click)="setAvatar('female')"
-            >
-              Female avatar
-            </button>
           </div>
           <div class="avatar-footer">
             <span class="chip">{{ userDepartmentName || 'Department' }}</span>
@@ -58,40 +42,18 @@
         <section class="card points-card">
           <div class="card-header">
             <h3>Your points</h3>
-            <button class="ghost-link" type="button">How to earn more?</button>
           </div>
-          <div class="points-value">{{ points }}</div>
-          <div class="points-meta">
-            <span>{{ stats.completed }} completed</span>
-            <span>{{ stats.ongoing }} active</span>
-            <span>{{ stats.upcoming }} upcoming</span>
-          </div>
-          <div class="updates-list">
-            @for (update of quickUpdates; track update.label) {
-              <div class="update-row">
-                <span>{{ update.label }}</span>
-                <strong>+{{ update.points }}</strong>
-              </div>
-            }
-          </div>
+          <div class="coming-soon">Coming soon</div>
+          <p class="coming-soon-sub">We are building a smarter, more accurate points system.</p>
         </section>
 
         <section class="card trophy-card">
           <div class="card-header">
-            <h3>Trophies</h3>
-            <span class="card-kicker">Kudo lover</span>
+            <h3>Achievements</h3>
+            <span class="card-kicker">Recognition</span>
           </div>
-          <div class="trophy-body">
-            <div class="trophy-icon">KL</div>
-            <div>
-              <p class="trophy-title">Kudo lover</p>
-              <p class="trophy-subtitle">You sent {{ kudosCount }} kudos</p>
-            </div>
-          </div>
-          <div class="trophy-footer">
-            <span class="pill">Team spirit</span>
-            <span class="pill">Reliable</span>
-          </div>
+          <div class="coming-soon">Coming soon</div>
+          <p class="coming-soon-sub">We will highlight your achievements here.</p>
         </section>
 
         <section class="card stats-card">
@@ -188,7 +150,6 @@
             <button class="btn-yes" (click)="setInterest('yes')">Yes</button>
             <button class="btn-no" (click)="setInterest('no')">No</button>
           </div>
-          <p class="interest-note">{{ getInterestLabel(selectedProject.id) }}</p>
         </div>
       </div>
     </div>
