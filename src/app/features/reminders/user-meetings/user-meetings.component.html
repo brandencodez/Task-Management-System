@@ -1,0 +1,82 @@
+<div class="user-meetings-container">
+
+  <div class="page-header">
+    <h2>📅 My Meetings</h2>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-state" *ngIf="isLoading">
+    <p>Loading meetings...</p>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" *ngIf="!isLoading && reminders.length === 0">
+    <p>No meetings scheduled for you yet.</p>
+  </div>
+
+  <!-- MEETINGS CARD -->
+  <div class="meetings-wrapper" *ngIf="!isLoading && reminders.length > 0">
+
+    <!-- ======== UPCOMING MEETINGS ======== -->
+    <div class="status-section" *ngIf="upcomingMeetings.length > 0">
+      <h3 class="section-title upcoming-title">UPCOMING Meetings</h3>
+      <div class="meetings-grid">
+        <div class="meeting-card upcoming-card" *ngFor="let r of upcomingMeetings">
+          <div class="card-accent upcoming-accent"></div>
+          <div class="card-body">
+            <div class="card-header">
+              <div class="header-left">
+                <strong class="card-title">{{ r.title }}</strong>
+                <span class="dept-tag">{{ r.department }}</span>
+              </div>
+              <span class="status-badge upcoming">UPCOMING</span>
+            </div>
+            <p class="purpose">{{ r.purpose }}</p>
+            <div class="meta-grid">
+              <p><strong>Client:</strong> {{ r.client_name }}</p>
+              <p><strong>Contact:</strong> {{ r.client_contact }}</p>
+              <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p *ngIf="r.meeting_datetime"><strong>Time:</strong> {{ r.meeting_datetime | date:'shortTime' }}</p>
+              <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
+            </div>
+            <div class="card-footer" *ngIf="r.meeting_link">
+              <a [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== MISSED MEETINGS ======== -->
+    <div class="status-section" *ngIf="missedMeetings.length > 0">
+      <h3 class="section-title missed-title">MISSED Meetings</h3>
+      <div class="meetings-grid">
+        <div class="meeting-card missed-card" *ngFor="let r of missedMeetings">
+          <div class="card-accent missed-accent"></div>
+          <div class="card-body">
+            <div class="card-header">
+              <div class="header-left">
+                <strong class="card-title">{{ r.title }}</strong>
+                <span class="dept-tag">{{ r.department }}</span>
+              </div>
+              <span class="status-badge missed">MISSED</span>
+            </div>
+            <p class="purpose">{{ r.purpose }}</p>
+            <div class="meta-grid">
+              <p><strong>Client:</strong> {{ r.client_name }}</p>
+              <p><strong>Contact:</strong> {{ r.client_contact }}</p>
+              <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p *ngIf="r.meeting_datetime"><strong>Time:</strong> {{ r.meeting_datetime | date:'shortTime' }}</p>
+              <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
+            </div>
+            <div class="card-footer" *ngIf="r.meeting_link">
+              <a [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

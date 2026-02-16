@@ -1,32 +1,109 @@
 /* ================= PAGE ================= */
-.reminder-list-container {
+.user-meetings-container {
   max-width: 960px;
   margin: 0 auto 80px;
   padding: 30px 20px 0;
 }
 
-/* ================= SCHEDULED MEETINGS WRAPPER ================= */
-.scheduled-meetings-card {
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* ================= NOTIFICATION BANNER ================= */
+.notification-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 100%);
+  border: 1px solid #fde68a;
+  border-left: 5px solid #f59e0b;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  animation: notifSlideIn 0.4s ease;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.12);
+}
+
+.notif-icon {
+  font-size: 24px;
+  animation: notifBell 1s ease-in-out infinite;
+}
+
+@keyframes notifBell {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(12deg); }
+  50% { transform: rotate(-12deg); }
+  75% { transform: rotate(6deg); }
+}
+
+@keyframes notifSlideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notif-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notif-body strong {
+  font-size: 14px;
+  color: #92400e;
+}
+
+.notif-body span {
+  font-size: 13px;
+  color: #78350f;
+}
+
+.notif-dismiss {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #b45309;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.notif-dismiss:hover {
+  background: rgba(180, 83, 9, 0.1);
+}
+
+/* ================= STATES ================= */
+.loading-state,
+.empty-state {
+  text-align: center;
+  color: #9ca3af;
+  margin: 60px 0;
+  font-size: 15px;
+}
+
+/* ================= MEETINGS WRAPPER ================= */
+.meetings-wrapper {
   background: #ffffff;
   border-radius: 16px;
   padding: 28px 28px 20px;
-  margin-top: 28px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   border: 1px solid #e5e7eb;
-}
-
-.scheduled-meetings-heading {
-  font-size: 22px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 24px;
-  padding-bottom: 14px;
-  border-bottom: 2px solid #f3f4f6;
 }
 
 /* ================= STATUS SECTIONS ================= */
 .status-section {
   margin: 1.5rem 0;
+}
+
+.status-section:first-child {
+  margin-top: 0;
 }
 
 .section-title {
@@ -44,7 +121,6 @@
   transform: translateY(15px);
 }
 
-/* 🟡 TODAY */
 .today-title {
   background: linear-gradient(
     to right,
@@ -56,37 +132,24 @@
   color: #7c2d12;
 }
 
-/* 🔵 UPCOMING */
 .upcoming-title {
   background: linear-gradient(
     to right,
-    #cce7ff 0%,   
-    #e6f2ff 50%,  
-    #ffffff 100%  
+    #cce7ff 0%,
+    #e6f2ff 50%,
+    #ffffff 100%
   );
-  color: #023549; 
+  color: #023549;
 }
 
-/* 🔴 MISSED */
 .missed-title {
   background: linear-gradient(
     to right,
-    #ffdede 0%,   
-    #ffeaea 50%,  
-    #ffffff 100%  
-  );
-  color: #7f1d1d; 
-}
-
-/* 🟢 COMPLETED */
-.completed-title {
-  background: linear-gradient(
-    to right,
-    #bbf7d0 0%,
-    #dcfce7 50%,
+    #ffdede 0%,
+    #ffeaea 50%,
     #ffffff 100%
   );
-  color: #14532d;
+  color: #7f1d1d;
 }
 
 @keyframes slideFadeIn {
@@ -97,22 +160,14 @@
 }
 
 /* ================= GRID ================= */
-.reminders-grid {
+.meetings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1.25rem;
 }
 
-/* ================= EMPTY ================= */
-.empty-text {
-  text-align: center;
-  color: #9ca3af;
-  margin: 40px 0 20px;
-  font-size: 15px;
-}
-
 /* ================= MEETING CARD ================= */
-.reminder-card {
+.meeting-card {
   background: #ffffff;
   border-radius: 14px;
   overflow: hidden;
@@ -122,12 +177,11 @@
   display: flex;
 }
 
-.reminder-card:hover {
+.meeting-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-/* Color accent bar on left */
 .card-accent {
   width: 5px;
   flex-shrink: 0;
@@ -136,7 +190,6 @@
 .today-accent { background: #facc15; }
 .upcoming-accent { background: #2563eb; }
 .missed-accent { background: #ef4444; }
-.completed-accent { background: #22c55e; }
 
 .card-body {
   padding: 18px 20px;
@@ -144,7 +197,7 @@
 }
 
 /* ================= CARD HEADER ================= */
-.header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -163,7 +216,7 @@
   color: #1f2937;
 }
 
-.dept {
+.dept-tag {
   font-size: 12px;
   color: #6b7280;
   text-transform: capitalize;
@@ -198,21 +251,6 @@
   border: 1px solid #fecaca;
 }
 
-.status-badge.completed {
-  background-color: #dcfce7;
-  color: #14532d;
-  border: 1px solid #bbf7d0;
-}
-
-.completed-card {
-  opacity: 0.85;
-}
-
-.completed-card .card-title {
-  text-decoration: line-through;
-  color: #6b7280;
-}
-
 /* ================= CONTENT ================= */
 .purpose {
   margin: 8px 0 12px;
@@ -244,17 +282,8 @@
 
 /* ================= FOOTER ================= */
 .card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding-top: 12px;
   border-top: 1px solid #f3f4f6;
-}
-
-.footer-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
 }
 
 .join-link {
@@ -270,69 +299,13 @@
   text-decoration: underline;
 }
 
-/* ================= DELETE ================= */
-.delete-btn {
-  background: #ef4444;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.delete-btn:hover {
-  background: #dc2626;
-}
-
-/* ================= COMPLETE / REOPEN BUTTONS ================= */
-.complete-btn {
-  background: #22c55e;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.complete-btn:hover {
-  background: #16a34a;
-}
-
-.edit-btn {
-  background: #ffffff;        
-  color: #111827;             
-  border: 1px solid #d1d5db; 
-  border-radius: 8px;         
-  padding: 6px 14px;          
-  font-size: 12px;           
-  font-weight: 500;           
-  cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
-  display: inline-flex;       
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;     
-}
-
-.edit-btn:hover {
-  background: #f3f4f6;        
-  transform: translateY(-1px); 
-}
-
-
 /* ================= MOBILE ================= */
 @media (max-width: 640px) {
-  .scheduled-meetings-card {
+  .meetings-wrapper {
     padding: 18px 16px 14px;
   }
 
-  .reminders-grid {
+  .meetings-grid {
     grid-template-columns: 1fr;
   }
 
@@ -340,7 +313,7 @@
     grid-template-columns: 1fr;
   }
 
-  .header {
+  .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;

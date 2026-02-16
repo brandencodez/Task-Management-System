@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { Reminder } from '../../shared/models/reminder.model';
+import { Reminder, MeetingNotification } from '../../shared/models/reminder.model';
 
 @Injectable({
   providedIn: 'root'
@@ -44,6 +44,55 @@ export class ReminderService {
         console.error('Delete reminder error:', error);
         throw error;
       })
+    );
+  }
+
+  getMyMeetings(employeeId: number): Observable<Reminder[]> {
+    return this.http.get<Reminder[]>(`${this.apiUrl}/reminders/employee/${employeeId}`).pipe(
+      catchError(error => {
+        console.error('Get my meetings error:', error);
+        return of([]);
+      })
+    );
+  }
+
+  markCompleted(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/reminders/${id}/complete`, {}).pipe(
+      catchError(error => { console.error('Mark completed error:', error); throw error; })
+    );
+  }
+
+  reopenReminder(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/reminders/${id}/reopen`, {}).pipe(
+      catchError(error => { console.error('Reopen error:', error); throw error; })
+    );
+  }
+
+  getNotifications(employeeId: number): Observable<MeetingNotification[]> {
+    return this.http.get<MeetingNotification[]>(`${this.apiUrl}/reminders/employee/${employeeId}/notifications`).pipe(
+      catchError(error => { console.error('Get notifications error:', error); return of([]); })
+    );
+  }
+
+  getAllNotifications(): Observable<MeetingNotification[]> {
+    return this.http.get<MeetingNotification[]>(`${this.apiUrl}/reminders/notifications/all`).pipe(
+      catchError(error => { console.error('Get all notifications error:', error); return of([]); })
+    );
+  }
+
+  updateReminder(id: number, reminder: Omit<Reminder, 'id' | 'employee_name'>): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/reminders/${id}`,
+      reminder,
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(error => { console.error('Update reminder error:', error); throw error; })
+    );
+  }
+
+  dismissNotification(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/reminders/${id}/dismiss-notification`, {}).pipe(
+      catchError(error => { console.error('Dismiss notification error:', error); throw error; })
     );
   }
 }

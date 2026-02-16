@@ -1,7 +1,7 @@
 <div class="reminder-form-container card">
 
   <h2 class="title">
-    📅 Schedule Meeting Reminder
+    {{ isEditing ? '✏️ Edit Meeting Reminder' : '📅 Schedule Meeting Reminder' }}
   </h2>
 
   <!-- EMPLOYEE + TITLE (2 columns) -->
@@ -97,11 +97,16 @@
     </div>
   </div>
 
-  <!-- DATES (2 columns) -->
-  <div class="form-grid two-col">
+  <!-- DATES + TIME (3 columns) -->
+  <div class="form-grid three-col">
     <div class="form-group">
       <label>Meeting Date</label>
       <input type="date" [(ngModel)]="meetingDate" />
+    </div>
+
+    <div class="form-group">
+      <label>Meeting Time</label>
+      <input type="time" [(ngModel)]="meetingTime" />
     </div>
 
     <div class="form-group">
@@ -114,7 +119,7 @@
   <div class="actions">
     <button
       class="save-btn"
-      (click)="addReminder()"
+      (click)="saveReminder()"
       [disabled]="
         !employeeId ||
         !title ||
@@ -124,7 +129,10 @@
         !remindOn
       "
     >
-      💾 Save Reminder
+      {{ isEditing ? '✏️ Update Reminder' : '💾 Save Reminder' }}
+    </button>
+    <button *ngIf="isEditing" class="cancel-btn" (click)="cancelEdit()">
+      ❌ Cancel
     </button>
   </div>
 
