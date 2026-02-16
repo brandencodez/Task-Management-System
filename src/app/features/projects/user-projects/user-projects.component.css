@@ -429,7 +429,7 @@
 
 .participant-avatar {
   width: 40px;
-  height: 40px;
+  height:  40px;
   background: #059669;
   color: white;
   border-radius: 50%;
@@ -704,4 +704,50 @@
 @keyframes pop{
  from{transform:scale(.8);opacity:0}
  to{transform:scale(1);opacity:1}
+}
+/* ===== Better Modal Layout ===== */
+
+.modal-body {
+  padding: 22px 26px;
+  line-height: 1.7;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: start;
+}
+
+.label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.value {
+  color: #111827;
+}
+
+.section-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 18px 0;
+}
+
+.brief-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #374151;
+}
+
+.brief-content {
+  background: #f9fafb;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #111827;
 }
