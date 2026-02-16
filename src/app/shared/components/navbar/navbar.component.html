@@ -11,6 +11,40 @@
     </a>
 
     @if (role === 'user' || role === 'admin') {
+
+      <!-- 🔔 NOTIFICATION BELL (user + admin) -->
+      @if (role === 'user' || role === 'admin') {
+        <div class="notif-wrapper">
+          <button class="notif-bell" (click)="toggleNotifDropdown($event)" aria-label="Notifications">
+            🔔
+            @if (notifications.length > 0) {
+              <span class="notif-badge">{{ notifications.length }}</span>
+            }
+          </button>
+
+          @if (showNotifDropdown) {
+            <div class="notif-dropdown">
+              <div class="notif-dropdown-header">Upcoming Meetings</div>
+              @if (notifications.length === 0) {
+                <div class="notif-empty">No notifications</div>
+              }
+              @for (n of notifications; track n.id) {
+                <div class="notif-item" (click)="goToMeetings($event)">
+                  <div class="notif-item-body">
+                    <strong>{{ n.title }}</strong>
+                    @if (role === 'admin' && n.employee_name) {
+                      <span>👤 {{ n.employee_name }}</span>
+                    }
+                    <span>⏰ Starts at {{ n.meeting_datetime | date:'shortTime' }}</span>
+                  </div>
+                  <button class="notif-item-dismiss" (click)="dismissNotification(n.id, $event)">✕</button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
       <button
         class="menu-toggle"
         type="button"
@@ -68,6 +102,17 @@
             (click)="closeMenu()"
           >
             My Projects
+          </a>
+        </li>
+
+        <li>
+          <a
+            routerLink="/user-dashboard/my-meetings"
+            routerLinkActive="active"
+            aria-label="My meetings"
+            (click)="closeMenu()"
+          >
+            My Meetings
           </a>
         </li>
 

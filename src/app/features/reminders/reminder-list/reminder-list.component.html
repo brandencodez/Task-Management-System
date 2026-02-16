@@ -2,7 +2,7 @@
 
   <!-- 🔔 SCHEDULE MEETING FORM -->
   <div class="schedule-reminder-section">
-    <app-reminder-form (reminderSaved)="loadReminders()"></app-reminder-form>
+    <app-reminder-form [editingReminder]="editingReminder" (reminderSaved)="loadReminders()"></app-reminder-form>
   </div>
 
   <!-- 🔔 SCHEDULED MEETINGS WRAPPER CARD -->
@@ -13,37 +13,6 @@
     <p class="empty-text" *ngIf="reminders.length === 0">
       No meetings found.
     </p>
-
-    <!-- ======== TODAY'S MEETINGS ======== -->
-    <div class="status-section" *ngIf="todayReminders.length > 0">
-      <h3 class="section-title today-title">TODAY'S Meetings</h3>
-      <div class="reminders-grid">
-        <div class="reminder-card today-card" *ngFor="let r of todayReminders">
-          <div class="card-accent today-accent"></div>
-          <div class="card-body">
-            <div class="header">
-              <div class="header-left">
-                <strong class="card-title">{{ r.title }}</strong>
-                <span class="dept">{{ r.department }}</span>
-              </div>
-              <span class="status-badge today">TODAY</span>
-            </div>
-            <p class="purpose">{{ r.purpose }}</p>
-            <div class="meta-grid">
-              <p><strong>Employee:</strong> {{ r.employee_name }}</p>
-              <p><strong>Client:</strong> {{ r.client_name }}</p>
-              <p><strong>Contact:</strong> {{ r.client_contact }}</p>
-              <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
-              <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
-            </div>
-            <div class="card-footer">
-              <a *ngIf="r.meeting_link" [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
-              <button class="delete-btn" (click)="delete(r.id)">Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- ======== UPCOMING MEETINGS ======== -->
     <div class="status-section" *ngIf="upcomingReminders.length > 0">
@@ -65,11 +34,16 @@
               <p><strong>Client:</strong> {{ r.client_name }}</p>
               <p><strong>Contact:</strong> {{ r.client_contact }}</p>
               <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p *ngIf="r.meeting_datetime"><strong>Time:</strong> {{ r.meeting_datetime | date:'shortTime' }}</p>
               <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
             </div>
             <div class="card-footer">
               <a *ngIf="r.meeting_link" [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
-              <button class="delete-btn" (click)="delete(r.id)">Delete</button>
+              <div class="footer-actions">
+                <button class="edit-btn" (click)="edit(r)">Edit</button>
+                <button class="complete-btn" (click)="toggleComplete(r)">Mark Complete</button>
+                <button class="delete-btn" (click)="delete(r.id)">Delete</button>
+              </div>
             </div>
           </div>
         </div>
@@ -96,11 +70,50 @@
               <p><strong>Client:</strong> {{ r.client_name }}</p>
               <p><strong>Contact:</strong> {{ r.client_contact }}</p>
               <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p *ngIf="r.meeting_datetime"><strong>Time:</strong> {{ r.meeting_datetime | date:'shortTime' }}</p>
               <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
             </div>
             <div class="card-footer">
               <a *ngIf="r.meeting_link" [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
-              <button class="delete-btn" (click)="delete(r.id)">Delete</button>
+              <div class="footer-actions">
+                <button class="edit-btn" (click)="edit(r)">✏️ Edit</button>
+                <button class="complete-btn" (click)="toggleComplete(r)">Mark Complete</button>
+                <button class="delete-btn" (click)="delete(r.id)">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== COMPLETED MEETINGS ======== -->
+    <div class="status-section" *ngIf="completedReminders.length > 0">
+      <h3 class="section-title completed-title">COMPLETED Meetings</h3>
+      <div class="reminders-grid">
+        <div class="reminder-card completed-card" *ngFor="let r of completedReminders">
+          <div class="card-accent completed-accent"></div>
+          <div class="card-body">
+            <div class="header">
+              <div class="header-left">
+                <strong class="card-title">{{ r.title }}</strong>
+                <span class="dept">{{ r.department }}</span>
+              </div>
+              <span class="status-badge completed">COMPLETED</span>
+            </div>
+            <p class="purpose">{{ r.purpose }}</p>
+            <div class="meta-grid">
+              <p><strong>Employee:</strong> {{ r.employee_name }}</p>
+              <p><strong>Client:</strong> {{ r.client_name }}</p>
+              <p><strong>Contact:</strong> {{ r.client_contact }}</p>
+              <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p *ngIf="r.meeting_datetime"><strong>Time:</strong> {{ r.meeting_datetime | date:'shortTime' }}</p>
+              <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
+            </div>
+            <div class="card-footer">
+              <a *ngIf="r.meeting_link" [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
+              <div class="footer-actions">
+                <button class="delete-btn" (click)="delete(r.id)">Delete</button>
+              </div>
             </div>
           </div>
         </div>

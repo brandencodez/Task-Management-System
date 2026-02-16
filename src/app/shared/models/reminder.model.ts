@@ -9,5 +9,15 @@ export interface Reminder {
   client_contact: string;
   meeting_link?: string;
   meeting_date: string;         
-  remind_on: string;            
+  meeting_datetime?: string;
+  remind_on: string;
+  status?: 'scheduled' | 'completed' | 'missed';
+  notified?: number;
+}
+
+export interface MeetingNotification {
+  id: number;
+  title: string;
+  meeting_datetime: string;
+  employee_name?: string;
 }

@@ -1,8 +1,11 @@
-import { Component, ElementRef, HostListener, Input } from '@angular/core';
+import { Component, ChangeDetectorRef, ElementRef, HostListener, Input, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../../features/admins/admin.service';
 import { UserService } from '../../services/user.service';
+import { ReminderService } from '../../../features/reminders/reminder.service';
+import { MeetingNotification } from '../../models/reminder.model';
+import { Subscription, interval } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
@@ -11,16 +14,69 @@ import { UserService } from '../../services/user.service';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit, OnDestroy {
   @Input() role: 'user' | 'admin' | null = null;
   isMenuOpen = false;
+  notifications: MeetingNotification[] = [];
+  showNotifDropdown = false;
+  private pollSub?: Subscription;
 
   constructor(
     private router: Router,
     private adminService: AdminService,
     private userService: UserService,
-    private elementRef: ElementRef
+    private reminderService: ReminderService,
+    private elementRef: ElementRef,
+    private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnInit(): void {
+    if (this.role === 'user' || this.role === 'admin') {
+      this.loadNotifications();
+      this.pollSub = interval(30000).subscribe(() => this.loadNotifications());
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
+  }
+
+  private loadNotifications(): void {
+    if (this.role === 'admin') {
+      this.reminderService.getAllNotifications().subscribe({
+        next: (notifs) => { this.notifications = notifs; this.cdr.detectChanges(); }
+      });
+    } else if (this.role === 'user') {
+      const userId = this.userService.getCurrentUserId();
+      if (!userId) return;
+      this.reminderService.getNotifications(+userId).subscribe({
+        next: (notifs) => { this.notifications = notifs; this.cdr.detectChanges(); }
+      });
+    }
+  }
+
+  toggleNotifDropdown(event: Event): void {
+    event.stopPropagation();
+    this.showNotifDropdown = !this.showNotifDropdown;
+  }
+
+  goToMeetings(event: Event): void {
+    event.stopPropagation();
+    this.showNotifDropdown = false;
+    this.closeMenu();
+    if (this.role === 'admin') {
+      this.router.navigate(['/admin-dashboard/reminders']);
+    } else {
+      this.router.navigate(['/user-dashboard/my-meetings']);
+    }
+  }
+
+  dismissNotification(id: number, event: Event): void {
+    event.stopPropagation();
+    this.reminderService.dismissNotification(id).subscribe({
+      next: () => { this.notifications = this.notifications.filter(n => n.id !== id); this.cdr.detectChanges(); }
+    });
+  }
 
   toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
@@ -33,13 +89,10 @@ export class NavbarComponent {
   @HostListener('document:click', ['$event'])
   @HostListener('document:touchstart', ['$event'])
   handleOutsideClick(event: Event): void {
-    if (!this.isMenuOpen) {
-      return;
-    }
-
     const target = event.target as Node | null;
     if (target && !this.elementRef.nativeElement.contains(target)) {
-      this.closeMenu();
+      if (this.isMenuOpen) this.closeMenu();
+      if (this.showNotifDropdown) this.showNotifDropdown = false;
     }
   }
 

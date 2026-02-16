@@ -77,6 +77,14 @@ export const routes: Routes = [
             .then(m => m.UserProjectsComponent)
       },
 
+      // 🔹 My Meetings
+      {
+        path: 'my-meetings',
+        loadComponent: () =>
+          import('./features/reminders/user-meetings/user-meetings.component')
+            .then(m => m.UserMeetingsComponent)
+      },
+
       // 🔹 Work Entry
       {
         path: 'work-entry',

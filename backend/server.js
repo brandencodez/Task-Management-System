@@ -22,6 +22,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 require('./jobs/autoAbsent.job');
 require('./jobs/autoCheckout');
+require('./jobs/meetingReminder.job');
 // Middleware
 app.use(helmet());
 app.use(cors({
