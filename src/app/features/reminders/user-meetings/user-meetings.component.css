@@ -152,6 +152,16 @@
   color: #7f1d1d;
 }
 
+.completed-title {
+  background: linear-gradient(
+    to right,
+    #d1fae5 0%,
+    #ecfdf5 50%,
+    #ffffff 100%
+  );
+  color: #065f46;
+}
+
 @keyframes slideFadeIn {
   to {
     opacity: 1;
@@ -190,6 +200,7 @@
 .today-accent { background: #facc15; }
 .upcoming-accent { background: #2563eb; }
 .missed-accent { background: #ef4444; }
+.completed-accent { background: #10b981; }
 
 .card-body {
   padding: 18px 20px;
@@ -249,6 +260,12 @@
   background-color: #fee2e2;
   color: #991b1b;
   border: 1px solid #fecaca;
+}
+
+.status-badge.completed {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
 }
 
 /* ================= CONTENT ================= */

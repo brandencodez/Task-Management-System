@@ -1,11 +1,12 @@
 import { Component, ChangeDetectorRef, ElementRef, HostListener, Input, OnInit, OnDestroy } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../../features/admins/admin.service';
 import { UserService } from '../../services/user.service';
 import { ReminderService } from '../../../features/reminders/reminder.service';
 import { MeetingNotification } from '../../models/reminder.model';
-import { Subscription, interval } from 'rxjs';
+import { Subscription, interval, merge } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-navbar',
@@ -33,7 +34,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     if (this.role === 'user' || this.role === 'admin') {
       this.loadNotifications();
-      this.pollSub = interval(30000).subscribe(() => this.loadNotifications());
+
+      // Merge: 30s poll + route navigation + explicit refresh from service
+      const poll$ = interval(30000);
+      const nav$ = this.router.events.pipe(filter(e => e instanceof NavigationEnd));
+      const refresh$ = this.reminderService.notificationRefresh$;
+
+      this.pollSub = merge(poll$, nav$, refresh$).subscribe(() => this.loadNotifications());
     }
   }
 

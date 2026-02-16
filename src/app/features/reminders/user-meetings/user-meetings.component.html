@@ -77,6 +77,36 @@
       </div>
     </div>
 
+    <!-- ======== COMPLETED MEETINGS ======== -->
+    <div class="status-section" *ngIf="completedMeetings.length > 0">
+      <h3 class="section-title completed-title">COMPLETED Meetings</h3>
+      <div class="meetings-grid">
+        <div class="meeting-card completed-card" *ngFor="let r of completedMeetings">
+          <div class="card-accent completed-accent"></div>
+          <div class="card-body">
+            <div class="card-header">
+              <div class="header-left">
+                <strong class="card-title">{{ r.title }}</strong>
+                <span class="dept-tag">{{ r.department }}</span>
+              </div>
+              <span class="status-badge completed">COMPLETED</span>
+            </div>
+            <p class="purpose">{{ r.purpose }}</p>
+            <div class="meta-grid">
+              <p><strong>Client:</strong> {{ r.client_name }}</p>
+              <p><strong>Contact:</strong> {{ r.client_contact }}</p>
+              <p><strong>Meeting:</strong> {{ r.meeting_date | date:'mediumDate' }}</p>
+              <p *ngIf="r.meeting_datetime"><strong>Time:</strong> {{ r.meeting_datetime | date:'shortTime' }}</p>
+              <p><strong>Reminder:</strong> {{ r.remind_on | date:'mediumDate' }}</p>
+            </div>
+            <div class="card-footer" *ngIf="r.meeting_link">
+              <a [href]="r.meeting_link" target="_blank" class="join-link">🔗 Join Meeting</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </div>

@@ -73,4 +73,8 @@ export class UserMeetingsComponent implements OnInit {
   get missedMeetings(): Reminder[] {
     return this.scheduledReminders.filter(r => this.getMeetingStatus(r) === 'Missed');
   }
+
+  get completedMeetings(): Reminder[] {
+    return this.reminders.filter(r => r.status === 'completed');
+  }
 }

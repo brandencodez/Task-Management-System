@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, of, Subject } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { Reminder, MeetingNotification } from '../../shared/models/reminder.model';
 
 @Injectable({
@@ -9,6 +9,9 @@ import { Reminder, MeetingNotification } from '../../shared/models/reminder.mode
 })
 export class ReminderService {
   private apiUrl = 'http://localhost:5000/api';
+
+  /** Emits whenever reminders are mutated (create/update/delete/complete/reopen) */
+  readonly notificationRefresh$ = new Subject<void>();
   
   constructor(private http: HttpClient) {}
 
@@ -40,6 +43,7 @@ export class ReminderService {
 
   deleteReminder(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/reminders/${id}`).pipe(
+      tap(() => this.notificationRefresh$.next()),
       catchError(error => {
         console.error('Delete reminder error:', error);
         throw error;
@@ -58,12 +62,14 @@ export class ReminderService {
 
   markCompleted(id: number): Observable<any> {
     return this.http.patch(`${this.apiUrl}/reminders/${id}/complete`, {}).pipe(
+      tap(() => this.notificationRefresh$.next()),
       catchError(error => { console.error('Mark completed error:', error); throw error; })
     );
   }
 
   reopenReminder(id: number): Observable<any> {
     return this.http.patch(`${this.apiUrl}/reminders/${id}/reopen`, {}).pipe(
+      tap(() => this.notificationRefresh$.next()),
       catchError(error => { console.error('Reopen error:', error); throw error; })
     );
   }
@@ -92,6 +98,7 @@ export class ReminderService {
 
   dismissNotification(id: number): Observable<any> {
     return this.http.patch(`${this.apiUrl}/reminders/${id}/dismiss-notification`, {}).pipe(
+      tap(() => this.notificationRefresh$.next()),
       catchError(error => { console.error('Dismiss notification error:', error); throw error; })
     );
   }

@@ -55,7 +55,7 @@ class Reminder {
   }
 
   static async markCompleted(id) {
-    const query = `UPDATE reminders SET status = 'completed' WHERE id = ?`;
+    const query = `UPDATE reminders SET status = 'completed', notified = 0 WHERE id = ?`;
     await db.execute(query, [id]);
   }
 
