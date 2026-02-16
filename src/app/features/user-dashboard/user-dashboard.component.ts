@@ -10,6 +10,7 @@ import { EmployeeService } from '../employees/employee.service';
 import { UserService } from '../../shared/services/user.service';
 import { ProjectInterestService } from '../../shared/services/project.interest.service';
 import { Project } from '../../shared/models/project.model';
+import { Employee } from '../employees/employee.model';
 
 interface QuickUpdate {
   label: string;
@@ -45,7 +46,9 @@ export class UserDashboardComponent implements OnInit {
   kudosCount = 0;
   quickUpdates: QuickUpdate[] = [];
 
-  avatarChoice: 'male' | 'female' = 'male';
+  profileImageUrl = '';
+  avatarInitial = 'A';
+  employeeGender: 'male' | 'female' | '' = '';
   selectedProject: Project | null = null;
   interestResponses: Record<number, 'yes' | 'no'> = {};
 
@@ -65,22 +68,12 @@ export class UserDashboardComponent implements OnInit {
       return;
     }
 
-    const savedAvatar = localStorage.getItem('employee_avatar_choice');
-    if (savedAvatar === 'male' || savedAvatar === 'female') {
-      this.avatarChoice = savedAvatar;
-    }
-
     this.loadDashboardData();
   }
 
   logout() {
     this.userService.clearCurrentUser();
     this.router.navigate(['/user-login']);
-  }
-
-  setAvatar(choice: 'male' | 'female') {
-    this.avatarChoice = choice;
-    localStorage.setItem('employee_avatar_choice', choice);
   }
 
   openProjectModal(project: Project) {
@@ -105,7 +98,7 @@ export class UserDashboardComponent implements OnInit {
     this.projectInterestService.saveInterest(interest).subscribe({
       next: () => {
         this.interestResponses[this.selectedProject!.id] = response;
-        console.log('Interest saved successfully');
+        this.closeProjectModal();
       },
       error: (err) => {
         console.error('Failed to save interest:', err);
@@ -141,6 +134,9 @@ export class UserDashboardComponent implements OnInit {
           this.currentEmployeeId = employee.id;
           this.userDepartmentId = employee.department_id;
           this.userDepartmentName = employee.department_name || '';
+          this.employeeGender = employee.gender || '';
+          this.profileImageUrl = this.getProfileImageUrl(employee.profile_image);
+          this.avatarInitial = this.getAvatarInitial(employee);
 
           this.departmentProjects = projects.filter(
             (project) => project.department_id === this.userDepartmentId,
@@ -162,6 +158,9 @@ export class UserDashboardComponent implements OnInit {
           this.points = 0;
           this.kudosCount = 0;
           this.quickUpdates = [{ label: 'No updates yet', points: 0 }];
+          this.profileImageUrl = '';
+          this.employeeGender = '';
+          this.avatarInitial = 'A';
         }
 
         this.isLoading = false;
@@ -175,10 +174,37 @@ export class UserDashboardComponent implements OnInit {
         this.points = 0;
         this.kudosCount = 0;
         this.quickUpdates = [{ label: 'No updates yet', points: 0 }];
+        this.profileImageUrl = '';
+        this.employeeGender = '';
+        this.avatarInitial = 'A';
         this.isLoading = false;
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private getProfileImageUrl(profileImage?: string): string {
+    if (!profileImage) return '';
+    if (
+      profileImage.startsWith('http') ||
+      profileImage.startsWith('data:') ||
+      profileImage.startsWith('blob:')
+    ) {
+      return profileImage;
+    }
+
+    if (profileImage.startsWith('/')) {
+      return `http://localhost:5000${profileImage}`;
+    }
+
+    return `http://localhost:5000/${profileImage}`;
+  }
+
+  private getAvatarInitial(employee: Employee): string {
+    if (employee.gender === 'female') return 'F';
+    if (employee.gender === 'male') return 'M';
+    if (employee.name) return employee.name.charAt(0).toUpperCase();
+    return 'A';
   }
 
   private loadEmployeeInterests() {
