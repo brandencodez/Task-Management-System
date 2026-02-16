@@ -22,7 +22,6 @@
     <div class="projects-grid">
       @for (project of projects; track project.id) {
 
-        <!-- UPDATED CARD -->
         <div class="project-card" (click)="openProjectModal(project)">
 
           <div class="project-header">
@@ -32,7 +31,6 @@
             </span>
           </div>
 
-          <!-- ONLY PREVIEW INFO -->
           <div class="project-preview">
             <p><strong>Type:</strong> {{ project.projectType || 'Not specified' }}</p>
             <p>
@@ -68,37 +66,60 @@
         <button class="close-btn" (click)="closeProjectModal()">×</button>
       </div>
 
+      <!-- ✨ NEW CLEAN STRUCTURED BODY -->
       <div class="modal-body">
 
-        <p><strong>Type:</strong> {{ selectedProject.projectType }}</p>
-        <p>
-          <strong>Duration:</strong>
-          {{ formatDateForDisplay(selectedProject.startDate) }}
-          to
-          {{ formatDateForDisplay(selectedProject.finishDate) }}
-        </p>
+        <div class="info-section">
+          <div class="info-row">
+            <span class="label">Type</span>
+            <span class="value">{{ selectedProject.projectType }}</span>
+          </div>
 
-        <hr>
-
-        <p><strong>Company:</strong> {{ selectedProject.clientDetails.companyName }}</p>
-
-        <div *ngFor="let contact of selectedProject.clientDetails.contacts">
-          <p><strong>Contact:</strong> {{ contact.name }} ({{ contact.email || contact.phone }})</p>
+          <div class="info-row">
+            <span class="label">Duration</span>
+            <span class="value">
+              {{ formatDateForDisplay(selectedProject.startDate) }}
+              →
+              {{ formatDateForDisplay(selectedProject.finishDate) }}
+            </span>
+          </div>
         </div>
 
-        <p *ngIf="selectedProject.clientDetails.address">
-          <strong>Address:</strong> {{ selectedProject.clientDetails.address }}
-        </p>
+        <div class="section-divider"></div>
 
-        <hr>
+        <div class="info-section">
+          <div class="info-row">
+            <span class="label">Company</span>
+            <span class="value">{{ selectedProject.clientDetails.companyName }}</span>
+          </div>
 
-        <p><strong>Brief:</strong> {{ selectedProject.projectBrief }}</p>
+          <div *ngFor="let contact of selectedProject.clientDetails.contacts" class="info-row">
+            <span class="label">Contact</span>
+            <span class="value">
+              {{ contact.name }} ({{ contact.email || contact.phone }})
+            </span>
+          </div>
+
+          <div class="info-row" *ngIf="selectedProject.clientDetails.address">
+            <span class="label">Address</span>
+            <span class="value">{{ selectedProject.clientDetails.address }}</span>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="brief-section">
+          <div class="brief-title">Brief</div>
+          <div class="brief-content">
+            {{ selectedProject.projectBrief || 'No description provided' }}
+          </div>
+        </div>
 
       </div>
     </div>
   </div>
 
-  <!-- CHAT BUTTON (UNCHANGED) -->
+  <!-- CHAT BUTTON -->
   <div class="chat-container">
     <button class="chat-toggle-btn" (click)="toggleChatPanel()">
       <span class="chat-icon">💬</span>
