@@ -1,6 +1,4 @@
 // user-dashboard.component.ts
-// UPDATED VERSION - Now saves interest to database instead of localStorage
-
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -127,7 +125,7 @@ export class UserDashboardComponent implements OnInit {
       projects: this.projectService.getProjects(),
     }).subscribe({
       next: ({ employees, projects }) => {
-        const employee = employees.find((emp) => emp.name === this.currentUser);
+        const employee = employees.find((emp) => emp.name.trim().toLowerCase() === this.currentUser?.trim().toLowerCase());
 
         if (employee) {
           this.hasEmployeeRecord = true;
@@ -151,6 +149,8 @@ export class UserDashboardComponent implements OnInit {
           // Load employee's interests from database
           this.loadEmployeeInterests();
         } else {
+          console.error('Employee not found. Logged in as:', this.currentUser);
+  console.error('Available employees:', employees.map(e => e.name));
           this.hasEmployeeRecord = false;
           this.departmentProjects = [];
           this.upcomingProjects = [];
