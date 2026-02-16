@@ -76,7 +76,7 @@ export class UserProjectsComponent implements OnInit {
     this.employeeService.getEmployees().subscribe({
       next: (employees) => {
 
-        const employee = employees.find((emp) => emp.name === this.currentUser);
+        const employee = employees.find((emp) => emp.name.trim().toLowerCase() === this.currentUser?.trim().toLowerCase());
 
         if (!employee) {
           this.projects = [];

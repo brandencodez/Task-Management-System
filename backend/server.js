@@ -17,6 +17,7 @@ const attendanceRoutes = require('./routes/attendance');
 const assignmentRoutes = require('./routes/assignments');
 const leaveRequestRoutes = require('./routes/leave-requests');
 const projectInterestRoutes = require('./routes/project-interest');
+const projectMemoRoutes = require('./routes/project-memos');
 const app = express();
 const PORT = process.env.PORT || 5000;
 require('./jobs/autoAbsent.job');
@@ -64,6 +65,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/leave-requests', leaveRequestRoutes);
 app.use('/api/project-interests', projectInterestRoutes);
+app.use('/api/project-memos', projectMemoRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

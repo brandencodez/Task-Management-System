@@ -5,6 +5,7 @@ const router = express.Router();
 
 /**
  * GET all memos for a project
+
  */
 router.get('/project/:projectId', async (req, res) => {
   try {
@@ -18,17 +19,16 @@ router.get('/project/:projectId', async (req, res) => {
 });
 
 /**
- * GET a single memo
+ * DELETE all memos for a project
+
  */
-router.get('/:id', async (req, res) => {
+router.delete('/project/:projectId', async (req, res) => {
   try {
-    const memo = await ProjectMemo.findById(req.params.id);
-    if (!memo) {
-      return res.status(404).json({ error: 'Memo not found' });
-    }
-    res.json(memo);
+    const { projectId } = req.params;
+    await ProjectMemo.deleteByProject(projectId);
+    res.json({ message: 'All project memos deleted successfully' });
   } catch (error) {
-    console.error('Get memo error:', error);
+    console.error('Delete project memos error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -57,6 +57,23 @@ router.post('/', async (req, res) => {
     res.status(201).json(memo);
   } catch (error) {
     console.error('🔥 Create memo failed:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET a single memo
+ * ⚠️ MUST come AFTER /project/:projectId routes
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const memo = await ProjectMemo.findById(req.params.id);
+    if (!memo) {
+      return res.status(404).json({ error: 'Memo not found' });
+    }
+    res.json(memo);
+  } catch (error) {
+    console.error('Get memo error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -100,20 +117,6 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Memo deleted successfully' });
   } catch (error) {
     console.error('🔥 Delete memo failed:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * DELETE all memos for a project
- */
-router.delete('/project/:projectId', async (req, res) => {
-  try {
-    const { projectId } = req.params;
-    await ProjectMemo.deleteByProject(projectId);
-    res.json({ message: 'All project memos deleted successfully' });
-  } catch (error) {
-    console.error('Delete project memos error:', error);
     res.status(500).json({ error: error.message });
   }
 });
