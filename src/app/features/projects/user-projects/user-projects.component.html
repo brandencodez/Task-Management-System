@@ -58,6 +58,7 @@
   <div class="project-modal-overlay" *ngIf="selectedProject" (click)="closeProjectModal()">
     <div class="project-modal" (click)="$event.stopPropagation()">
 
+      <!-- MODAL HEADER (always visible) -->
       <div class="modal-header">
         <h3>{{ selectedProject.name }}</h3>
         <span class="status-badge {{ selectedProject.status.toLowerCase() }}">
@@ -66,8 +67,26 @@
         <button class="close-btn" (click)="closeProjectModal()">×</button>
       </div>
 
-      <!-- ✨ NEW CLEAN STRUCTURED BODY -->
-      <div class="modal-body">
+      <!-- TAB TOGGLE ROW -->
+      <div class="modal-tab-row">
+        <button
+          class="tab-btn"
+          [class.active]="!showMemoView"
+          (click)="showMemoView = false">
+          <span class="tab-icon">📋</span> Details
+        </button>
+        <div class="tab-divider"></div>
+        <button
+          class="tab-btn"
+          [class.active]="showMemoView"
+          (click)="toggleMemoView()">
+          <span class="tab-icon">📝</span> Memo
+          <span class="tab-arrow" [class.flipped]="showMemoView">›</span>
+        </button>
+      </div>
+
+      <!-- ===== PROJECT DETAILS VIEW ===== -->
+      <div class="modal-body" *ngIf="!showMemoView">
 
         <div class="info-section">
           <div class="info-row">
@@ -116,6 +135,79 @@
         </div>
 
       </div>
+
+      <!-- ===== MEMO VIEW ===== -->
+      <div class="modal-body memo-body" *ngIf="showMemoView">
+
+        <!-- Loading state -->
+        <div class="memo-loading" *ngIf="isLoadingMemos">
+          <span class="loading-spinner">⏳</span> Loading memos...
+        </div>
+
+        <!-- Error state -->
+        <div class="memo-error" *ngIf="memoError && !isLoadingMemos">
+          {{ memoError }}
+        </div>
+
+        <!-- Memo list -->
+        <div class="memo-list" *ngIf="!isLoadingMemos && !memoError">
+
+          <div class="memo-empty" *ngIf="projectMemos.length === 0">
+            <span>No memos yet. Add one below.</span>
+          </div>
+
+          <div class="memo-item" *ngFor="let memo of projectMemos">
+
+            <!-- View mode -->
+            <ng-container *ngIf="editingMemo?.id !== memo.id">
+              <div class="memo-content-text">{{ memo.content }}</div>
+              <div class="memo-meta">
+                <span class="memo-date" *ngIf="memo.updatedAt">
+                  {{ memo.updatedAt | date: 'dd-MM-yyyy HH:mm' }}
+                </span>
+                <div class="memo-actions">
+                  <button class="memo-action-btn edit-btn" (click)="startEditMemo(memo)" title="Edit">✏️</button>
+                  <button class="memo-action-btn delete-btn" (click)="deleteMemo(memo)" title="Delete">🗑️</button>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Edit mode -->
+            <ng-container *ngIf="editingMemo?.id === memo.id">
+              <textarea
+                class="memo-textarea"
+                [(ngModel)]="editMemoContent"
+                rows="3"
+                placeholder="Edit memo...">
+              </textarea>
+              <div class="memo-edit-actions">
+                <button class="memo-save-btn" (click)="saveEditMemo()">Save</button>
+                <button class="memo-cancel-btn" (click)="cancelEditMemo()">Cancel</button>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+
+        <!-- Add new memo -->
+        <div class="memo-add-section" *ngIf="!isLoadingMemos">
+          <textarea
+            class="memo-textarea"
+            [(ngModel)]="newMemoContent"
+            rows="3"
+            placeholder="Write a new memo for this project...">
+          </textarea>
+          <button
+            class="memo-add-btn"
+            (click)="addMemo()"
+            [disabled]="isSavingMemo || !newMemoContent.trim()">
+            {{ isSavingMemo ? 'Saving...' : '+ Add Memo' }}
+          </button>
+        </div>
+
+      </div>
+      <!-- END MEMO VIEW -->
+
     </div>
   </div>
 
