@@ -9,6 +9,7 @@ import { ProjectAssignmentService } from '../../../shared/services/project-assig
 import { Project } from '../../../shared/models/project.model';
 import { Router } from '@angular/router';
 import { ChatService } from '../../../shared/services/chat.service';
+import { ProjectMemoService, ProjectMemo } from '../../../shared/services/project-memo.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -28,6 +29,16 @@ export class UserProjectsComponent implements OnInit {
 
   // ⭐ MODAL STATE
   selectedProject: Project | null = null;
+
+  // 📝 MEMO STATE
+  showMemoView = false;
+  projectMemos: ProjectMemo[] = [];
+  isLoadingMemos = false;
+  memoError: string | null = null;
+  newMemoContent = '';
+  isSavingMemo = false;
+  editingMemo: ProjectMemo | null = null;
+  editMemoContent = '';
 
   // CHAT
   showChatPanel = false;
@@ -50,6 +61,7 @@ export class UserProjectsComponent implements OnInit {
     private projectAssignmentService: ProjectAssignmentService,
     private router: Router,
     private chatService: ChatService,
+    private projectMemoService: ProjectMemoService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -64,10 +76,113 @@ export class UserProjectsComponent implements OnInit {
 
   openProjectModal(project: Project) {
     this.selectedProject = project;
+    this.showMemoView = false;
+    this.projectMemos = [];
+    this.memoError = null;
+    this.newMemoContent = '';
+    this.editingMemo = null;
   }
 
   closeProjectModal() {
     this.selectedProject = null;
+    this.showMemoView = false;
+    this.projectMemos = [];
+    this.editingMemo = null;
+  }
+
+  // 📝 Toggle between project details and memo view
+  toggleMemoView() {
+    this.showMemoView = !this.showMemoView;
+    if (this.showMemoView && this.selectedProject) {
+      this.loadMemos(this.selectedProject.id);
+    }
+  }
+
+  loadMemos(projectId: number) {
+    this.isLoadingMemos = true;
+    this.memoError = null;
+
+    this.projectMemoService.getMemosByProject(projectId).subscribe({
+      next: (memos) => {
+        this.projectMemos = memos;
+        this.isLoadingMemos = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.memoError = 'Failed to load memos.';
+        this.isLoadingMemos = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  addMemo() {
+    if (!this.newMemoContent.trim() || !this.selectedProject) return;
+    this.isSavingMemo = true;
+
+    const memo: ProjectMemo = {
+      projectId: this.selectedProject.id,
+      content: this.newMemoContent.trim(),
+    };
+
+    this.projectMemoService.createMemo(memo).subscribe({
+      next: (created) => {
+        this.projectMemos.push(created);
+        this.newMemoContent = '';
+        this.isSavingMemo = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isSavingMemo = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  startEditMemo(memo: ProjectMemo) {
+    this.editingMemo = memo;
+    this.editMemoContent = memo.content;
+  }
+
+  cancelEditMemo() {
+    this.editingMemo = null;
+    this.editMemoContent = '';
+  }
+
+  saveEditMemo() {
+    if (!this.editingMemo?.id || !this.editMemoContent.trim()) return;
+
+    const updated: ProjectMemo = {
+      ...this.editingMemo,
+      content: this.editMemoContent.trim(),
+    };
+
+    this.projectMemoService.updateMemo(this.editingMemo.id, updated).subscribe({
+      next: (saved) => {
+        const idx = this.projectMemos.findIndex(m => m.id === saved.id);
+        if (idx !== -1) this.projectMemos[idx] = saved;
+        this.editingMemo = null;
+        this.editMemoContent = '';
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  deleteMemo(memo: ProjectMemo) {
+    if (!memo.id) return;
+
+    this.projectMemoService.deleteMemo(memo.id).subscribe({
+      next: () => {
+        this.projectMemos = this.projectMemos.filter(m => m.id !== memo.id);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   loadAllData() {

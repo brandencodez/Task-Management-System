@@ -751,3 +751,234 @@
   border-radius: 8px;
   color: #111827;
 }
+
+/* ========================================
+   ADD THESE STYLES TO user-projects.component.css
+   ======================================== */
+
+/* --- Tab toggle row --- */
+.modal-tab-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 1.25rem;
+  background: #f9fafb;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover {
+  color: #374151;
+}
+
+.tab-btn.active {
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+}
+
+.tab-icon {
+  font-size: 1rem;
+}
+
+.tab-arrow {
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  transition: transform 0.25s ease;
+  transform: rotate(0deg);
+}
+
+.tab-arrow.flipped {
+  transform: rotate(90deg);
+}
+
+.tab-divider {
+  width: 1px;
+  height: 20px;
+  background: #d1d5db;
+  margin: 0 4px;
+}
+
+/* --- Memo body --- */
+.memo-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* --- Memo loading / error --- */
+.memo-loading,
+.memo-error {
+  text-align: center;
+  padding: 1rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.memo-error {
+  color: #ef4444;
+}
+
+/* --- Memo list --- */
+.memo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.memo-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  padding: 1rem 0;
+}
+
+.memo-item {
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid #4f46e5;
+}
+
+.memo-content-text {
+  font-size: 0.9rem;
+  color: #1f2937;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0.5rem;
+}
+
+.memo-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.memo-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.memo-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.memo-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.memo-action-btn:hover {
+  background: #e5e7eb;
+}
+
+/* --- Textarea --- */
+.memo-textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: #1f2937;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.memo-textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* --- Edit actions --- */
+.memo-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.memo-save-btn,
+.memo-cancel-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.memo-save-btn {
+  background: #4f46e5;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+.memo-save-btn:hover {
+  background: #4338ca;
+}
+
+.memo-cancel-btn {
+  background: #e5e7eb;
+  color: #374151;
+  transition: background 0.2s;
+}
+
+.memo-cancel-btn:hover {
+  background: #d1d5db;
+}
+
+/* --- Add memo section --- */
+.memo-add-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.memo-add-btn {
+  align-self: flex-end;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.memo-add-btn:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.memo-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

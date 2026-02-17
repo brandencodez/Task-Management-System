@@ -9,7 +9,7 @@ import { Project } from '../../shared/models/project.model';
 import { EmployeeService } from '../employees/employee.service';
 import { Router } from '@angular/router';
 import { UserService } from '../../shared/services/user.service';
-import { ProjectMemoService } from './project-memo.service';
+import { ProjectMemoService } from '../../shared/services/project-memo.service';
 import { ProjectStatusChartComponent } from './charts/project-status-chart.component';
 import { ProjectsByDepartmentComponent } from './charts/projects-by-department.component';
 import { ProjectsCompletedPerMonthComponent } from './charts/projects-completed-per-month.component';
